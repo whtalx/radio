@@ -3,6 +3,7 @@ import styled, { css } from 'styled-components'
 import Player from './components/Player'
 import getStations from './functions/getStations'
 import makeEndpoint from './functions/makeEndpoint'
+import getURL from './functions/getURL'
 
 const List = styled.ul`
   padding: 0 0 0 1em;
@@ -30,68 +31,95 @@ const Label = styled.li`
   }
 `
 
-// const type = [
-//   `byid`,
-//   `byuuid`,
-//   `byname`,
-//   `bynameexact`,
-//   `bycodec`,
-//   `bycodecexact`,
-//   `bycountry`,
-//   `bycountryexact`,
-//   `bycountrycodeexact`,
-//   `bystate`,
-//   `bystateexact`,
-//   `bylanguage`,
-//   `bylanguageexact`,
-//   `bytag`,
-//   `bytagexact`,
-// ]
+/*
+const type = [
+  `countries`,
+  `countrycodes`,
+  `languages`,
+  `stations`,
+  `servers`,
+  `url/${ stationid }`,
+  `tags`,
+]
 
-// const order = [
-//   `name`,
-//   `url`,
-//   `homepage`,
-//   `favicon`,
-//   `tags`,
-//   `country`,
-//   `state`,
-//   `language`,
-//   `votes`,
-//   `negativevotes`,
-//   `codec`,
-//   `bitrate`,
-//   `lastcheckok`,
-//   `lastchecktime`,
-//   `clicktimestamp`,
-//   `clickcount`,
-//   `clicktrend`,
-// ]
+const query = [
+  `byid`,
+  `byuuid`,
+  `byname`,
+  `bynameexact`,
+  `bycodec`,
+  `bycodecexact`,
+  `bycountry`,
+  `bycountryexact`,
+  `bycountrycodeexact`,
+  `bystate`,
+  `bystateexact`,
+  `bylanguage`,
+  `bylanguageexact`,
+  `bytag`,
+  `bytagexact`,
+]
 
+const order = [
+  `name`,
+  `url`,
+  `homepage`,
+  `favicon`,
+  `tags`,
+  `country`,
+  `state`,
+  `language`,
+  `votes`,
+  `negativevotes`,
+  `codec`,
+  `bitrate`,
+  `lastcheckok`,
+  `lastchecktime`,
+  `clicktimestamp`,
+  `clickcount`,
+  `clicktrend`,
+]
+*/
 
 export default () => {
+
   const [current, setCurrent] = useState(null)
   const [stations, setStations] = useState([])
   const [params] = useState({
-    countrycode: `GB`,
-    limit: 100,
-    offset: 200,
-    hidebroken: true,
+    server: `de1.api.radio-browser.info`,
+    type: `stations`,
+    search: {
+      countrycode: `GB`,
+      limit: 100,
+      offset: 400,
+      hidebroken: true,
+    },
   })
+
+  const select = (id) =>
+    getURL(
+      makeEndpoint({
+        server: params.server,
+        type: `url/${ id }`,
+      })
+    ).then(setCurrent)
 
   useEffect(
     () => {
-      getStations(makeEndpoint(params), setStations)
+      getStations(makeEndpoint(params))
+        .then(setStations)
+        .catch(({ message }) => console.error(message))
     },// eslint-disable-next-line
     [params]
   )
+
   return (
     <div>
       <Player source={ current } />
       <List>
         {
-          stations.map(({ uuid, name, src }) =>
-            <Label key={ uuid } playing={ src === current } onClick={ () => setCurrent(src) }>
+          stations.map(({ id, stationuuid, name, src }) =>
+            <Label key={ stationuuid } playing={ src === current } onClick={ () => current === src ? setCurrent(null) : setCurrent(src) }>
               { name }
             </Label>
           )

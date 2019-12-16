@@ -1,32 +1,22 @@
-const protocol = `https:/`
-
-const servers = [
-  `nl1.api.radio-browser.info`,
-  `de2.api.radio-browser.info`,
-  `fr1.api.radio-browser.info`,
-  `de1.api.radio-browser.info`,
-  `nl1.api.radio-browser.info`,
-  `fr1.api.radio-browser.info`,
-  `de1.api.radio-browser.info`,
-  `de2.api.radio-browser.info`,
-]
-
-const data = `json`
-
-const type = `stations`
-
-const query = `search`
-
-export default (props) =>
+const query = (props) =>
   [
-    [
-      protocol,
-      servers[2],
-      data,
-      type,
-      query,
-    ].join(`/`),
+    `search`,
     [...Array(Object.keys(props).length).keys()].map((i) =>
-    `${ Object.keys(props)[i] }=${ Object.values(props)[i] }`
-    ).join(`&`),
+      `${ Object.keys(props)[i] }=${ Object.values(props)[i] }`
+    ).join(`&`)
   ].join(`?`)
+
+export default ({
+  protocol = `https:/`,
+  server = `de1.api.radio-browser.info`,
+  data = `json`,
+  type,
+  search,
+}) =>
+  [
+    protocol,
+    server,
+    data,
+    type,
+    search && query(search),
+  ].join(`/`).replace(/[/]+$/g, ``)

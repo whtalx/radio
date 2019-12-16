@@ -6,9 +6,11 @@ const Canvas = styled.canvas`
   position: fixed;
   right: 0;
   top: 0;
-  width: 50vw;
-  height: 25vw;
+  width: calc(.5vw * 79);
+  height: calc(.5vw * 19);
 `
+
+const bands = [2,3,4,5,6,7,10,15,21,30,42,60,84,116,167,237,334,464,696]
 
 const Player = ({ source, player, changeSource }) => {
   const visualization = useRef(null)
@@ -17,35 +19,67 @@ const Player = ({ source, player, changeSource }) => {
     const canvas = visualization.current
     const ctx = canvas.getContext(`2d`)
     const { width, height } = canvas
+    const gradient = ctx.createLinearGradient(0, 0, 0, height / 19 * 16)
 
-    const drawBar = (x, w, amp) => {
-      ctx.strokeStyle =  `hsl(${ 100 - 100 / 255 * amp }, 100%, 50%)`
-      ctx.lineWidth = w
-      ctx.beginPath()
-      ctx.moveTo(x + (w / 2), height)
-      ctx.lineTo(x + (w / 2), height - height * amp / 255)
-      ctx.stroke()
+    gradient.addColorStop(0, `hsl(0, 100%, 50%)`)
+    gradient.addColorStop(.25, `hsl(30, 100%, 50%)`)
+    gradient.addColorStop(.5, `hsl(60, 100%, 50%)`)
+    gradient.addColorStop(.75, `hsl(90, 100%, 50%)`)
+    gradient.addColorStop(1, `hsl(120, 100%, 50%)`)
+
+    const clear = () => {
+      ctx.fillStyle = `hsl(0, 0%, 0%)`
+      ctx.fillRect(0, 0, width, height);
+
+      [...Array(19).keys()].forEach((y) => {
+        [...Array(79).keys()].forEach((x) => {
+          if (x % 2 === 0 && y % 2 === 0) {
+            ctx.fillStyle = x === 0
+              ? y % 4 === 0
+                ? `hsl(216, 60%, 81%)`
+                : `hsl(205, 100%, 71%)`
+              : y === 18
+                ? x % 4 === 0
+                  ? `hsl(216, 60%, 81%)`
+                  : `hsl(205, 100%, 71%)`
+                : `hsl(240, 41%, 16%)`
+
+            ctx.fillRect(x * width / 79, y * height / 19, width / 79, height / 19)
+          }
+        })
+      })
     }
 
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, width, height)
+    const drawBar = (x, w, amp) => {
+      ctx.strokeStyle = gradient//`hsl(${ 100 - 100 / 16 * amp }, 100%, 50%)`
+      ctx.lineWidth = w
+      ctx.beginPath()
+      ctx.moveTo(x + (width / 39.5), height - height / 19 * 2)
+      ctx.lineTo(x + (width / 39.5), height / 19 * (16 - amp))
+      ctx.stroke()
+    }
 
     const bufferLength = player.analyser.frequencyBinCount
     const dataArray = new Uint8Array(bufferLength)
     player.analyser.getByteFrequencyData(dataArray)
 
-    for(let i = 0; i < bufferLength; i++){
-      const x = i * width / bufferLength
-      const amp = dataArray[i]
+    clear()
 
-      drawBar(x, width / bufferLength, amp)
-    }
+    bands.forEach((band, i) => {
+      const x = i === 0
+        ? 2 * width / 79
+        : (((i - 1) * 4) + 6) * width / 79
+      const amp = Math.floor(16 / 255 * dataArray[band])
 
-    !player.element.paused && requestAnimationFrame(visualize)
+      drawBar(x, width / 79 * 3, amp)
+    })
+
+    player.element.paused 
+      ? clear()
+      : requestAnimationFrame(visualize)
   }
 
   const play = ({ target }) => {
-    console.log(target.currentSrc)
     target.play().catch(() => false)
     // visualize()
   }
@@ -53,7 +87,21 @@ const Player = ({ source, player, changeSource }) => {
   useEffect(
     () => {
       player.element.onloadeddata = play
+      player.element.onloadedmetadata = ({ target: { currentSrc } }) => console.log(currentSrc)
       player.element.onplaying = visualize
+      player.element.onerror = ({ message }) => console.warn(message)
+      player.element.onstalled = changeSource()
+      player.element.onsuspend = ({ target: { readyState } }) => {
+        if (readyState !== 0) return
+
+        if (/\/source+$/.test(player.element.currentSrc)) {
+          changeSource()
+          return
+        }
+
+        changeSource(`${ player.element.currentSrc.replace(/[/]+$/g, ``) }/stream`)
+        player.element.load()
+      }
     },// eslint-disable-next-line
     []
   )

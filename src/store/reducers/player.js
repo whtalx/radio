@@ -5,10 +5,10 @@ const initialState = () => {
   const analyser = context.createAnalyser()
   element.crossOrigin = ``
   // const frequencyArray = new Uint8Array(analyser.frequencyBinCount)
-  analyser.fftSize = 256
+  analyser.fftSize = 2048
   analyser.minDecibels = -90
-  analyser.maxDecibels = -30
-  analyser.smoothingTimeConstant = 0.95
+  analyser.maxDecibels = -20
+  analyser.smoothingTimeConstant = 0.5
   source.connect(analyser)
   analyser.connect(context.destination)
 

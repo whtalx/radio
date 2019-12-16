@@ -91,18 +91,18 @@ export default () => {
     search: {
       countrycode: `GB`,
       limit: 100,
-      offset: 400,
+      offset: 600,
       hidebroken: true,
     },
   })
 
-  const select = (id) =>
-    getURL(
-      makeEndpoint({
-        server: params.server,
-        type: `url/${ id }`,
-      })
-    ).then(setCurrent)
+  // const select = (id) =>
+  //   getURL(
+  //     makeEndpoint({
+  //       server: params.server,
+  //       type: `url/${ id }`,
+  //     })
+  //   ).then(setCurrent)
 
   useEffect(
     () => {

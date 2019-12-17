@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react'
+import { connect } from 'react-redux'
 import styled, { css } from 'styled-components'
 import Player from './components/Player'
+import request from './functions/request'
 import getStations from './functions/getStations'
 import makeEndpoint from './functions/makeEndpoint'
-import getURL from './functions/getURL'
+import { v4 } from 'uuid'
+// import getURL from './functions/getURL'
 
 const List = styled.ul`
   padding: 0 0 0 1em;
@@ -31,70 +34,40 @@ const Label = styled.li`
   }
 `
 
-/*
-const type = [
-  `countries`,
-  `countrycodes`,
-  `languages`,
-  `stations`,
-  `servers`,
-  `url/${ stationid }`,
-  `tags`,
-]
-
-const query = [
-  `byid`,
-  `byuuid`,
-  `byname`,
-  `bynameexact`,
-  `bycodec`,
-  `bycodecexact`,
-  `bycountry`,
-  `bycountryexact`,
-  `bycountrycodeexact`,
-  `bystate`,
-  `bystateexact`,
-  `bylanguage`,
-  `bylanguageexact`,
-  `bytag`,
-  `bytagexact`,
-]
-
-const order = [
-  `name`,
-  `url`,
-  `homepage`,
-  `favicon`,
-  `tags`,
-  `country`,
-  `state`,
-  `language`,
-  `votes`,
-  `negativevotes`,
-  `codec`,
-  `bitrate`,
-  `lastcheckok`,
-  `lastchecktime`,
-  `clicktimestamp`,
-  `clickcount`,
-  `clicktrend`,
-]
-*/
-
-export default () => {
-
+const App = ({
+  api,
+  query,
+  setType,
+}) => {
   const [current, setCurrent] = useState(null)
+  const [lastType, setLastType] = useState(null)
   const [stations, setStations] = useState([])
-  const [params] = useState({
-    server: `de1.api.radio-browser.info`,
-    type: `stations`,
-    search: {
-      countrycode: `GB`,
-      limit: 100,
-      offset: 600,
-      hidebroken: true,
+  const [list, setList] = useState([
+    {
+      id: v4(),
+      name: `by countries`,
+      onClick: () => {
+        setLastType(`countries`)
+        setType(`countries`)
+      }
     },
-  })
+    {
+      id: v4(),
+      name: `by languages`,
+      onClick: () => {
+        setLastType(`languages`)
+        setType(`languages`)
+      }
+    },
+    {
+      id: v4(),
+      name: `by tags`,
+      onClick: () => {
+        setLastType(`tags`)
+        setType(`tags`)
+      }
+    },
+  ])
 
   // const select = (id) =>
   //   getURL(
@@ -106,11 +79,38 @@ export default () => {
 
   useEffect(
     () => {
-      getStations(makeEndpoint(params))
-        .then(setStations)
-        .catch(({ message }) => console.error(message))
+      if (api.type === `stations`) {
+        getStations(makeEndpoint(api))
+          .then(setStations)
+          .catch(({ message }) => console.error(message))
+        return
+      }
+
+      if (api.type === `countries` || api.type === `languages` || api.type === `tags`) {
+        request(makeEndpoint(api))
+          .then((data) => {
+            setList(
+              data.map(item => ({
+                ...item,
+                onClick: () => query({
+                  type: `stations`,
+                  search: {
+                    country: lastType === `countries` ? item.name : undefined,
+                    countryExact: lastType === `countries` ? true : undefined,
+                    language: lastType === `languages` ? item.name : undefined,
+                    languageExact: lastType === `languages` ? true : undefined,
+                    tag: lastType === `tags` ? item.name : undefined,
+                    tagExact: lastType === `tags` ? true : undefined,
+                    hidebroken: true,
+                  },
+                })
+              }))
+            )
+          })
+          .catch(({ message }) => console.error(message))
+      }
     },// eslint-disable-next-line
-    [params]
+    [api.type]
   )
 
   return (
@@ -118,13 +118,27 @@ export default () => {
       <Player source={ current } />
       <List>
         {
-          stations.map(({ id, stationuuid, name, src }) =>
-            <Label key={ stationuuid } playing={ src === current } onClick={ () => current === src ? setCurrent(null) : setCurrent(src) }>
-              { name }
-            </Label>
-          )
+          stations.length > 0
+            ? stations.map(({ stationuuid, name, src }) =>
+              <Label key={ stationuuid } playing={ src === current } onClick={ () => current === src ? setCurrent(null) : setCurrent(src) }>
+                { name }
+              </Label>
+            )
+            : list.map(({ id, name, onClick }) =>
+              <Label key={ id } onClick={ onClick }>
+                { name }
+              </Label>
+            )
         }
       </List>
     </div>
   )
 }
+
+const mapStateToProps = (props) => ({ ...props });
+const mapDispatchToProps = (dispatch) => ({
+  setType: (payload) => dispatch({ type: `SET_TYPE`, payload }),
+  query: (payload) => dispatch({ type: `SET_ALL`, payload }),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(App)

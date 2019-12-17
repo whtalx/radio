@@ -1,8 +1,12 @@
 const query = (props) =>
   [
     `search`,
-    [...Array(Object.keys(props).length).keys()].map((i) =>
-      `${ Object.keys(props)[i] }=${ Object.values(props)[i] }`
+    [...Array(Object.keys(props).length).keys()].reduce(
+      (a, i) =>
+        typeof props[Object.keys(props)[i]] !== `undefined` && props[Object.keys(props)[i]] !== null
+          ? [...a, `${ Object.keys(props)[i] }=${ Object.values(props)[i] }`]
+          : a,
+      []
     ).join(`&`)
   ].join(`?`)
 

@@ -19,7 +19,7 @@ export default (code) => {
     case `aq`:
       return { name: `Antarctica`, orig: `Antarctica` }
     case `ag`:
-      return { name: `Antigua and Barbuda` }
+      return { name: `Antigua and Barbuda`, orig: `Antigua and Barbuda` }
     case `ar`:
       return { name: `Argentina`, orig: `República Argentina` }
     case `am`:
@@ -468,8 +468,8 @@ export default (code) => {
       return { name: `Ukraine`, orig: `Україна` }
     case `ae`:
       return { name: `United Arab Emirates`, orig: `الإمارات العربية المتحدة` }
-    case `GB`:
-      return { name: `United Kingdom`, orig: `United Kingdom of Great Britain and Northern Ireland` }
+    case `gb`:
+      return { name: `United Kingdom`, orig: `United Kingdom of Great Britain and Northern Ireland`, flag: `uk` }
     case `us`:
       return { name: `United States`, orig: `United States of America` }
     case `um`:

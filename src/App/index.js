@@ -1,76 +1,20 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { connect } from 'react-redux'
-import styled, { css } from 'styled-components'
-import Player from './components/Player'
+import Visualization from './components/Visualization'
 import request from './functions/request'
 import getStations from './functions/getStations'
 import makeEndpoint from './functions/makeEndpoint'
-import { v4 } from 'uuid'
-import Flag from './components/Flag'
-import countries from './functions/iso3166-1-alpha-2'
+import error from './functions/error'
+import List from './components/List'
 // import getURL from './functions/getURL'
-
-const List = styled.ul`
-  padding: 0 0 0 1em;
-  list-style-type: none;
-`
-
-const Label = styled.li`
-  cursor: pointer;
-
-  ${
-    props => props.playing 
-      ? css`
-        background-color: lightslategray;
-        color: white;
-      `
-      : css`
-        :hover {
-          color: slategray;
-        }
-
-        :nth-child(2n) {
-          background-color: ghostwhite;
-        }
-      `
-  }
-`
 
 const App = ({
   api,
-  query,
-  setType,
+  setCountryCodes,
+  setLanguages,
+  setStations,
+  setTags,
 }) => {
-  const [current, setCurrent] = useState(null)
-  const [lastType, setLastType] = useState(null)
-  const [stations, setStations] = useState([])
-  const [list, setList] = useState([
-    {
-      id: v4(),
-      name: `by countries`,
-      onClick: () => {
-        setLastType(`countrycodes`)
-        setType(`countrycodes`)
-      }
-    },
-    {
-      id: v4(),
-      name: `by languages`,
-      onClick: () => {
-        setLastType(`languages`)
-        setType(`languages`)
-      }
-    },
-    {
-      id: v4(),
-      name: `by tags`,
-      onClick: () => {
-        setLastType(`tags`)
-        setType(`tags`)
-      }
-    },
-  ])
-
   // const select = (id) =>
   //   getURL(
   //     makeEndpoint({
@@ -81,34 +25,96 @@ const App = ({
 
   useEffect(
     () => {
-      if (api.type === `stations`) {
-        getStations(makeEndpoint(api))
-          .then(setStations)
-          .catch(({ message }) => console.error(message))
-        return
-      }
+      switch (api.type) {
+        case `stations`: {
+          getStations(makeEndpoint(api))
+            .then(setStations)
+            .catch(error)
+          return
+        }
 
-      if (api.type === `countrycodes` || api.type === `languages` || api.type === `tags`) {
-        request(makeEndpoint(api))
-          .then((data) => {
-            setList(
-              data.map(item => ({
-                ...item,
-                onClick: () => query({
-                  type: `stations`,
-                  search: {
-                    countrycode: lastType === `countrycodes` ? item.name : undefined,
-                    language: lastType === `languages` ? item.name : undefined,
-                    languageExact: lastType === `languages` ? true : undefined,
-                    tag: lastType === `tags` ? item.name : undefined,
-                    tagExact: lastType === `tags` ? true : undefined,
-                    hidebroken: true,
-                  },
-                })
-              }))
-            )
-          })
-          .catch(({ message }) => console.error(message))
+        case `countrycodes`: {
+          request(makeEndpoint(api))
+            .then((data) => {
+              setCountryCodes(
+                data.map(
+                  (item) => ({
+                    ...item,
+                    action: {
+                      type: `SET_ALL`,
+                      payload: {
+                        type: `stations`,
+                        search: {
+                          countrycode: item.name,
+                          hidebroken: true,
+                        },
+                      }
+                    }
+                  })
+                )
+              )
+            })
+            .catch(error)
+
+          return
+        }
+
+        case `languages`: {
+          request(makeEndpoint(api))
+            .then((data) => {
+              setLanguages(
+                data.map(
+                  (item) => ({
+                    ...item,
+                    action: {
+                      type: `SET_ALL`,
+                      payload: {
+                        type: `stations`,
+                        search: {
+                          language: item.name,
+                          languageExact: true,
+                          hidebroken: true,
+                        },
+                      }
+                    }
+                  })
+                )
+              )
+            })
+            .catch(error)
+
+          return
+        }
+
+        case `tags`: {
+          request(makeEndpoint(api))
+            .then((data) => {
+              setTags(
+                data.map(
+                  (item) => ({
+                    ...item,
+                    action: {
+                      type: `SET_ALL`,
+                      payload: {
+                        type: `stations`,
+                        search: {
+                          tag: item.name,
+                          tagExact: true,
+                          hidebroken: true,
+                        },
+                      }
+                    }
+                  })
+                )
+              )
+            })
+            .catch(error)
+
+          return
+        }
+
+        default:
+          return
       }
     },// eslint-disable-next-line
     [api.type]
@@ -116,37 +122,18 @@ const App = ({
 
   return (
     <div>
-      <Player source={ current } />
-      <List>
-        {
-          stations.length > 0
-            ? stations.map(({ stationuuid, name, src }) =>
-              <Label key={ stationuuid } playing={ src === current } onClick={ () => current === src ? setCurrent(null) : setCurrent(src) }>
-                { name }
-              </Label>
-            )
-            : list.map(({ id, name, onClick }) =>
-              <Label key={ id } onClick={ onClick }>
-                {
-                  lastType === `countrycodes`
-                  ? <p key={ v4() } title={ countries(name).orig }>
-                    <Flag code={ countries(name).flag ? countries(name).flag : name } />
-                    { countries(name).name }
-                  </p>
-                  : name
-                }
-              </Label>
-            )
-        }
-      </List>
+      <Visualization />
+      <List />
     </div>
   )
 }
 
-const mapStateToProps = (props) => ({ ...props });
+const mapStateToProps = ({ api }) => ({ api });
 const mapDispatchToProps = (dispatch) => ({
-  setType: (payload) => dispatch({ type: `SET_TYPE`, payload }),
-  query: (payload) => dispatch({ type: `SET_ALL`, payload }),
+  setCountryCodes: (payload) => dispatch({ type: `SET_COUNTRY_CODES`, payload }),
+  setLanguages: (payload) => dispatch({ type: `SET_LANGUAGES`, payload }),
+  setStations: (payload) => dispatch({ type: `SET_STATIONS`, payload }),
+  setTags: (payload) => dispatch({ type: `SET_TAGS`, payload }),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(App)

@@ -9,8 +9,8 @@ export default (endpoint) =>
             (stations, station) => {
               const { id, stationuuid, name, url, url_resolved } = station
               if (!url_resolved && /.m3u|.m3u8|.pls|.asx|.ashx/.test(url)) {
-                // console.log(station)
-                return stations
+                console.log(name)
+                // return stations
               }
 
               let src = url_resolved || url // truncURI(url_resolved || url)

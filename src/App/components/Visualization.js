@@ -12,20 +12,13 @@ const Canvas = styled.canvas`
 
 const bands = [2,3,4,5,6,7,10,15,21,30,42,60,84,116,167,237,334,464,696]
 
-const Player = ({ source, player, changeSource }) => {
-  const visualization = useRef(null)
+const Visualization = ({ player, setVisualization }) => {
+  const spectrum = useRef(null)
 
   const visualize = () => {
-    const canvas = visualization.current
+    const canvas = spectrum.current
     const ctx = canvas.getContext(`2d`)
     const { width, height } = canvas
-    const gradient = ctx.createLinearGradient(0, 0, 0, height / 19 * 16)
-
-    gradient.addColorStop(0, `hsl(0, 100%, 50%)`)
-    gradient.addColorStop(.25, `hsl(30, 100%, 50%)`)
-    gradient.addColorStop(.5, `hsl(60, 100%, 50%)`)
-    gradient.addColorStop(.75, `hsl(90, 100%, 50%)`)
-    gradient.addColorStop(1, `hsl(120, 100%, 50%)`)
 
     const clear = () => {
       ctx.fillStyle = `hsl(0, 0%, 0%)`
@@ -50,6 +43,18 @@ const Player = ({ source, player, changeSource }) => {
       })
     }
 
+    clear()
+
+    if (player.element.paused) return
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, height / 19 * 16)
+
+    gradient.addColorStop(0, `hsl(0, 100%, 50%)`)
+    gradient.addColorStop(.25, `hsl(30, 100%, 50%)`)
+    gradient.addColorStop(.5, `hsl(60, 100%, 50%)`)
+    gradient.addColorStop(.75, `hsl(90, 100%, 50%)`)
+    gradient.addColorStop(1, `hsl(120, 100%, 50%)`)
+
     const drawBar = (x, w, amp) => {
       ctx.strokeStyle = gradient//`hsl(${ 100 - 100 / 16 * amp }, 100%, 50%)`
       ctx.lineWidth = w
@@ -63,8 +68,6 @@ const Player = ({ source, player, changeSource }) => {
     const dataArray = new Uint8Array(bufferLength)
     player.analyser.getByteFrequencyData(dataArray)
 
-    clear()
-
     bands.forEach((band, i) => {
       const x = i === 0
         ? 2 * width / 79
@@ -74,56 +77,25 @@ const Player = ({ source, player, changeSource }) => {
       drawBar(x, width / 79 * 3, amp)
     })
 
-    player.element.paused 
-      ? clear()
-      : requestAnimationFrame(visualize)
-  }
-
-  const play = ({ target }) => {
-    target.play().catch(() => false)
-    // visualize()
+    requestAnimationFrame(visualize)
   }
 
   useEffect(
     () => {
-      player.element.onloadeddata = play
-      player.element.onloadedmetadata = ({ target: { currentSrc } }) => console.log(currentSrc)
-      player.element.onplaying = visualize
-      player.element.onerror = ({ message }) => console.warn(message)
-      player.element.onstalled = changeSource()
-      player.element.onsuspend = ({ target: { readyState } }) => {
-        if (readyState !== 0) return
-
-        if (/\/source+$/.test(player.element.currentSrc)) {
-          changeSource()
-          return
-        }
-
-        changeSource(`${ player.element.currentSrc.replace(/[/]+$/g, ``) }/stream`)
-        player.element.load()
-      }
+      setVisualization(visualize)
+      visualize()
     },// eslint-disable-next-line
     []
   )
 
-  useEffect(
-    () => {
-      changeSource(source)
-      source
-        ? player.element.load()
-        : player.element.pause()
-    },// eslint-disable-next-line
-    [source]
-  )
-
   return (
-    <Canvas ref={ visualization } />
+    <Canvas ref={ spectrum } />
   )
 }
 
 const mapStateToProps = (props) => ({ ...props });
 const mapDispatchToProps = (dispatch) => ({
-  changeSource: (payload) => dispatch({ type: `CHANGE_SOURCE`, payload }),
+  setVisualization: (payload) => dispatch({ type: `SET_VISUALIZATION`, payload })
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Player);
+export default connect(mapStateToProps, mapDispatchToProps)(Visualization);

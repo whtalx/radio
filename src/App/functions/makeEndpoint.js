@@ -1,14 +1,14 @@
 const query = (props) =>
-  [
+  encodeURI([
     `search`,
     [...Array(Object.keys(props).length).keys()].reduce(
       (a, i) =>
-        typeof props[Object.keys(props)[i]] !== `undefined` && props[Object.keys(props)[i]] !== null
+        props[Object.keys(props)[i]]
           ? [...a, `${ Object.keys(props)[i] }=${ Object.values(props)[i] }`]
           : a,
       []
     ).join(`&`)
-  ].join(`?`)
+  ].join(`?`)).replace(/#/g, '%23')
 
 export default ({
   protocol = `https:/`,

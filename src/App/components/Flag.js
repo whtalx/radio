@@ -1,7 +1,7 @@
 import styled from 'styled-components'
 
 const source = (code) =>
-  `static/images/flags/${ code.toLowerCase() }.svg`
+  `/images/flags/${ code.toLowerCase() }.svg`
 
 export default styled.img.attrs((props) => ({
   src: source(props.code),

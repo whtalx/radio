@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import styled, { css } from 'styled-components'
-import { v4 } from 'uuid'
 import Flag from './Flag'
 import countries from '../functions/iso3166-1-alpha-2'
 import error from '../functions/error'
@@ -40,25 +39,33 @@ const List = ({
   dispatch,
   setStation,
 }) => {
-  const [current, setCurrent] = useState(player.station)
+  const [current, setCurrent] = useState(``)
   useEffect(
     () => {
-      controller && controller.abort()
+      if (!controller) return
+      controller.abort()
       controller = null
-      setCurrent(player.station)
     },
     [player.station]
   )
 
-  const checkURL = (url) => {
+  const checkURL = (url, origin) => {
+    if (url === ``) {
+      setCurrent(url)
+      setStation(url)
+      return
+    }
+
+    origin && console.log(origin, ` recursive call: `, url)
+
     controller && controller.abort()
     controller = new AbortController()
-    controller.signal.onabort = () => { console.log(`aborted`) }
+    controller.signal.onabort = () => undefined
 
     fetch(url, { signal: controller.signal })
       .then((response) => {
         const type = response.headers.get(`content-type`)
-        console.log(type, url)
+        console.log(url, ` content-type: `, type)
 
         if (
           !type ||
@@ -66,11 +73,13 @@ const List = ({
           type === `application/ogg`
         ) {
           setStation(url)
+          setCurrent(origin || url)
           return null
         } else if(/text\/html/.test(type)) {
           if (/index\.html\?sid=1/.test(response.url)) {
-            console.log(response.url, `recursive call`)
-            checkURL(response.url.replace(/index\.html\?sid=1/, ';'))
+            checkURL(response.url.replace(/index\.html\?sid=1/, `;`), url)
+          } else if (/webcast-server\.net:\d+\/$|castserver\.net:\d+\/$/.test(response.url)) {
+            checkURL(`${ response.url };`, url)
           }
 
           return null
@@ -82,11 +91,10 @@ const List = ({
       .then(text => {
         if (!text) return null
 
-        console.log(`parsing`, text)
+        console.log(`parsing: `, text)
 
         if (/http\S+/g.test(text)) {
-          console.log(`recursive call`)
-          checkURL(text.match(/http\S+/g)[0])
+          checkURL(text.match(/http\S+/g)[0], url)
         }
 
         return null
@@ -103,7 +111,7 @@ const List = ({
               const country = countries(listItem.name)
               return (
                 <Li
-                  key={ v4() }
+                  key={ listItem.name }
                   title={ country.orig }
                   onClick={ () => dispatch(listItem.action) }
                 >
@@ -116,9 +124,9 @@ const List = ({
             case `stations`:
               return (
                 <Li
-                  key={ listItem.stationuuid }
+                  key={ listItem.id }
                   active={ current === listItem.src }
-                  onClick={ () => current === listItem.src ? setStation(``) : checkURL(listItem.src) }
+                  onClick={ () => checkURL(current === listItem.src ? `` : listItem.src) }
                 >
                   { listItem.name }
                 </Li>
@@ -126,7 +134,7 @@ const List = ({
 
             default:
               return (
-                <Li key={ v4() } onClick={ () => dispatch(listItem.action) }>
+                <Li key={ listItem.name } onClick={ () => dispatch(listItem.action) }>
                   { listItem.name }
                 </Li>
               )
@@ -140,35 +148,8 @@ const List = ({
 
 const mapStateToProps = ({ list, player }) => ({ list, player });
 const mapDispatchToProps = (dispatch) => ({
-  dispatch: (action) => dispatch(action),
-  setStation: (payload) => dispatch({ type: `SET_STATION`, payload })
+  dispatch: action => dispatch(action),
+  setStation: payload => dispatch({ type: `SET_STATION`, payload })
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(List)
-
-
-/*
-
-      <List>
-        {
-          stations.length > 0
-            ? stations.map(({ stationuuid, name, src }) =>
-              <Label key={ stationuuid } playing={ src === current } onClick={ () => current === src ? setCurrent(null) : setCurrent(src) }>
-                { name }
-              </Label>
-            )
-            : list.map(({ id, name, onClick }) =>
-              <Label key={ id } onClick={ onClick }>
-                {
-                  lastType === `countrycodes`
-                  ? <p key={ v4() } title={ countries(name).orig }>
-                    <Flag code={ countries(name).flag ? countries(name).flag : name } />
-                    { `\t${ countries(name).name }` }
-                  </p>
-                  : name
-                }
-              </Label>
-            )
-        }
-      </List>
- */

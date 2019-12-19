@@ -93,9 +93,9 @@ const Visualization = ({ player, setVisualization }) => {
   )
 }
 
-const mapStateToProps = (props) => ({ ...props });
+const mapStateToProps = ({ player }) => ({ player })
 const mapDispatchToProps = (dispatch) => ({
-  setVisualization: (payload) => dispatch({ type: `SET_VISUALIZATION`, payload })
-});
+  setVisualization: payload => dispatch({ type: `SET_VISUALIZATION`, payload })
+})
 
-export default connect(mapStateToProps, mapDispatchToProps)(Visualization);
+export default connect(mapStateToProps, mapDispatchToProps)(Visualization)

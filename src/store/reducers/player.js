@@ -2,29 +2,23 @@ import error from '../../App/functions/error'
 
 const initialState = () => {
   const context = new AudioContext()
+
   const element = document.createElement(`AUDIO`)
-  const source = context.createMediaElementSource(element)
-  const analyser = context.createAnalyser()
   element.crossOrigin = ``
-  element.onloadeddata = () => {
-    element.play().catch(error)
-  }
+  element.preload = `metadata`
   element.onabort = error
   element.onerror = error
-  // element.onsuspend = ({ target: { readyState, currentSrc } }) => {
-  //   if (readyState !== 0) return
-  //
-  //   element.src = /\/source+$/.test(currentSrc)
-  //     ? ``
-  //     : `${ element.currentSrc.replace(/[/]+$/g, ``) }/stream`
-  //
-  //   element.load()
-  // }
+  element.oncanplay = () => {
+    element.play().catch(error)
+  }
 
+  const analyser = context.createAnalyser()
   analyser.fftSize = 2048
   analyser.minDecibels = -90
   analyser.maxDecibels = -20
   analyser.smoothingTimeConstant = .88
+
+  const source = context.createMediaElementSource(element)
   source.connect(analyser)
 
   return {
@@ -36,29 +30,34 @@ const initialState = () => {
 }
 
 export default (state = initialState(), { type, payload }) => {
+  let {
+    context,
+    element,
+    analyser,
+    station,
+  } = state
+
   switch (type) {
     case `SET_STATION`: {
-      const newState = { ...state }
-      newState.station = payload
-
-      if (payload === ``) {
-        newState.element.pause()
-      } else {
-        newState.element.src = payload
-        newState.element.load()
-      }
-
-      return newState
+      station = payload
+      element.src = payload
+      break
     }
 
     case `SET_VISUALIZATION`: {
-      const newState = { ...state }
-      newState.element.onplaying = payload
-      newState.analyser.connect(newState.context.destination)
-      return newState
+      element.onplaying = payload
+      analyser.connect(context.destination)
+      break
     }
 
     default:
-      return state
+      break
+  }
+
+  return {
+    context,
+    element,
+    analyser,
+    station,
   }
 }

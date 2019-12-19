@@ -1,71 +1,92 @@
-const initialState = () => ({
-  show: `start`,
-  countrycodes: [],
-  languages: [],
-  tags: [],
-  stations: [],
-  start: [
-    {
-      name: `by countries`,
-      action: {
-        type: `SET_TYPE`,
-        payload: `countrycodes`,
+const initialState = () => {
+  const lastStateString = localStorage.getItem(`list`)
+
+  if (lastStateString) {
+    return JSON.parse(lastStateString)
+  }
+
+  const newState = {
+      show: `start`,
+      countrycodes: [],
+      languages: [],
+      tags: [],
+      stations: [],
+      start: [
+      {
+        name: `by countries`,
+        action: {
+          type: `SET_TYPE`,
+          payload: `countrycodes`,
+        },
       },
-    },
-    {
-      name: `by languages`,
-      action: {
-        type: `SET_TYPE`,
-        payload: `languages`,
+      {
+        name: `by languages`,
+        action: {
+          type: `SET_TYPE`,
+          payload: `languages`,
+        },
       },
-    },
-    {
-      name: `by tags`,
-      action: {
-        type: `SET_TYPE`,
-        payload: `tags`,
+      {
+        name: `by tags`,
+        action: {
+          type: `SET_TYPE`,
+          payload: `tags`,
+        },
       },
-    },
-  ],
-})
+    ],
+  }
+
+  return newState
+}
 
 export default (state = initialState(), { type, payload }) => {
+  let {
+    show,
+    countrycodes,
+    languages,
+    tags,
+    stations,
+    start,
+  } = state
+
   switch (type) {
-    case `SET_COUNTRY_CODES`:
-      return {
-        ...state,
-        countrycodes: payload,
-        show: `countrycodes`,
-      }
+    case `SET_COUNTRY_CODES`: {
+      countrycodes = payload
+      show = `countrycodes`
+      break
+    }
 
-    case `SET_LANGUAGES`:
-      return {
-        ...state,
-        languages: payload,
-        show: `languages`,
-      }
+    case `SET_LANGUAGES`: {
+      languages = payload
+      show = `languages`
+      break
+    }
 
-    case `SET_TAGS`:
-      return {
-        ...state,
-        tags: payload,
-        show: `tags`,
-      }
+    case `SET_TAGS`: {
+      tags = payload
+      show = `tags`
+      break
+    }
 
-    case `SET_STATIONS`:
-      return {
-        ...state,
-        stations: payload,
-        show: `stations`,
-      }
-
-    case `SHOW_LIST`:
-      return {
-        ...state,
-        show: payload,
-      }
+    case `SET_STATIONS`: {
+      stations = payload
+      show =  `stations`
+      break
+    }
 
     default:
-      return state
+      break
   }
+
+  const newState = {
+    show,
+    countrycodes,
+    languages,
+    tags,
+    stations,
+    start,
+  }
+
+  localStorage.setItem(`list`, JSON.stringify(newState))
+  return newState
 }

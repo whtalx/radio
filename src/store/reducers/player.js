@@ -1,4 +1,4 @@
-import error from "../../App/functions/error"
+import error from '../../App/functions/error'
 
 const initialState = () => {
   const context = new AudioContext()
@@ -7,9 +7,9 @@ const initialState = () => {
   const analyser = context.createAnalyser()
   element.crossOrigin = ``
   element.onloadeddata = () => {
-    element.play().then(() => false)
+    element.play().catch(error)
   }
-  element.onabort = () => false
+  element.onabort = error
   element.onerror = error
   // element.onsuspend = ({ target: { readyState, currentSrc } }) => {
   //   if (readyState !== 0) return
@@ -26,7 +26,6 @@ const initialState = () => {
   analyser.maxDecibels = -20
   analyser.smoothingTimeConstant = .88
   source.connect(analyser)
-  analyser.connect(context.destination)
 
   return {
     context,
@@ -46,7 +45,7 @@ export default (state = initialState(), { type, payload }) => {
         newState.element.pause()
       } else {
         newState.element.src = payload
-        newState.element.play()
+        newState.element.load()
       }
 
       return newState
@@ -55,6 +54,7 @@ export default (state = initialState(), { type, payload }) => {
     case `SET_VISUALIZATION`: {
       const newState = { ...state }
       newState.element.onplaying = payload
+      newState.analyser.connect(newState.context.destination)
       return newState
     }
 

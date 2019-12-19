@@ -128,12 +128,12 @@ const App = ({
   )
 }
 
-const mapStateToProps = ({ api }) => ({ api });
+const mapStateToProps = ({ api }) => ({ api })
 const mapDispatchToProps = (dispatch) => ({
   setCountryCodes: (payload) => dispatch({ type: `SET_COUNTRY_CODES`, payload }),
   setLanguages: (payload) => dispatch({ type: `SET_LANGUAGES`, payload }),
   setStations: (payload) => dispatch({ type: `SET_STATIONS`, payload }),
   setTags: (payload) => dispatch({ type: `SET_TAGS`, payload }),
-});
+})
 
 export default connect(mapStateToProps, mapDispatchToProps)(App)

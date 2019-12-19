@@ -1,4 +1,4 @@
 export default ({ message }) =>
-  message === `body is undefined`
+  /user\saborted/i.test(message)
     ? false
     : console.error(message)

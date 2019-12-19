@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import styled, { css } from 'styled-components'
 import { v4 } from 'uuid'
-import countries from '../functions/iso3166-1-alpha-2'
 import Flag from './Flag'
-import error from "../functions/error"
+import countries from '../functions/iso3166-1-alpha-2'
+import error from '../functions/error'
 
 const Ul = styled.ul`
   padding: 0 0 0 1em;
@@ -32,6 +32,8 @@ const Li = styled.li`
   }
 `
 
+let controller
+
 const List = ({
   list,
   player,
@@ -41,18 +43,17 @@ const List = ({
   const [current, setCurrent] = useState(player.station)
   useEffect(
     () => {
+      controller && controller.abort()
+      controller = null
       setCurrent(player.station)
     },
     [player.station]
   )
 
   const checkURL = (url) => {
-    if (url === player.station) {
-      setStation(``)
-      return
-    }
-
-    const controller = new AbortController()
+    controller && controller.abort()
+    controller = new AbortController()
+    controller.signal.onabort = () => { console.log(`aborted`) }
 
     fetch(url, { signal: controller.signal })
       .then((response) => {
@@ -60,51 +61,34 @@ const List = ({
         console.log(type, url)
 
         if (
+          !type ||
           type.split(`/`)[0] === `audio` ||
           type === `application/ogg`
         ) {
           setStation(url)
-          controller.abort()          // throw new Error(`it's OK`)
+          return null
         } else if(/text\/html/.test(type)) {
           if (/index\.html\?sid=1/.test(response.url)) {
             console.log(response.url, `recursive call`)
             checkURL(response.url.replace(/index\.html\?sid=1/, ';'))
           }
 
-          controller.abort()
+          return null
         } else {
-          return response.body
+          return response.blob()
         }
       })
-      .then(body => {
-        const reader = body.getReader();
+      .then(blob => blob ? blob.text() : null)
+      .then(text => {
+        if (!text) return null
 
-        return new ReadableStream({
-          start(controller) {
-            return pump()
+        console.log(`parsing`, text)
 
-            function pump() {
-              return reader.read().then(({ done, value }) => {
-                if (done) {
-                  controller.close()
-                  return;
-                }
-
-                controller.enqueue(value)
-                return pump()
-              })
-            }
-          }
-        })
-      })
-      .then(stream => new Response(stream))
-      .then(response => response.blob())
-      .then(blob => blob.text())
-      .then(response => {
-        if (/http\S+/g.test(response)) {
-          console.log(response, `recursive call`)
-          checkURL(response.match(/http\S+/g)[0])
+        if (/http\S+/g.test(text)) {
+          console.log(`recursive call`)
+          checkURL(text.match(/http\S+/g)[0])
         }
+
         return null
       })
       .catch(error)
@@ -134,7 +118,7 @@ const List = ({
                 <Li
                   key={ listItem.stationuuid }
                   active={ current === listItem.src }
-                  onClick={ () => checkURL(listItem.src) }
+                  onClick={ () => current === listItem.src ? setStation(``) : checkURL(listItem.src) }
                 >
                   { listItem.name }
                 </Li>

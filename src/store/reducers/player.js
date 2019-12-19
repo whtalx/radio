@@ -3,7 +3,7 @@ import error from '../../App/functions/error'
 const initialState = () => {
   const context = new AudioContext()
 
-  const element = document.createElement(`AUDIO`)
+  const element = document.createElement(`VIDEO`)
   element.crossOrigin = ``
   element.preload = `metadata`
   element.onabort = error

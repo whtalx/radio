@@ -4,8 +4,8 @@ import styled from 'styled-components'
 
 const Canvas = styled.canvas`
   position: fixed;
-  right: 0;
-  top: 0;
+  right: .5vw;
+  bottom: .5vw;
   width: calc(.5vw * 79);
   height: calc(.5vw * 19);
 `

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { connect } from 'react-redux'
 import List from './components/List'
+import Header from './components/Header'
 import Visualization from './components/Visualization'
 import getCountryCodes from './functions/getCountryCodes'
 import getLanguages from './functions/getLanguages'
@@ -47,6 +48,7 @@ const App = ({
 
   return (
     <div>
+      <Header />
       <Visualization />
       <List />
     </div>

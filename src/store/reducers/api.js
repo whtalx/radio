@@ -84,13 +84,20 @@ export default (state = initialState, { type, payload }) => {
     case `SET_TYPE`:
       return {
         ...state,
-        type: payload
+        type: payload,
+        search: null,
       }
 
     case `SET_ALL`:
       return {
         ...state,
-        ...payload
+        ...payload,
+      }
+
+    case `SET_STATIONS`:
+      return {
+        ...state,
+        type: null,
       }
 
     default:

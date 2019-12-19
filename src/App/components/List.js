@@ -6,6 +6,7 @@ import countries from '../functions/iso3166-1-alpha-2'
 import error from '../functions/error'
 
 const Ul = styled.ul`
+  margin: 0;
   padding: 0 0 0 1em;
   list-style-type: none;
 `
@@ -49,7 +50,7 @@ const List = ({
     [player.station]
   )
 
-  const checkURL = (url, origin) => {
+  const checkURL = ({ url, origin }) => {
     if (url === ``) {
       setCurrent(url)
       setStation(url)
@@ -62,39 +63,59 @@ const List = ({
     controller = new AbortController()
     controller.signal.onabort = () => undefined
 
-    fetch(url, { signal: controller.signal })
+    fetch(url, { signal: controller.signal, })
       .then((response) => {
-        const type = response.headers.get(`content-type`)
-        console.log(url, ` content-type: `, type)
+        const [type, subtype] = (response.headers.get(`content-type`) || ``).split(`/`)
+        console.log(url, ` content-type: ${ type }/${ subtype }`)
 
         if (
           !type ||
-          type.split(`/`)[0] === `audio` ||
-          type === `application/ogg`
+          subtype === `aac` ||
+          subtype === `ogg` ||
+          subtype === `mp4` ||
+          subtype === `mpeg` ||
+          subtype === `aacp` ||
+          subtype === `opus`
         ) {
           setStation(url)
           setCurrent(origin || url)
           return null
-        } else if(/text\/html/.test(type)) {
-          if (/index\.html\?sid=1/.test(response.url)) {
-            checkURL(response.url.replace(/index\.html\?sid=1/, `;`), url)
-          } else if (/webcast-server\.net:\d+\/$|castserver\.net:\d+\/$/.test(response.url)) {
-            checkURL(`${ response.url };`, url)
-          }
+        } else if(type === `text` && subtype === `html`) {
+          response
+            .text()
+            .then(text => console.log(`response text: `, text))
+            .catch(e => console.log(`can't resolve ${ url } response text: `, e))
 
+          if (!/http(s)*:\/\/[\w\d.:-]+\/;/.test(response.url)) {
+            checkURL({ url: url.match(/http(s)*:\/\/[\w\d.:-]+\//g) + `;`, origin: url })
+          }
           return null
-        } else {
-          return response.blob()
+        } else if (type === `video`) {
+          return null
         }
+
+        return response.text()
       })
-      .then(blob => blob ? blob.text() : null)
       .then(text => {
         if (!text) return null
 
         console.log(`parsing: `, text)
 
-        if (/http\S+/g.test(text)) {
-          checkURL(text.match(/http\S+/g)[0], url)
+        const isM3U = text.substr(0,7) === `#EXTM3U`
+        /*
+         * works with:
+         * application/vnd.apple.mpegurl
+         * application/x-mpegURL
+         */
+
+        if (isM3U) {
+          const links = text.replace(/#.+\n/g, ``).split(`\n`).filter(i => i)
+          checkURL({
+            url: /^http/.test(links[links.length - 1])
+              ? links[links.length - 1]
+              : url.replace(/[\d\w-]+\.[\d\w-]+$/g, links[links.length - 1]),
+            orig: url,
+          })
         }
 
         return null
@@ -126,7 +147,7 @@ const List = ({
                 <Li
                   key={ listItem.id }
                   active={ current === listItem.src }
-                  onClick={ () => checkURL(current === listItem.src ? `` : listItem.src) }
+                  onClick={ () => checkURL({ url : current === listItem.src ? `` : listItem.src }) }
                 >
                   { listItem.name }
                 </Li>
@@ -144,7 +165,6 @@ const List = ({
     </Ul>
   )
 }
-
 
 const mapStateToProps = ({ list, player }) => ({ list, player });
 const mapDispatchToProps = (dispatch) => ({

@@ -59,11 +59,11 @@ const List = ({
 
     origin && console.log(origin, ` recursive call: `, url)
 
-    controller && controller.abort()
+    if (controller) controller.abort()
     controller = new AbortController()
-    controller.signal.onabort = () => undefined
+    controller.signal.onabort = error
 
-    fetch(url, { signal: controller.signal, })
+    fetch(url, { signal: controller.signal })
       .then((response) => {
         const [type, subtype] = (response.headers.get(`content-type`) || ``).split(`/`)
         console.log(url, ` content-type: ${ type }/${ subtype }`)
@@ -114,7 +114,7 @@ const List = ({
             url: /^http/.test(links[links.length - 1])
               ? links[links.length - 1]
               : url.replace(/[\d\w-]+\.[\d\w-]+$/g, links[links.length - 1]),
-            orig: url,
+            origin: url,
           })
         }
 

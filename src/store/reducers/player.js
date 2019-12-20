@@ -3,7 +3,7 @@ import error from '../../App/functions/error'
 const initialState = () => {
   const context = new AudioContext()
 
-  const element = document.createElement(`VIDEO`)
+  const element = document.createElement(`AUDIO`)
   element.crossOrigin = ``
   element.preload = `metadata`
   element.onabort = error
@@ -41,6 +41,7 @@ export default (state = initialState(), { type, payload }) => {
     case `SET_STATION`: {
       station = payload
       element.src = payload
+      element.play()
       break
     }
 

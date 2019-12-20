@@ -5,11 +5,19 @@ const initialState = () => {
 
   const element = document.createElement(`AUDIO`)
   element.crossOrigin = ``
-  element.preload = `metadata`
-  element.onabort = error
+  element.preload = `all`
   element.onerror = error
+  element.onabort = ({ target }) => {
+    console.log(`aborted: `, target.src)
+  }
+  element.onloadstart = ({ target }) => {
+    console.log(`loading: `, target.src)
+  }
+  element.onloadedmetadata = ({ target }) => {
+    console.log(`playing: `, target.src)
+  }
   element.oncanplay = () => {
-    element.play().catch(error)
+    element.play()//.catch(error)
   }
 
   const analyser = context.createAnalyser()
@@ -25,7 +33,6 @@ const initialState = () => {
     context,
     element,
     analyser,
-    station: element.currentSrc
   }
 }
 
@@ -34,14 +41,12 @@ export default (state = initialState(), { type, payload }) => {
     context,
     element,
     analyser,
-    station,
   } = state
 
   switch (type) {
     case `SET_STATION`: {
-      station = payload
       element.src = payload
-      element.play()
+      element.load()
       break
     }
 
@@ -59,6 +64,5 @@ export default (state = initialState(), { type, payload }) => {
     context,
     element,
     analyser,
-    station,
   }
 }

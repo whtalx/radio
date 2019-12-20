@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import styled, { css } from 'styled-components'
 import Flag from './Flag'
+import sniff from '../functions/sniff'
 import countries from '../functions/iso3166-1-alpha-2'
-import error from '../functions/error'
 
 const Ul = styled.ul`
   margin: 0;
@@ -32,96 +32,53 @@ const Li = styled.li`
   }
 `
 
-let controller
-
 const List = ({
   list,
-  player,
   dispatch,
   setStation,
 }) => {
   const [current, setCurrent] = useState(``)
+  const [controller, setController] = useState(null)
+
+  useEffect(
+    () => {
+      if (current) {
+        setController(new AbortController())
+        console.log(`creating controller`)
+      } else {
+        if (controller) {
+          console.log(`this should never happen. if you read this, god bless you`)
+          setController(null)
+        }
+        setStation(``)
+      }
+    }, // eslint-disable-next-line
+    [current]
+  )
+
   useEffect(
     () => {
       if (!controller) return
-      controller.abort()
-      controller = null
-    },
-    [player.station]
+
+      const signal = controller.signal
+      signal.addEventListener(`abort`, () => {
+        console.log(`destroying controller`)
+        setController(null)
+      })
+
+      sniff({
+        url: current,
+        signal,
+      })
+        .then(({ station = `` }) => {
+          setStation(station)
+          controller.abort()
+          station === `` && setCurrent(station) // TODO: change color of list item
+        })
+        // .catch(error)
+    }, // eslint-disable-next-line
+    [controller]
   )
-
-  const checkURL = ({ url, origin }) => {
-    if (url === ``) {
-      setCurrent(url)
-      setStation(url)
-      return
-    }
-
-    origin && console.log(origin, ` recursive call: `, url)
-
-    if (controller) controller.abort()
-    controller = new AbortController()
-    controller.signal.onabort = error
-
-    fetch(url, { signal: controller.signal })
-      .then((response) => {
-        const [type, subtype] = (response.headers.get(`content-type`) || ``).split(`/`)
-        console.log(url, ` content-type: ${ type }/${ subtype }`)
-
-        if (
-          !type ||
-          subtype === `aac` ||
-          subtype === `ogg` ||
-          subtype === `mp4` ||
-          subtype === `mpeg` ||
-          subtype === `aacp` ||
-          subtype === `opus`
-        ) {
-          setStation(url)
-          setCurrent(origin || url)
-          return null
-        } else if(type === `text` && subtype === `html`) {
-          response
-            .text()
-            .then(text => console.log(`response text: `, text))
-            .catch(e => console.log(`can't resolve ${ url } response text: `, e))
-
-          if (!/http(s)*:\/\/[\w\d.:-]+\/;/.test(response.url)) {
-            checkURL({ url: url.match(/http(s)*:\/\/[\w\d.:-]+\//g) + `;`, origin: url })
-          }
-          return null
-        } else if (type === `video`) {
-          return null
-        }
-
-        return response.text()
-      })
-      .then(text => {
-        if (!text) return null
-
-        console.log(`parsing: `, text)
-
-        const isM3U = text.substr(0,7) === `#EXTM3U`
-        /*
-         * works with:
-         * application/vnd.apple.mpegurl
-         * application/x-mpegURL
-         */
-
-        if (isM3U) {
-          const links = text.replace(/#.+\n/g, ``).split(`\n`).filter(i => i)
-          checkURL({
-            url: /^http/.test(links[links.length - 1])
-              ? links[links.length - 1]
-              : url.replace(/[\d\w-]+\.[\d\w-]+$/g, links[links.length - 1]),
-            origin: url,
-          })
-        }
-
-        return null
-      })
-      .catch(error)
-  }
 
   return (
     <Ul>
@@ -147,9 +104,11 @@ const List = ({
                 <Li
                   key={ listItem.id }
                   active={ current === listItem.src }
-                  onClick={ () => checkURL({ url : current === listItem.src ? `` : listItem.src }) }
+                  onClick={ () => setCurrent(last => last === listItem.src ? `` : listItem.src ) }
                 >
-                  { listItem.name }
+                  <span>{ listItem.name }</span>
+                  _________
+                  <span>{ listItem.src }</span>
                 </Li>
               )
 
@@ -166,7 +125,7 @@ const List = ({
   )
 }
 
-const mapStateToProps = ({ list, player }) => ({ list, player });
+const mapStateToProps = ({ list }) => ({ list });
 const mapDispatchToProps = (dispatch) => ({
   dispatch: action => dispatch(action),
   setStation: payload => dispatch({ type: `SET_STATION`, payload })

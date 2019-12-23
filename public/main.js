@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'path'
 import isDev from 'electron-is-dev'
+import store from '../src/store/main'
 
 if (isDev) {
   const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require('electron-devtools-installer')
@@ -106,3 +107,11 @@ ipcMain.on(`toggle-list`, () => {
     ? list.close()
     : createList()
 })
+
+// let currentState
+
+// store.subscribe(() => {
+//   let oldState = currentState
+//   currentState = store.getState()
+//   console.log(JSON.stringify(oldState), JSON.stringify(currentState))
+// })

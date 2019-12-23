@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react'
-import { connect } from 'react-redux'
 import styled from 'styled-components'
 
 const Canvas = styled.canvas`
@@ -12,7 +11,11 @@ const Canvas = styled.canvas`
 
 const bands = [2,3,4,5,6,7,10,15,21,30,42,60,84,116,167,237,334,464,696]
 
-const Visualization = ({ player, setVisualization }) => {
+export default ({
+  paused,
+  analyser,
+  setVisualization,
+}) => {
   const spectrum = useRef(null)
 
   const visualize = () => {
@@ -45,7 +48,7 @@ const Visualization = ({ player, setVisualization }) => {
 
     clear()
 
-    if (player.element.paused) return
+    if (!paused) return
 
     const gradient = ctx.createLinearGradient(0, 0, 0, height / 19 * 16)
 
@@ -64,9 +67,9 @@ const Visualization = ({ player, setVisualization }) => {
       ctx.stroke()
     }
 
-    const bufferLength = player.analyser.frequencyBinCount
+    const bufferLength = analyser.frequencyBinCount
     const dataArray = new Uint8Array(bufferLength)
-    player.analyser.getByteFrequencyData(dataArray)
+    analyser.getByteFrequencyData(dataArray)
 
     bands.forEach((band, i) => {
       const x = i === 0
@@ -82,6 +85,7 @@ const Visualization = ({ player, setVisualization }) => {
 
   useEffect(
     () => {
+      if (!spectrum.current) return
       setVisualization(visualize)
       visualize()
     },// eslint-disable-next-line
@@ -92,10 +96,3 @@ const Visualization = ({ player, setVisualization }) => {
     <Canvas ref={ spectrum } />
   )
 }
-
-const mapStateToProps = ({ player }) => ({ player })
-const mapDispatchToProps = (dispatch) => ({
-  setVisualization: payload => dispatch({ type: `SET_VISUALIZATION`, payload })
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(Visualization)

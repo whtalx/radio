@@ -1,6 +1,6 @@
 import React from 'react'
-import List from './components/List'
-import Player from './components/Player'
+import List from './windows/List'
+import Player from './windows/Player'
 
 export default ({ location }) => {
   switch(location.search.substr(1)) {

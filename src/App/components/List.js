@@ -41,6 +41,7 @@ const Li = styled.li`
 const List = ({
   api,
   list,
+  player,
   setTags,
   dispatch,
   setStation,
@@ -48,7 +49,7 @@ const List = ({
   setLanguages,
   setCountryCodes,
 }) => {
-  const [current, setCurrent] = useState(``)
+  const [current, setCurrent] = useState(player.station)
   const [controller, setController] = useState(null)
 
   useEffect(
@@ -83,15 +84,16 @@ const List = ({
 
   useEffect(
     () => {
-      if (current) {
-        setController(new AbortController())
-        console.log(`creating controller`)
-      } else {
+      if (!current.id) {
         if (controller) {
           console.log(`this should never happen. if you read this, god bless you`)
           setController(null)
         }
-        setStation(``)
+
+        player.station.id && setStation({})
+      } else if (current.id !== player.station.id) {
+        setController(new AbortController())
+        console.log(`creating controller`)
       }
     }, // eslint-disable-next-line
     [current]
@@ -108,13 +110,14 @@ const List = ({
       })
 
       sniff({
-        url: current,
+        url: current.src,
         signal,
       })
-        .then(({ station = `` }) => {
-          setStation(station)
+        .then(({ src_resolved = `` }) => {
           controller.abort()
-          station === `` && setCurrent(station) // TODO: change color of list item
+          src_resolved === `` // TODO: change color of list item
+            ? setCurrent({})
+            : setStation({ ...current, src_resolved })
         })
         // .catch(error)
     }, // eslint-disable-next-line
@@ -126,7 +129,7 @@ const List = ({
       <Header />
       <Ul>
         {
-          list[list.show].map(listItem => {
+          list.show && list[list.show].map(listItem => {
             switch (list.show) {
               case `countrycodes`: {
                 const country = countries(listItem.name)
@@ -146,8 +149,8 @@ const List = ({
                 return (
                   <Li
                     key={ listItem.id }
-                    active={ current === listItem.src }
-                    onClick={ () => setCurrent(last => last === listItem.src ? `` : listItem.src ) }
+                    active={ current.id === listItem.id }
+                    onClick={ () => setCurrent(({ id }) => id === listItem.id ? {} : listItem) }
                   >
                     <span>{ listItem.name }</span>
                     <br />
@@ -169,7 +172,7 @@ const List = ({
   )
 }
 
-const mapStateToProps = ({ api, list }) => ({ api, list })
+const mapStateToProps = ({ api, list, player }) => ({ api, list, player })
 const mapDispatchToProps = (dispatch) => ({
   setTags: payload => dispatch({ type: `SET_TAGS`, payload }),
   dispatch: action => dispatch(action),

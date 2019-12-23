@@ -1,45 +1,6 @@
-const initialState = () => {
-  const lastStateString = localStorage.getItem(`list`)
+import storage from 'electron-json-storage'
 
-  if (lastStateString) {
-    return JSON.parse(lastStateString)
-  }
-
-  return {
-      show: `start`,
-      history: [`start`],
-      lastSearch: {},
-      countrycodes: [],
-      languages: [],
-      tags: [],
-      stations: [],
-      start: [
-      {
-        name: `by countries`,
-        action: {
-          type: `SET_TYPE`,
-          payload: `countrycodes`,
-        },
-      },
-      {
-        name: `by languages`,
-        action: {
-          type: `SET_TYPE`,
-          payload: `languages`,
-        },
-      },
-      {
-        name: `by tags`,
-        action: {
-          type: `SET_TYPE`,
-          payload: `tags`,
-        },
-      },
-    ],
-  }
-}
-
-export default (state = initialState(), { type, payload }) => {
+export default (state = {}, { type, payload }) => {
   let {
     show,
     history,
@@ -129,6 +90,6 @@ export default (state = initialState(), { type, payload }) => {
     start,
   }
 
-  localStorage.setItem(`list`, JSON.stringify(newState))
+  storage.set(`list`, newState, console.warn)
   return newState
 }

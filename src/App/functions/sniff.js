@@ -23,7 +23,7 @@ const sniff = ({ url, signal, recursive = false }) => {
         !type || /aac|ogg|mp4|mpeg$|opus/.test(subtype)
       ) {
         return {
-          station: url,
+          src_resolved: url,
         }
       } else if (type === `text` && /html/.test(subtype)) {
         if (!/http(s)?:\/\/[\w.-]+(:\d+)?\/;/.test(url)) {

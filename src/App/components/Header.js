@@ -50,7 +50,8 @@ const TableHead = styled.div`
   border-bottom: 1px solid lightslategray;
 `
 
-const makeTitle = ({ countrycode, language, tag }) => {
+const makeTitle = (props = {}) => {
+  const { countrycode, language, tag } = props
   if (tag) return tag
   if (language) return language
   if (countrycode) return countries(countrycode).name
@@ -77,6 +78,12 @@ const Header = ({
       })
     },// eslint-disable-next-line
     [list.lastSearch]
+  )
+
+  if (!list.history) return (
+    <Wrapper>
+      <StatusBar />
+    </Wrapper>
   )
 
   return (

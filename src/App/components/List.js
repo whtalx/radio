@@ -3,7 +3,12 @@ import { connect } from 'react-redux'
 import styled, { css } from 'styled-components'
 import Flag from './Flag'
 import sniff from '../functions/sniff'
+import request from '../functions/request'
+import getTags from '../functions/getTags'
+import getStations from '../functions/getStations'
+import getLanguages from '../functions/getLanguages'
 import countries from '../functions/iso3166-1-alpha-2'
+import getCountryCodes from '../functions/getCountryCodes'
 
 const Ul = styled.ul`
   margin: 0;
@@ -33,12 +38,47 @@ const Li = styled.li`
 `
 
 const List = ({
+  api,
   list,
+  setTags,
   dispatch,
   setStation,
+  setStations,
+  setLanguages,
+  setCountryCodes,
 }) => {
   const [current, setCurrent] = useState(``)
   const [controller, setController] = useState(null)
+
+  useEffect(
+    () => {
+      switch (api.type) {
+        case `stations`: {
+          request(api).then(data => setStations(getStations(data)))
+          return
+        }
+
+        case `countrycodes`: {
+          request(api).then(data => setCountryCodes(getCountryCodes(data)))
+          return
+        }
+
+        case `languages`: {
+          request(api).then(data => setLanguages(getLanguages(data)))
+          return
+        }
+
+        case `tags`: {
+          request(api).then((data) => setTags(getTags(data)))
+          return
+        }
+
+        default:
+          return
+      }
+    },// eslint-disable-next-line
+    [api.type]
+  )
 
   useEffect(
     () => {
@@ -107,7 +147,7 @@ const List = ({
                   onClick={ () => setCurrent(last => last === listItem.src ? `` : listItem.src ) }
                 >
                   <span>{ listItem.name }</span>
-                  _________
+                  &nbsp;--&nbsp;
                   <span>{ listItem.src }</span>
                 </Li>
               )
@@ -125,10 +165,14 @@ const List = ({
   )
 }
 
-const mapStateToProps = ({ list }) => ({ list });
+const mapStateToProps = ({ api, list }) => ({ api, list })
 const mapDispatchToProps = (dispatch) => ({
+  setTags: payload => dispatch({ type: `SET_TAGS`, payload }),
   dispatch: action => dispatch(action),
-  setStation: payload => dispatch({ type: `SET_STATION`, payload })
-});
+  setStation: payload => dispatch({ type: `SET_STATION`, payload }),
+  setStations: payload => dispatch({ type: `SET_STATIONS`, payload }),
+  setLanguages: payload => dispatch({ type: `SET_LANGUAGES`, payload }),
+  setCountryCodes: payload => dispatch({ type: `SET_COUNTRY_CODES`, payload }),
+})
 
 export default connect(mapStateToProps, mapDispatchToProps)(List)

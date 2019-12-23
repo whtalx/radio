@@ -1,21 +1,24 @@
 const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require('electron-devtools-installer')
-
 const { app, BrowserWindow } = require('electron')
-
 const path = require('path')
 const isDev = require('electron-is-dev')
 
-let mainWindow;
+installExtension(REDUX_DEVTOOLS)
+installExtension(REACT_DEVELOPER_TOOLS)
 
-function createWindow () {
-  mainWindow = new BrowserWindow({
-    width: 400,
-    height: 800,
-    // minWidth: 150,
-    // minHeight: 32,
+let player
+let list
+
+const createPlayer = () => {
+  player = new BrowserWindow({
+    width: 275,
+    height: 116,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
     // hasShadow: false,
     // transparent: true,
-    // frame: false,
+    frame: false,
     webPreferences: {
       nodeIntegration: true,
       webSecurity: false,
@@ -23,23 +26,50 @@ function createWindow () {
     show: false,
   })
 
-  installExtension(REDUX_DEVTOOLS)
-  installExtension(REACT_DEVELOPER_TOOLS)
+  player.loadURL(isDev ? `http://localhost:3000?player` : `file://${ path.join(__dirname, `../build/index.html?player`) }`)
 
-  mainWindow.loadURL(isDev ? `http://localhost:3000` : `file://${ path.join(__dirname, `../build/index.html`) }`)
+  player.webContents.openDevTools()
 
-  mainWindow.webContents.openDevTools()
-
-  mainWindow.once(`ready-to-show`, () => {
-    mainWindow.show()
+  player.once(`ready-to-show`, () => {
+    player.show()
   })
 
-  mainWindow.on(`closed`, () => {
-    mainWindow = null
+  player.on(`closed`, () => {
+    player = null
   })
 }
 
-app.on(`ready`, createWindow);
+const createList = () => {
+  list = new BrowserWindow({
+    width: 275,
+    height: 550,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    parent: player,
+    frame: false,
+    webPreferences: {
+      nodeIntegration: true,
+      webSecurity: false,
+    },
+    show: false,
+  })
+
+  list.loadURL(isDev ? `http://localhost:3000?list` : `file://${ path.join(__dirname, `../build/index.html?list`) }`)
+
+  list.once(`ready-to-show`, () => {
+    list.show()
+  })
+
+  list.on(`closed`, () => {
+    list = null
+  })
+}
+
+app.on(`ready`, () => {
+  createPlayer()
+  createList()
+})
 
 app.on(`window-all-closed`, () => {
   // if (process.platform !== `darwin`) app.quit()
@@ -47,5 +77,5 @@ app.on(`window-all-closed`, () => {
 })
 
 app.on(`activate`, () => {
-  mainWindow === null && createWindow()
+  player === null && createWindow()
 })

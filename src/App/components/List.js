@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import styled, { css } from 'styled-components'
 import Flag from './Flag'
+import Header from './Header'
 import sniff from '../functions/sniff'
 import request from '../functions/request'
 import getTags from '../functions/getTags'
@@ -121,47 +122,50 @@ const List = ({
   )
 
   return (
-    <Ul>
-      {
-        list[list.show].map(listItem => {
-          switch (list.show) {
-            case `countrycodes`: {
-              const country = countries(listItem.name)
-              return (
-                <Li
-                  key={ listItem.name }
-                  title={ country.orig }
-                  onClick={ () => dispatch(listItem.action) }
-                >
-                  <Flag code={ country.flag ? country.flag : listItem.name }/>
-                  { `\t${ country.name }` }
-                </Li>
-              )
+    <div>
+      <Header />
+      <Ul>
+        {
+          list[list.show].map(listItem => {
+            switch (list.show) {
+              case `countrycodes`: {
+                const country = countries(listItem.name)
+                return (
+                  <Li
+                    key={ listItem.name }
+                    title={ country.orig }
+                    onClick={ () => dispatch(listItem.action) }
+                  >
+                    <Flag code={ country.flag ? country.flag : listItem.name }/>
+                    { `\t${ country.name }` }
+                  </Li>
+                )
+              }
+
+              case `stations`:
+                return (
+                  <Li
+                    key={ listItem.id }
+                    active={ current === listItem.src }
+                    onClick={ () => setCurrent(last => last === listItem.src ? `` : listItem.src ) }
+                  >
+                    <span>{ listItem.name }</span>
+                    <br />
+                    <span>{ listItem.src }</span>
+                  </Li>
+                )
+
+              default:
+                return (
+                  <Li key={ listItem.name } onClick={ () => dispatch(listItem.action) }>
+                    { listItem.name }
+                  </Li>
+                )
             }
-
-            case `stations`:
-              return (
-                <Li
-                  key={ listItem.id }
-                  active={ current === listItem.src }
-                  onClick={ () => setCurrent(last => last === listItem.src ? `` : listItem.src ) }
-                >
-                  <span>{ listItem.name }</span>
-                  &nbsp;--&nbsp;
-                  <span>{ listItem.src }</span>
-                </Li>
-              )
-
-            default:
-              return (
-                <Li key={ listItem.name } onClick={ () => dispatch(listItem.action) }>
-                  { listItem.name }
-                </Li>
-              )
-          }
-        })
-      }
-    </Ul>
+          })
+        }
+      </Ul>
+    </div>
   )
 }
 

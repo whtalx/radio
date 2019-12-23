@@ -27,7 +27,8 @@ const initialState = () => {
   analyser.smoothingTimeConstant = .88
 
   const source = context.createMediaElementSource(element)
-  source.connect(analyser)
+  // source.connect(analyser)
+  source.connect(context.destination)
 
   return {
     context,

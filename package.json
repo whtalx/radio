@@ -3,23 +3,29 @@
   "version": "0.1.0",
   "private": true,
   "homepage": "./",
+  "author": "whtalx",
+  "description": "web radio player",
   "main": "public/electron.js",
   "scripts": {
-    "start": "concurrently \"BROWSER=none react-scripts start\" \"wait-on http://localhost:3000 && ELECTRON_DISABLE_SECURITY_WARNINGS=true electron .\"",
-    "pack": "build --em.main=build/electron.js",
-    "prepack": "react-scripts build",
+    "start": "concurrently \"BROWSER=none craco start\" \"wait-on http://localhost:3000 && ELECTRON_DISABLE_SECURITY_WARNINGS=true electron .\"",
+    "pack": "electron-builder -m",
+    "prepack": "craco build",
     "release": "electron-builder",
-    "react": "react-scripts start",
+    "react": "craco start",
     "electron": "electron .",
     "postinstall": "electron-builder install-app-deps"
   },
+  "dependencies": {
+    "electron-is-dev": "^1.1.0",
+    "esm": "^3.2.25"
+  },
   "devDependencies": {
+    "@craco/craco": "^5.6.2",
     "babel-plugin-styled-components": "^1.10.6",
     "concurrently": "^5.0.2",
     "electron": "^7.1.7",
     "electron-builder": "^21.2.0",
     "electron-devtools-installer": "^2.2.4",
-    "electron-is-dev": "^1.1.0",
     "prettier": "^1.18.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
@@ -42,6 +48,10 @@
   },
   "build": {
     "appId": "com.example.radio",
+    "productName": "radio",
+    "mac": {
+      "category": "public.app-category.music"
+    },
     "files": [
       "build/**/*",
       "node_modules/**/*"

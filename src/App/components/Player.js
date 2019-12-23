@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import { ipcRenderer } from 'electron'
 
 const Main = styled.div`
   width: 275px;
@@ -12,7 +13,9 @@ const Main = styled.div`
   -webkit-app-region: drag;
 `
 
-export default (props) => // TODO: svg
+export default () => // TODO: svg
   <Main>
-    &nbsp;
+    <button onClick={ () => { ipcRenderer.send(`toggle-list`) }}>
+      list
+    </button>
   </Main>

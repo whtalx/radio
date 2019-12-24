@@ -14,10 +14,10 @@ import countries from '../functions/iso3166-1-alpha-2'
 import getCountryCodes from '../functions/getCountryCodes'
 
 const barSpin = keyframes`
-  0% { content: '\' }
-  33% { content: '|' }
-  66% { content: '/' }
-  to { content: '—' }
+  0% { content: '\\005C' }
+  33% { content: '\\2013' }
+  66% { content: '\\002F' }
+  to { content: '\\007C' }
 `
 
 const Ul = styled.ul`
@@ -51,18 +51,20 @@ const Li = styled.li`
   ${
     props => props.playing && css`
       :before {
-        content: '▶';
+        content: '\\25B8';
         position: absolute;
         top: 0;
-        left: 0;
+        left: -.1em;
+        font-size: 1.8em;
+        line-height: .66;
       }
     `
   }
 
   ${
-    props => props.proccessing && props.active && css`
+    props => props.processing && props.active && css`
       :after {
-        content: '\';
+        content: '\\005C';
         position: absolute;
         top: 0;
         right: 0;
@@ -108,12 +110,12 @@ const List = ({
       })
 
       ipcRenderer.on(`paused`, () => {
-        playing.id && setPlaying({})
+        setPlaying({})
         console.log(`paused`)
       })
 
       ipcRenderer.on(`loading`, (event, station) => {
-        playing.id && setPlaying({})
+        setPlaying({})
         console.log(`loading: `, station.name)
       })
 
@@ -232,7 +234,7 @@ const List = ({
                     key={ listItem.id }
                     active={ current.id === listItem.id }
                     playing={ playing.id === listItem.id }
-                    proccessing={ controller !== null }
+                    processing={ controller !== null }
                     onClick={ () => current.id !== listItem.id && tune(listItem) }
                     onDoubleClick={
                       () => {

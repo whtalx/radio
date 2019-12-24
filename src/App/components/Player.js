@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { connect } from 'react-redux'
 import { remote, ipcRenderer } from 'electron'
 import styled from 'styled-components'
 import Visualization from './Visualization'
@@ -8,25 +7,8 @@ import error from '../functions/error'
 const audioNode = () => {
   const node = document.createElement(`AUDIO`)
   node.crossOrigin = ``
-  node.preload = `all`
+  node.preload = `none`
   node.onerror = error
-
-  node.onabort = ({ target }) => {
-    console.log(`aborted: `, target.src)
-  }
-
-  node.onloadstart = ({ target }) => {
-    console.log(`loading: `, target.src)
-  }
-
-  node.onloadedmetadata = ({ target }) => {
-    console.log(`playing: `, target.src)
-  }
-
-  node.oncanplay = () => {
-    node.play().catch(error)
-  }
-
   return node
 }
 
@@ -54,26 +36,64 @@ const Main = styled.div`
   }
 `
 
-const Player = ({ player }) => {
+export default () => {
   const [context] = useState(new AudioContext())
   const [analyser] = useState(analyserNode(context))
   const [audio] = useState(audioNode())
   const [list, setList] = useState(remote.getGlobal(`list`))
+  const [current, setCurrent] = useState({})
+  const [state, setState] = useState(`paused`)
+
+  const play = () => {
+    audio.load()
+    audio.play().catch(error)
+  }
+
+  const setStation = (src = ``) => {
+    const children = [...audio.childNodes]
+    children.forEach(child => child.remove())
+
+    if (src) {
+      const source = document.createElement(`SOURCE`)
+      source.src = src
+      audio.appendChild(source)
+    } else {
+      setState(`paused`)
+    }
+
+    play()
+  }
 
   useEffect(
     () => {
       const source = context.createMediaElementSource(audio)
       source.connect(analyser)
       analyser.connect(context.destination)
+      audio.addEventListener(`playing`, () => {
+        setState(`playing`)
+      })
+      audio.addEventListener(`loadstart`, () => {
+        setState(`loading`)
+      })
+      audio.addEventListener(`pause`, () => {
+        setState(`paused`)
+      })
 
       ipcRenderer.on(`station`, (event, station) => {
-        audio.src = station ? station.src_resolved || `` : ``
-        audio.load()
-        if (!list) setList(remote.getGlobal(`list`))
-        list.webContents.send(`message`, `playing`)
+        setStation(station.src_resolved)
+        setCurrent(station)
       })
     }, // eslint-disable-next-line
     []
+  )
+
+  useEffect(
+    () => {
+      if (!list) setList(remote.getGlobal(`list`))
+
+      list.webContents.send(state, current)
+    }, // eslint-disable-next-line
+    [state]
   )
 
   return (
@@ -81,14 +101,13 @@ const Player = ({ player }) => {
       <button onClick={() => { ipcRenderer.send(`toggle-list`) }}>
         list
       </button>
-      <Visualization analyser={ analyser } paused={ audio.paused } setVisualization={ (f) => { audio.onplaying = f } }/>
+      <button onClick={() => { audio.paused && audio.children.length > 0 && play() }}>
+        play
+      </button>
+      <button onClick={() => { !audio.paused && audio.pause() }}>
+        stop
+      </button>
+      <Visualization analyser={ analyser } paused={ audio.paused } setVisualization={ (f) => { audio.addEventListener(`playing`, f) }} />
     </Main>
   )
 }
-
-const mapStateToProps = ({ player }) => ({ player })
-const mapDispatchToProps = (dispatch) => ({
-  init: payload => dispatch({ type: `INIT_PLAYER`, payload }),
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(Player)

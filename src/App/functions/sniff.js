@@ -3,15 +3,14 @@ import error from './error'
 const sniff = ({ url, signal, recursive = false }) => {
   if (!url) {
     console.log(`this should never happen. if you read this, god bless you`)
-    return {
-      station: url,
-    }
+    error({ message: `url is ${ url }` })
+    return {}
   }
 
   if (recursive) {
-    console.log(`recursive call: `, url)
+    console.log(`recursive sniff out: `, url)
   } else {
-    console.log(`new call: `, url)
+    console.log(`sniff out: `, url)
   }
 
   return fetch(url, { signal })
@@ -19,12 +18,8 @@ const sniff = ({ url, signal, recursive = false }) => {
       const [type, subtype] = (response.headers.get(`content-type`) || ``).split(`/`)
       console.log(`content-type: ${ type }/${ subtype }`)
 
-      if (
-        !type || /aac|ogg|mp4|mpeg$|opus/.test(subtype)
-      ) {
-        return {
-          src_resolved: url,
-        }
+      if (!type || /aac|ogg|mp4|mpeg$|opus/.test(subtype)) {
+        return { src_resolved: url }
       } else if (type === `text` && /html/.test(subtype)) {
         if (!/http(s)?:\/\/[\w.-]+(:\d+)?\/;/.test(url)) {
           return sniff({
@@ -35,10 +30,6 @@ const sniff = ({ url, signal, recursive = false }) => {
         }
 
         return response.text()
-          // .then(text => console.log(`response text: `, text))
-          // .then(() => ({}))
-          // .catch(e => console.log(`can't resolve ${ response.url } response text: `, e))
-
       } else if (type === `video`) {
         return {}
       }
@@ -54,6 +45,8 @@ const sniff = ({ url, signal, recursive = false }) => {
        * works with:
        * application/vnd.apple.mpegurl
        * application/x-mpegURL
+       *
+       * TODO: implement support of 11 sec files
        */
 
       if (isM3U) {
@@ -71,7 +64,10 @@ const sniff = ({ url, signal, recursive = false }) => {
 
       return {}
     })
-    .catch(error)
+    .catch(e => {
+      error(e)
+      return {}
+    })
 }
 
 export default sniff

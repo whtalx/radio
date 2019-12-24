@@ -71,7 +71,6 @@ const orders = [
 ]
 */
 
-
 const initialState = () => ({
   protocol: `https:/`,
   server: `de1.api.radio-browser.info`,

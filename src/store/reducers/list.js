@@ -1,35 +1,41 @@
-const initialState = () => ({
-  tags: [],
-  show: `start`,
-  history: [`start`],
-  stations: [],
-  languages: [],
-  lastSearch: {},
-  countrycodes: [],
-  start: [
-    {
-      name: `by countries`,
-      action: {
-        type: `SET_TYPE`,
-        payload: `countrycodes`,
+const initialState = () => {
+  const lastList = localStorage.getItem(`list`)
+
+  if (lastList) return JSON.parse(lastList)
+
+  return {
+      tags: [],
+      show: `start`,
+      history: [`start`],
+      stations: [],
+      languages: [],
+      lastSearch: {},
+      countrycodes: [],
+        start: [
+      {
+        name: `by countries`,
+        action: {
+          type: `SET_TYPE`,
+          payload: `countrycodes`,
+        },
       },
-    },
-    {
-      name: `by languages`,
-      action: {
-        type: `SET_TYPE`,
-        payload: `languages`,
+      {
+        name: `by languages`,
+        action: {
+          type: `SET_TYPE`,
+          payload: `languages`,
+        },
       },
-    },
-    {
-      name: `by tags`,
-      action: {
-        type: `SET_TYPE`,
-        payload: `tags`,
+      {
+        name: `by tags`,
+        action: {
+          type: `SET_TYPE`,
+          payload: `tags`,
+        },
       },
-    },
-  ],
-})
+    ],
+  }
+}
 
 export default (state = initialState(), { type, payload }) => {
   let {
@@ -43,12 +49,15 @@ export default (state = initialState(), { type, payload }) => {
     countrycodes,
   } = state
 
+  let changed = false
+
   switch (type) {
     case `SET_COUNTRY_CODES`: {
       countrycodes = payload
       show = `countrycodes`
       history = history.splice(0, 1)
       history.push(show)
+      changed = true
       break
     }
 
@@ -57,6 +66,7 @@ export default (state = initialState(), { type, payload }) => {
       show = `languages`
       history = history.splice(0, 1)
       history.push(show)
+      changed = true
       break
     }
 
@@ -65,6 +75,7 @@ export default (state = initialState(), { type, payload }) => {
       show = `tags`
       history = history.splice(0, 1)
       history.push(show)
+      changed = true
       break
     }
 
@@ -73,6 +84,7 @@ export default (state = initialState(), { type, payload }) => {
       show =  `stations`
       history = history.splice(0, 2)
       history.push(show)
+      changed = true
       break
     }
 
@@ -81,6 +93,7 @@ export default (state = initialState(), { type, payload }) => {
 
       if (index >= 0) {
         show = history[index]
+        changed = true
       }
 
       break
@@ -91,6 +104,7 @@ export default (state = initialState(), { type, payload }) => {
 
       if (index < history.length) {
         show = history[index]
+        changed = true
       }
 
       break
@@ -98,11 +112,19 @@ export default (state = initialState(), { type, payload }) => {
 
     case `SHOW`: {
       show = payload
+      changed = true
       break
     }
 
     case `SET_ALL`: {
       lastSearch = payload.search
+      changed = true
+      break
+    }
+
+    case `SET_STATION`: {
+      stations[stations.findIndex(station => station.id === payload.id)] = payload
+      changed = true
       break
     }
 
@@ -110,7 +132,7 @@ export default (state = initialState(), { type, payload }) => {
       break
   }
 
-  const newState = {
+  const list = {
     tags,
     show,
     start,
@@ -121,5 +143,7 @@ export default (state = initialState(), { type, payload }) => {
     countrycodes,
   }
 
-  return newState
+  changed && localStorage.setItem(`list`, JSON.stringify(list))
+
+  return list
 }

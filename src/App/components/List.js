@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { remote, ipcRenderer } from 'electron'
-import styled, { css } from 'styled-components'
-import Flag from './Flag'
+import styled, { css, keyframes } from 'styled-components'
+// import Flag from './Flag'
 import Header from './Header'
 import sniff from '../functions/sniff'
+import error from '../functions/error'
 import request from '../functions/request'
 import getTags from '../functions/getTags'
 import getStations from '../functions/getStations'
@@ -12,14 +13,23 @@ import getLanguages from '../functions/getLanguages'
 import countries from '../functions/iso3166-1-alpha-2'
 import getCountryCodes from '../functions/getCountryCodes'
 
+const barSpin = keyframes`
+  0% { content: '\' }
+  33% { content: '|' }
+  66% { content: '/' }
+  to { content: '—' }
+`
+
 const Ul = styled.ul`
   margin: 0;
-  padding: 0 0 0 1em;
+  padding: 0;
   list-style-type: none;
 `
 
 const Li = styled.li`
   cursor: pointer;
+  position: relative;
+  padding-left: 1em;
 
   ${
     props => props.active
@@ -37,6 +47,31 @@ const Li = styled.li`
         }
       `
   }
+
+  ${
+    props => props.playing && css`
+      :before {
+        content: '▶';
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+    `
+  }
+
+  ${
+    props => props.proccessing && props.active && css`
+      :after {
+        content: '\';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 1em;
+        text-align: center;
+        animation: ${ barSpin } .5s linear infinite;
+      }
+    `
+  }
 `
 
 const List = ({
@@ -44,21 +79,47 @@ const List = ({
   list,
   setTags,
   dispatch,
+  setStation,
   setStations,
   setLanguages,
   setCountryCodes,
 }) => {
-  const [current, setCurrent] = useState(``)
+  const [current, setCurrent] = useState({})
   const [controller, setController] = useState(null)
+  const [playing, setPlaying] = useState({})
   const [player] = useState(remote.getGlobal(`player`))
+  const [key, setKey] = useState(null)
 
-  const setStation = (station) => {
-    player && player.webContents.send(`station`, station)
+  const tune = (station, play = false) => {
+    setCurrent(station)
+    play && player.webContents.send(`station`, station)
+  }
+
+  const snoop = () => {
+    setController(new AbortController())
+    console.log(`creating controller`)
   }
 
   useEffect(
     () => {
-      ipcRenderer.on(`message`, (event, message) => { console.log (message) })
+      ipcRenderer.on(`playing`, (event, station) => {
+        setPlaying(station)
+        console.log(`playing: `, station.name)
+      })
+
+      ipcRenderer.on(`paused`, () => {
+        playing.id && setPlaying({})
+        console.log(`paused`)
+      })
+
+      ipcRenderer.on(`loading`, (event, station) => {
+        playing.id && setPlaying({})
+        console.log(`loading: `, station.name)
+      })
+
+      ipcRenderer.on(`key`, (event, key) => {
+        setKey(key)
+      })
     }, // eslint-disable-next-line
     []
   )
@@ -82,7 +143,7 @@ const List = ({
         }
 
         case `tags`: {
-          request(api).then((data) => setTags(getTags(data)))
+          request(api).then(data => setTags(getTags(data)))
           return
         }
 
@@ -95,19 +156,21 @@ const List = ({
 
   useEffect(
     () => {
-      if (!current.id) {
-        if (controller) {
-          console.log(`this should never happen. if you read this, god bless you`)
-          setController(null)
-        }
+      if (!key) return
 
-        setStation({})
-      } else {
-        setController(new AbortController())
-        console.log(`creating controller`)
+      if (
+        key === `Enter` &&
+        !controller &&
+        current.src &&
+        !current.src_resolved &&
+        current.id !== playing.id
+      ) {
+        snoop()
       }
+
+      setKey(null)
     }, // eslint-disable-next-line
-    [current]
+    [key]
   )
 
   useEffect(
@@ -124,13 +187,20 @@ const List = ({
         url: current.src,
         signal,
       })
-        .then(({ src_resolved = `` }) => {
+        .then(({ src_resolved }) => {
           controller.abort()
-          src_resolved === `` // TODO: change color of list item
-            ? setCurrent({})
-            : setStation({ ...current, src_resolved })
+          if (src_resolved) {
+            const station = { ...current, src_resolved }
+            setStation(station)
+            tune(station, true)
+          } else {
+            tune({}, true)
+          }
         })
-        // .catch(error)
+        .catch((e) => {
+          controller.abort()
+          error(e)
+        })
     }, // eslint-disable-next-line
     [controller]
   )
@@ -140,7 +210,7 @@ const List = ({
       <Header />
       <Ul>
         {
-          list.show && list[list.show].map(listItem => {
+          list.show && list[list.show].map((listItem) => {
             switch (list.show) {
               case `countrycodes`: {
                 const country = countries(listItem.name)
@@ -150,7 +220,7 @@ const List = ({
                     title={ country.orig }
                     onClick={ () => dispatch(listItem.action) }
                   >
-                    <Flag code={ country.flag ? country.flag : listItem.name }/>
+                    {/*<Flag code={ country.flag ? country.flag : listItem.name }/>*/}
                     { `\t${ country.name }` }
                   </Li>
                 )
@@ -161,11 +231,20 @@ const List = ({
                   <Li
                     key={ listItem.id }
                     active={ current.id === listItem.id }
-                    onClick={ () => setCurrent(({ id }) => id === listItem.id ? {} : listItem) }
+                    playing={ playing.id === listItem.id }
+                    proccessing={ controller !== null }
+                    onClick={ () => current.id !== listItem.id && tune(listItem) }
+                    onDoubleClick={
+                      () => {
+                        if (listItem.src_resolved) {
+                          tune(listItem, true)
+                        } else if (current.id !== playing.id) {
+                          snoop()
+                        }
+                      }
+                    }
                   >
-                    <span>{ listItem.name }</span>
-                    <br />
-                    <span>{ listItem.src }</span>
+                    { listItem.name }
                   </Li>
                 )
 
@@ -183,7 +262,7 @@ const List = ({
   )
 }
 
-const mapStateToProps = ({ api, list, player }) => ({ api, list, player })
+const mapStateToProps = ({ api, list }) => ({ api, list })
 const mapDispatchToProps = (dispatch) => ({
   setTags: payload => dispatch({ type: `SET_TAGS`, payload }),
   dispatch: action => dispatch(action),

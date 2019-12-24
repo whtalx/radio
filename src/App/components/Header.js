@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { connect } from 'react-redux'
-import { v4 } from 'uuid'
 import countries from '../functions/iso3166-1-alpha-2'
-
 
 const Wrapper = styled.div`
   position: sticky;
@@ -15,6 +13,7 @@ const Wrapper = styled.div`
   display: flex;
   flex-flow: column;
   align-items: stretch;
+  z-index: 1;
 `
 
 const StatusBar = styled.div`
@@ -68,16 +67,17 @@ const Header = ({
   show,
 }) => {
   const [titles, setTitles] = useState({
-    start: <Nav key={ v4() } onClick={ () => show(`start`) }>stations</Nav>,
-    countrycodes: <Nav key={ v4() } onClick={ () => show(`countrycodes`) }>from</Nav>,
-    languages: <Nav key={ v4() } onClick={ () => show(`languages`) }>in</Nav>,
-    tags: <Nav key={ v4() } onClick={ () => show(`tags`) }>tagged</Nav>,
+    start: <Nav key={ `start` } onClick={ () => show(`start`) }>stations</Nav>,
+    countrycodes: <Nav key={ `countrycodes` } onClick={ () => show(`countrycodes`) }>from</Nav>,
+    languages: <Nav key={ `languages` } onClick={ () => show(`languages`) }>in</Nav>,
+    tags: <Nav key={ `tags` } onClick={ () => show(`tags`) }>tagged</Nav>,
+    stations: <Nav key={ `stations` } onClick={ () => show(`stations`) }>{ makeTitle(list.lastSearch) }</Nav>,
   })
 
   useEffect(
     () => {
       setTitles(t => {
-        t.stations = <Nav key={ v4() } onClick={ () => show(`stations`) }>{ makeTitle(list.lastSearch) }</Nav>
+        t.stations = <Nav key={ `stations` } onClick={ () => show(`stations`) }>{ makeTitle(list.lastSearch) }</Nav>
         return t
       })
     },// eslint-disable-next-line
@@ -117,7 +117,6 @@ const Header = ({
     </Wrapper>
   )
 }
-
 
 const mapStateToProps = ({ list }) => ({ list })
 const mapDispatchToProps = (dispatch) => ({

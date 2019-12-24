@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'path'
 import isDev from 'electron-is-dev'
+import keypress from 'electron-localshortcut'
 
 global.player = null
 global.list = null
@@ -32,7 +33,6 @@ const createPlayer = () => {
   global.player.once(`ready-to-show`, () => {
     if (isDev) {
       const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require('electron-devtools-installer')
-
       installExtension(REDUX_DEVTOOLS)
       installExtension(REACT_DEVELOPER_TOOLS)
     }
@@ -46,13 +46,9 @@ const createPlayer = () => {
 }
 
 const createList = () => {
-  const rect = global.player.getBounds()
-
   global.list = new BrowserWindow({
     width: 275,
     height: 550,
-    x: rect.x,
-    y: rect.y + rect.height,
     resizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -70,13 +66,12 @@ const createList = () => {
 
   global.list.loadURL(makeURL(`list`))
 
-
-  global.list.once(`ready-to-show`, () => {
-    list.show()
-    // list.webContents.openDevTools()
+  keypress.register(global.list, 'Enter', () => {
+    global.list.webContents.send(`key`, `Enter`)
   })
 
   global.list.on(`closed`, () => {
+    keypress.unregister(global.list, 'Enter')
     global.list = null
   })
 }
@@ -84,7 +79,7 @@ const createList = () => {
 
 app.on(`ready`, () => {
   createPlayer()
-  // createList()
+  createList()
 })
 
 app.on(`window-all-closed`, () => {
@@ -97,7 +92,14 @@ app.on(`activate`, () => {
 })
 
 ipcMain.on(`toggle-list`, () => {
-  global.list !== null
-    ? global.list.close()
-    : createList()
+  if (!global.list) {
+    createList()
+  } else if (global.list.isVisible()) {
+    global.list.hide()
+    return
+  }
+
+  const rect = global.player.getBounds()
+  global.list.setBounds({ x: rect.x, y: rect.y + rect.height })
+  global.list.show()
 })

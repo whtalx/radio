@@ -71,7 +71,16 @@ const orders = [
 ]
 */
 
-export default (state = {}, { type, payload }) => {
+
+const initialState = () => ({
+  protocol: `https:/`,
+  server: `de1.api.radio-browser.info`,
+  data: `json`,
+  type: null,
+  search: null,
+})
+
+export default (state = initialState(), { type, payload }) => {
   switch (type) {
     case `SET_TYPE`:
       return {

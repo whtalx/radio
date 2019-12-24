@@ -22,6 +22,11 @@ const StatusBar = styled.div`
   display: flex;
   flex-flow: row;
   -webkit-app-region: drag;
+
+  span,
+  button {
+    -webkit-app-region: no-drag;
+  }
 `
 
 const NavigateButton = styled.button`
@@ -29,7 +34,6 @@ const NavigateButton = styled.button`
   padding: 0;
   width: 1em;
   height: 1em;
-  -webkit-app-region: no-drag;
 `
 
 const Status = styled.p`
@@ -115,11 +119,11 @@ const Header = ({
 }
 
 
-const mapStateToProps = ({ list }) => ({ list });
+const mapStateToProps = ({ list }) => ({ list })
 const mapDispatchToProps = (dispatch) => ({
   back: () => dispatch({ type: `LIST_BACK` }),
   forward: () => dispatch({ type: `LIST_FORWARD` }),
   show: (payload) => dispatch({ type: `SHOW`, payload }),
-});
+})
 
 export default connect(mapStateToProps, mapDispatchToProps)(Header)

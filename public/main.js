@@ -1,17 +1,9 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'path'
 import isDev from 'electron-is-dev'
-import store from '../src/store/main'
 
-if (isDev) {
-  const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require('electron-devtools-installer')
-
-  installExtension(REDUX_DEVTOOLS)
-  installExtension(REACT_DEVELOPER_TOOLS)
-}
-
-let player
-let list
+global.player = null
+global.list = null
 
 const makeURL = (view) =>
   isDev
@@ -19,7 +11,7 @@ const makeURL = (view) =>
     : `file://${ path.join(__dirname, `../build/index.html?${ view }`) }`
 
 const createPlayer = () => {
-  player = new BrowserWindow({
+  global.player = new BrowserWindow({
     width: 275,
     height: 116,
     resizable: false,
@@ -35,26 +27,28 @@ const createPlayer = () => {
     show: false,
   })
 
-  player.loadURL(makeURL(`player`))
+  global.player.loadURL(makeURL(`player`))
 
-  // list = new BrowserView()
-  // player.setBrowserView(list)
-  // list.setBounds({ x: 0, y: 116, width: 275, height: 550 })
-  // list.webContents.loadURL(makeURL(`list`))
+  global.player.once(`ready-to-show`, () => {
+    if (isDev) {
+      const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require('electron-devtools-installer')
 
-  player.once(`ready-to-show`, () => {
-    player.show()
+      installExtension(REDUX_DEVTOOLS)
+      installExtension(REACT_DEVELOPER_TOOLS)
+    }
+
+    global.player.show()
   })
 
-  player.on(`closed`, () => {
-    player = null
+  global.player.on(`closed`, () => {
+    global.player = null
   })
 }
 
 const createList = () => {
-  const rect = player.getBounds()
+  const rect = global.player.getBounds()
 
-  list = new BrowserWindow({
+  global.list = new BrowserWindow({
     width: 275,
     height: 550,
     x: rect.x,
@@ -74,16 +68,16 @@ const createList = () => {
     show: false,
   })
 
-  list.loadURL(makeURL(`list`))
+  global.list.loadURL(makeURL(`list`))
 
 
-  list.once(`ready-to-show`, () => {
+  global.list.once(`ready-to-show`, () => {
     list.show()
     // list.webContents.openDevTools()
   })
 
-  list.on(`closed`, () => {
-    list = null
+  global.list.on(`closed`, () => {
+    global.list = null
   })
 }
 
@@ -99,19 +93,11 @@ app.on(`window-all-closed`, () => {
 })
 
 app.on(`activate`, () => {
-  player === null && createPlayer()
+  global.player === null && createPlayer()
 })
 
 ipcMain.on(`toggle-list`, () => {
-  list
-    ? list.close()
+  global.list !== null
+    ? global.list.close()
     : createList()
 })
-
-// let currentState
-
-// store.subscribe(() => {
-//   let oldState = currentState
-//   currentState = store.getState()
-//   console.log(JSON.stringify(oldState), JSON.stringify(currentState))
-// })

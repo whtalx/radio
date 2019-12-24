@@ -1,15 +1,46 @@
-import storage from 'electron-json-storage'
+const initialState = () => ({
+  tags: [],
+  show: `start`,
+  history: [`start`],
+  stations: [],
+  languages: [],
+  lastSearch: {},
+  countrycodes: [],
+  start: [
+    {
+      name: `by countries`,
+      action: {
+        type: `SET_TYPE`,
+        payload: `countrycodes`,
+      },
+    },
+    {
+      name: `by languages`,
+      action: {
+        type: `SET_TYPE`,
+        payload: `languages`,
+      },
+    },
+    {
+      name: `by tags`,
+      action: {
+        type: `SET_TYPE`,
+        payload: `tags`,
+      },
+    },
+  ],
+})
 
-export default (state = {}, { type, payload }) => {
+export default (state = initialState(), { type, payload }) => {
   let {
+    tags,
     show,
+    start,
     history,
+    stations,
+    languages,
     lastSearch,
     countrycodes,
-    languages,
-    tags,
-    stations,
-    start,
   } = state
 
   switch (type) {
@@ -80,16 +111,15 @@ export default (state = {}, { type, payload }) => {
   }
 
   const newState = {
+    tags,
     show,
+    start,
     history,
+    stations,
+    languages,
     lastSearch,
     countrycodes,
-    languages,
-    tags,
-    stations,
-    start,
   }
 
-  storage.set(`list`, newState, console.warn)
   return newState
 }

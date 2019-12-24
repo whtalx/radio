@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
-import { ipcRenderer } from 'electron'
+import { remote, ipcRenderer } from 'electron'
 import styled from 'styled-components'
 import Visualization from './Visualization'
 import error from '../functions/error'
@@ -48,28 +48,32 @@ const Main = styled.div`
   box-shadow:
     inset 1px 1px 2px hsl(199, 22%, 45%);
   -webkit-app-region: drag;
+
+  button {
+  -webkit-app-region: no-drag;
+  }
 `
 
 const Player = ({ player }) => {
   const [context] = useState(new AudioContext())
   const [analyser] = useState(analyserNode(context))
   const [audio] = useState(audioNode())
+  const [list, setList] = useState(remote.getGlobal(`list`))
 
   useEffect(
     () => {
       const source = context.createMediaElementSource(audio)
       source.connect(analyser)
       analyser.connect(context.destination)
+
+      ipcRenderer.on(`station`, (event, station) => {
+        audio.src = station ? station.src_resolved || `` : ``
+        audio.load()
+        if (!list) setList(remote.getGlobal(`list`))
+        list.webContents.send(`message`, `playing`)
+      })
     }, // eslint-disable-next-line
     []
-  )
-
-  useEffect(
-    () => {
-      audio.src = player.station.src_resolved || ``
-      audio.load()
-    }, // eslint-disable-next-line
-    [player.station]
   )
 
   return (

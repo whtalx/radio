@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
+import { remote, ipcRenderer } from 'electron'
 import styled, { css } from 'styled-components'
 import Flag from './Flag'
 import Header from './Header'
@@ -41,16 +42,26 @@ const Li = styled.li`
 const List = ({
   api,
   list,
-  player,
   setTags,
   dispatch,
-  setStation,
   setStations,
   setLanguages,
   setCountryCodes,
 }) => {
-  const [current, setCurrent] = useState(player.station)
+  const [current, setCurrent] = useState(``)
   const [controller, setController] = useState(null)
+  const [player] = useState(remote.getGlobal(`player`))
+
+  const setStation = (station) => {
+    player && player.webContents.send(`station`, station)
+  }
+
+  useEffect(
+    () => {
+      ipcRenderer.on(`message`, (event, message) => { console.log (message) })
+    }, // eslint-disable-next-line
+    []
+  )
 
   useEffect(
     () => {
@@ -90,8 +101,8 @@ const List = ({
           setController(null)
         }
 
-        player.station.id && setStation({})
-      } else if (current.id !== player.station.id) {
+        setStation({})
+      } else {
         setController(new AbortController())
         console.log(`creating controller`)
       }

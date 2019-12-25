@@ -3,10 +3,10 @@ import styled from 'styled-components'
 
 const Canvas = styled.canvas`
   position: fixed;
-  right: .5vw;
-  bottom: .5vw;
-  width: calc(.5vw * 79);
-  height: calc(.5vw * 19);
+  right: 15px;
+  bottom: 15px;
+  width: 79px;
+  height: 19px;
 `
 
 const bands = [2,3,4,5,6,7,10,15,21,30,42,60,84,116,167,237,334,464,696]

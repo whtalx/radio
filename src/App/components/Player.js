@@ -22,18 +22,61 @@ const analyserNode = (context) => {
 }
 
 const Main = styled.div`
+  padding: 3px;
   width: 275px;
   height: 116px;
   box-sizing: border-box;
-  background-image: linear-gradient(to right bottom, hsl(240, 52%, 13%) 0%, hsl(240, 41%, 16%) 15%, hsl(240, 38%, 26%) 35%, hsl(240, 30%, 32%) 50%, hsl(240, 34%, 29%) 75%, hsl(240, 33%, 9%) 100%);
+  display: flex;
+  flex-flow: column;
+  background-image:
+    linear-gradient(
+      315deg,
+      hsl(240, 33%, 9%) 0%,
+      hsl(240, 31%, 16%) 5%,
+      hsl(240, 32%, 20%) 10%,
+      hsl(240, 20%, 28%) 40%,
+      hsl(240, 20%, 28%) 60%,
+      hsl(240, 32%, 20%) 90%,
+      hsl(240, 31%, 16%) 95%,
+      hsl(240, 33%, 9%) 100%
+    );
   border: 1px solid black;
   box-shadow:
-    inset 1px 1px 2px hsl(199, 22%, 45%);
+    inset 1px 1px 2px hsl(200, 20%, 80%);
+`
+
+const Title = styled.div`
+  height: 9px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   -webkit-app-region: drag;
 
   button {
-  -webkit-app-region: no-drag;
+    margin-left: 3px;
+    padding: 0;
+    width: 9px;
+    height: 9px;
+    -webkit-app-region: no-drag;
   }
+`
+
+const Content = styled.div`
+  flex: 0 1 100%;
+  height: auto;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-color: hsl(240, 100%, 3%);
+  border-style: solid;
+  border-width: 2px 1px 1px 2px;
+  box-shadow:
+    inset 1px 1px 2px hsl(200, 20%, 80%),
+    1px 1px 2px hsl(200, 20%, 80%);
+  
 `
 
 export default () => {
@@ -98,16 +141,22 @@ export default () => {
 
   return (
     <Main>
-      <button onClick={() => { ipcRenderer.send(`toggle-list`) }}>
-        list
-      </button>
-      <button onClick={() => { audio.paused && audio.children.length > 0 && play() }}>
-        play
-      </button>
-      <button onClick={() => { !audio.paused && audio.pause() }}>
-        stop
-      </button>
-      <Visualization analyser={ analyser } paused={ audio.paused } setVisualization={ (f) => { audio.addEventListener(`playing`, f) }} />
+      <Title>
+        <button onClick={() => { ipcRenderer.send(`hide`) }} title={ `hide` } />
+        <button onClick={() => { ipcRenderer.send(`close`) }} title={ `close` } />
+      </Title>
+      <Content>
+        <button onClick={() => { ipcRenderer.send(`toggle-list`) }}>
+          list
+        </button>
+        <button onClick={() => { audio.paused && audio.children.length > 0 && play() }}>
+          play
+        </button>
+        <button onClick={() => { !audio.paused && audio.pause() }}>
+          stop
+        </button>
+        <Visualization analyser={ analyser } paused={ audio.paused } setVisualization={ (f) => { audio.addEventListener(`playing`, f) }} />
+      </Content>
     </Main>
   )
 }

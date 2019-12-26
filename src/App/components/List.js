@@ -24,42 +24,16 @@ const Ul = styled.ul`
   margin: 0;
   padding: 0;
   list-style-type: none;
+  background-color: hsl(0, 0%, 0%);
 `
 
 const Li = styled.li`
   cursor: pointer;
   position: relative;
   padding-left: 1em;
+  color: ${ props => props.playing ? css`hsl(0, 0%, 100%)` : css`hsl(120, 100%, 50%)` };
 
-  ${
-    props => props.active
-      ? css`
-        background-color: lightslategray;
-        color: white;
-      `
-      : css`
-        :hover {
-          color: slategray;
-        }
-
-        :nth-child(2n) {
-          background-color: ghostwhite;
-        }
-      `
-  }
-
-  ${
-    props => props.playing && css`
-      :before {
-        content: '\\25B8';
-        position: absolute;
-        top: 0;
-        left: -.1em;
-        font-size: 1.8em;
-        line-height: .66;
-      }
-    `
-  }
+  ${ props => props.active && css`background-color: hsl(240, 100%, 50%);` }
 
   ${
     props => props.processing && props.active && css`

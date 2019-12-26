@@ -3,23 +3,17 @@ import styled from 'styled-components'
 import { connect } from 'react-redux'
 import countries from '../functions/iso3166-1-alpha-2'
 
-const Wrapper = styled.div`
+const StatusBar = styled.div`
   position: sticky;
+  z-index: 1;
   left: 0;
   top: 0;
   width: 100%;
-  height: 2em;
-  background-color: #fff;
-  display: flex;
-  flex-flow: column;
-  align-items: stretch;
-  z-index: 1;
-`
-
-const StatusBar = styled.div`
-  height: 1em;
+  height: 1.1em;
   display: flex;
   flex-flow: row;
+  align-items: center;
+  background-color: hsl(0, 0%, 0%);
   -webkit-app-region: drag;
 
   span,
@@ -41,16 +35,6 @@ const Status = styled.p`
 
 const Nav = styled.span`
   cursor: pointer;
-
-  :hover {
-    color: lightslategray;
-  }
-`
-
-const TableHead = styled.div`
-  height: 1em;
-  border-top: 1px solid lightslategray;
-  border-bottom: 1px solid lightslategray;
 `
 
 const makeTitle = (props = {}) => {
@@ -84,38 +68,29 @@ const Header = ({
     [list.lastSearch]
   )
 
-  if (!list.history) return (
-    <Wrapper>
-      <StatusBar />
-    </Wrapper>
-  )
-
-  return (
-    <Wrapper>
-      <StatusBar>
-        <NavigateButton onClick={ back } disabled={ list.history.findIndex(i => i === list.show) === 0 } />
-        <NavigateButton onClick={ forward } disabled={ list.history.findIndex(i => i === list.show) === list.history.length - 1 } />
-        <Status>
-          {
-            list.history
-              .slice(0, list.history.findIndex(i => i === list.show) + 1)
-              .reduce(
-                (all, item, index, orig) =>
-                  index === 0
-                    ? orig.length === 2
-                      ? [...all, titles[item], ` > `]
-                      : [...all, titles[item]]
-                    : index === orig.length - 1
-                      ? [...all, titles[item]]
-                      : [...all, ` > `, titles[item], ` > `],
-                []
-              )
-          }
-        </Status>
-      </StatusBar>
-      { list.show === `stations` && <TableHead /> }
-    </Wrapper>
-  )
+  return !list.history
+    ? <StatusBar />
+    : <StatusBar>
+      <NavigateButton onClick={ back } disabled={ list.history.findIndex(i => i === list.show) === 0 } />
+      <NavigateButton onClick={ forward } disabled={ list.history.findIndex(i => i === list.show) === list.history.length - 1 } />
+      <Status>
+        {
+          list.history
+            .slice(0, list.history.findIndex(i => i === list.show) + 1)
+            .reduce(
+              (all, item, index, orig) =>
+                index === 0
+                  ? orig.length === 2
+                    ? [...all, titles[item], ` > `]
+                    : [...all, titles[item]]
+                  : index === orig.length - 1
+                    ? [...all, titles[item]]
+                    : [...all, ` > `, titles[item], ` > `],
+              []
+            )
+        }
+      </Status>
+    </StatusBar>
 }
 
 const mapStateToProps = ({ list }) => ({ list })

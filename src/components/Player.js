@@ -1,41 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { remote, ipcRenderer } from 'electron'
+import { connect } from 'react-redux'
 import styled from 'styled-components'
-import Visualization from './Visualization'
 import error from '../functions/error'
-import { connect } from "react-redux"
-
-class audioNode {
-  constructor() {
-    const node = document.createElement(`AUDIO`)
-    node.crossOrigin = ``
-    node.preload = `none`
-    node.onerror = error
-    return node
-  }
-}
-
-class bandsAnalyserNode {
-  constructor(context) {
-    const node = context.createAnalyser()
-    node.fftSize = 2048
-    node.minDecibels = -90
-    node.maxDecibels = -20
-    node.smoothingTimeConstant = .7
-    return node
-  }
-}
-
-class peaksAnalyserNode {
-  constructor(context) {
-    const node = context.createAnalyser()
-    node.fftSize = 2048
-    node.minDecibels = -90
-    node.maxDecibels = -20
-    node.smoothingTimeConstant = .99
-    return node
-  }
-}
+import Visualization from './Visualization'
+import AudioNode from '../classes/AudioNode'
+import AnalyserNode from '../classes/AnalyserNode'
 
 const StyledPlayer = styled.div`
   width: 264px;
@@ -49,10 +19,10 @@ const Player = ({
   setLastState,
   setLastStation,
 }) => {
-  const [audio] = useState(new audioNode())
+  const [audio] = useState(new AudioNode())
   const [context] = useState(new AudioContext())
-  const [bands] = useState(new bandsAnalyserNode(context))
-  const [peaks] = useState(new peaksAnalyserNode(context))
+  const [bands] = useState(new AnalyserNode({ context, stc: .7 }))
+  const [peaks] = useState(new AnalyserNode({ context, stc: .99 }))
   const [list, setList] = useState(remote.getGlobal(`list`))
   const [station, setStation] = useState(lastStation)
   const [state, setState] = useState(lastState)
@@ -81,7 +51,7 @@ const Player = ({
       audio.addEventListener(`loadstart`, () => setState(`loading`))
       audio.addEventListener(`pause`, () => setState(`paused`))
 
-      ipcRenderer.on(`station`, (event, data) => setStation(data))
+      ipcRenderer.on(`station`, (e, data) => setStation(data))
 
       state === `playing` && play(station)
     }, // eslint-disable-next-line

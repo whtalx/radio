@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { remote, ipcRenderer } from 'electron'
 import styled, { css, keyframes } from 'styled-components'
-// import Flag from './Flag'
 import Header from './Header'
 import sniff from '../functions/sniff'
 import error from '../functions/error'
@@ -20,21 +19,28 @@ const barSpin = keyframes`
   to { content: '\\007C' }
 `
 
+const Container = styled.div`
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden scroll;
+  background-color: hsl(0, 0%, 0%);
+  color: hsl(120, 100%, 50%);
+`
+
 const Ul = styled.ul`
   margin: 0;
   padding: 0;
   list-style-type: none;
-  background-color: hsl(0, 0%, 0%);
 `
 
 const Li = styled.li`
   cursor: pointer;
   position: relative;
   padding-left: 1em;
-  color: ${ props => props.playing ? css`hsl(0, 0%, 100%)` : css`hsl(120, 100%, 50%)` };
 
+  ${ props => props.playing && css`color: hsl(0, 0%, 100%);` }
   ${ props => props.active && css`background-color: hsl(240, 100%, 50%);` }
-
   ${
     props => props.processing && props.active && css`
       :after {
@@ -66,36 +72,12 @@ const List = ({
   const [player] = useState(remote.getGlobal(`player`))
   const [key, setKey] = useState(null)
 
-  const tune = (station, play = false) => {
-    setCurrent(station)
-    play && player.webContents.send(`station`, station)
-  }
-
-  const snoop = () => {
-    setController(new AbortController())
-    console.log(`creating controller`)
-  }
-
   useEffect(
     () => {
-      ipcRenderer.on(`playing`, (event, station) => {
-        setPlaying(station)
-        console.log(`playing: `, station.name)
-      })
-
-      ipcRenderer.on(`paused`, () => {
-        setPlaying({})
-        console.log(`paused`)
-      })
-
-      ipcRenderer.on(`loading`, (event, station) => {
-        setPlaying({})
-        console.log(`loading: `, station.name)
-      })
-
-      ipcRenderer.on(`key`, (event, key) => {
-        setKey(key)
-      })
+      ipcRenderer.on(`playing`, (e, station) => setPlaying(station))
+      ipcRenderer.on(`loading`, () => setPlaying({}))
+      ipcRenderer.on(`paused`, () => setPlaying({}))
+      ipcRenderer.on(`key`, (e, key) => setKey(key))
     }, // eslint-disable-next-line
     []
   )
@@ -134,15 +116,12 @@ const List = ({
     () => {
       if (!key) return
 
-      if (
-        key === `Enter` &&
-        !controller &&
-        current.src &&
-        !current.src_resolved &&
-        current.id !== playing.id
-      ) {
-        snoop()
-      }
+      key === `Enter` &&
+      !controller &&
+      current.src &&
+      !current.src_resolved &&
+      current.id !== playing.id &&
+      setController(new AbortController())
 
       setKey(null)
     }, // eslint-disable-next-line
@@ -154,10 +133,7 @@ const List = ({
       if (!controller) return
 
       const signal = controller.signal
-      signal.addEventListener(`abort`, () => {
-        console.log(`destroying controller`)
-        setController(null)
-      })
+      signal.addEventListener(`abort`, () => setController(null))
 
       sniff({
         url: current.src,
@@ -168,9 +144,10 @@ const List = ({
           if (src_resolved) {
             const station = { ...current, src_resolved }
             setStation(station)
-            tune(station, true)
+            player.webContents.send(`station`, station)
           } else {
-            tune({}, true)
+            setCurrent({})
+            player.webContents.send(`station`, {})
           }
         })
         .catch((e) => {
@@ -182,7 +159,7 @@ const List = ({
   )
 
   return (
-    <div>
+    <Container>
       <Header />
       <Ul>
         {
@@ -196,8 +173,7 @@ const List = ({
                     title={ country.orig }
                     onClick={ () => dispatch(listItem.action) }
                   >
-                    {/*<Flag code={ country.flag ? country.flag : listItem.name }/>*/}
-                    { `\t${ country.name }` }
+                    { country.name }
                   </Li>
                 )
               }
@@ -209,15 +185,11 @@ const List = ({
                     active={ current.id === listItem.id }
                     playing={ playing.id === listItem.id }
                     processing={ controller !== null }
-                    onClick={ () => current.id !== listItem.id && tune(listItem) }
-                    onDoubleClick={
-                      () => {
-                        if (listItem.src_resolved) {
-                          tune(listItem, true)
-                        } else if (current.id !== playing.id) {
-                          snoop()
-                        }
-                      }
+                    onClick={ () => current.id !== listItem.id && setCurrent(listItem) }
+                    onDoubleClick={ () =>
+                      listItem.src_resolved
+                        ? player.webContents.send(`station`, listItem)
+                        : current.id !== playing.id && setController(new AbortController())
                     }
                   >
                     { listItem.name }
@@ -234,7 +206,7 @@ const List = ({
           })
         }
       </Ul>
-    </div>
+    </Container>
   )
 }
 

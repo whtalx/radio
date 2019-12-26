@@ -6,21 +6,8 @@ import keypress from 'electron-localshortcut'
 global.player = null
 global.list = null
 
-const control = ({ func, title }) => {
-  switch (title) {
-    case `WebRadio`: {
-      global.player[func]()
-      break
-    }
-
-    case `WebRadio Stations`: {
-      global.list[func]()
-      break
-    }
-
-    default:
-      break
-  }
+const control = ({ func, name }) => {
+  global[name] && global[name][func] && global[name][func]()
 }
 
 const makeURL = (view) =>
@@ -119,14 +106,6 @@ ipcMain.on(`toggle-list`, () => {
   global.list.show()
 })
 
-ipcMain.on(`close`, (event, window) => {
-  control({ func: `close`, title: window })
-})
-
-ipcMain.on(`minimize`, (event, window) => {
-  control({ func: `minimize`, title: window })
-})
-
-ipcMain.on(`hide`, (event, window) => {
-  control({ func: `hide`, title: window })
-})
+ipcMain.on(`close`, (e, name) => control({ func: `close`, name }))
+ipcMain.on(`minimize`, (e, name) => control({ func: `minimize`, name }))
+ipcMain.on(`hide`, (e, name) => control({ func: `hide`, name }))

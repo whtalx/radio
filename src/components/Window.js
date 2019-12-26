@@ -5,6 +5,7 @@ import { ipcRenderer } from 'electron'
 
 const Window = styled.div`
   padding: 3px;
+  height: 100vh;
   box-sizing: border-box;
   display: flex;
   flex-flow: column;
@@ -31,6 +32,7 @@ const Title = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  color: hsl(0, 0%, 100%);
   -webkit-app-region: drag;
 
   button {
@@ -46,6 +48,7 @@ const Content = styled.div`
   flex: 0 1 100%;
   height: auto;
   width: 100%;
+  overflow: hidden;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -58,7 +61,7 @@ const Content = styled.div`
     1px 1px 2px hsl(200, 20%, 80%);
 `
 
-export default ({ buttons, children, title }) =>
+export default ({ buttons, children, name, title }) =>
   <Window>
     <Helmet>
       <title>
@@ -72,7 +75,7 @@ export default ({ buttons, children, title }) =>
           <button
             key={ title + button }
             title={ button }
-            onClick={() => ipcRenderer.send(button, title) }
+            onClick={() => ipcRenderer.send(button, name) }
           />
         )
       }

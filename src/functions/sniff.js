@@ -10,23 +10,27 @@ const sniff = ({ recursive = ``, station, signal }) => {
     return unresolvable
   }
 
-  recursive
-    ? console.log(`recursive sniff out: `, recursive)
-    : console.log(`sniff out: `, src)
+  const url = (recursive || src)
 
-  return fetch(recursive || src, { signal })
+  console.log(recursive ? `recursive sniff out: `: `sniff out: `, url)
+
+  return fetch(url, { signal })
     .then((response) => {
       const [type, subtype] = (response.headers.get(`content-type`) || `/`).split(`/`)
-      console.log(`content-type: ${ type }/${ subtype }`)
+      console.log(`responded with status ${ response.status } and content-type: ${ type || `?` }/${ subtype || `?` }`)
 
-      if (!type || /aac|ogg|mp4|mpeg$|opus/.test(subtype)) {
-        console.log(`resolved: `, recursive || src)
-        return { ...station, src_resolved: recursive || src }
+      if (response.status === 404 || response.status === 403) {
+        return unresolvable
+      } else if (!type || /aac|ogg|mp4|mpeg$|opus/.test(subtype)) {
+        console.log(`resolved: `, url)
+        return { ...station, src_resolved: url }
+      } else if (type === `application` && (subtype === `vnd.apple.mpegurl` || subtype === `x-mpegURL`)) {
+          return { ...station, src_resolved: true, hls: url }
       } else if (type === `text` && /html/.test(subtype)) {
-        return /\.m3u(8)?$|http(s)?:\/\/[\w.-]+(:\d+)?\/;/.test(src)
+        return /http(s)?:\/\/[\w.-]+(:\d+)?\/;/.test(url)
           ? response.text()
           : sniff({
-            recursive: `${ src.match(/http(s)?:\/\/[\w\d.-]+(:\d+)?/g)[0] }/;`,
+            recursive: `${ url.match(/http(s)?:\/\/[\w\d.-]+(:\d+)?/g)[0] }/;`,
             station,
             signal,
           })
@@ -39,24 +43,21 @@ const sniff = ({ recursive = ``, station, signal }) => {
     .then(result => {
       if (typeof result !== `string`) return result
 
-      console.log(`parsing:\n`, result)
-      const isM3U = result.substr(0,7) === `#EXTM3U`
-      /*
-       * works with:
-       * application/vnd.apple.mpegurl
-       * application/x-mpegURL
-       *
-       * TODO: implement support of 11 sec files
-       */
+      console.log(result)
+      // const isM3U = result.substr(0,7) === `#EXTM3U`
 
-      if (isM3U) {
-        const links = result.replace(/#.+\n/g, ``).split(`\n`).filter(i => i)
-        const lastLink = /^http/.test(links[links.length - 1])
-          ? links[links.length - 1]
-          : src.match(/\S+\//g) + links[links.length - 1]
-
-        return sniff({ recursive: lastLink, station, signal, })
-      }
+      // if (isM3U) {
+      //   const links = result
+      //     .replace(/#.+\n/g, ``)
+      //     .split(`\n`)
+      //     .filter(i => i)
+      //     .map(i => /^http/.test(i) ? i : src.match(/\S+\//g) + i)
+      //   const lastLink = /^http/.test(links[links.length - 1])
+      //     ? links[links.length - 1]
+      //     : src.match(/\S+\//g) + links[links.length - 1]
+      //
+      //   return  sniff({ recursive: links, station, signal, })
+      // }
 
       return unresolvable
     })

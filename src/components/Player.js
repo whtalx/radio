@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { remote, ipcRenderer } from 'electron'
 import { connect } from 'react-redux'
+import Hls from 'hls.js'
 import styled from 'styled-components'
 import error from '../functions/error'
 import Visualization from './Visualization'
-import AudioNode from '../classes/AudioNode'
 import AnalyserNode from '../classes/AnalyserNode'
 
 const StyledPlayer = styled.div`
@@ -19,7 +19,8 @@ const Player = ({
   setLastState,
   setLastStation,
 }) => {
-  const [audio] = useState(new AudioNode())
+  const node = useRef(null)
+  const [hls, setHls] = useState(null)
   const [context] = useState(new AudioContext())
   const [bands] = useState(new AnalyserNode({ context, stc: .7 }))
   const [peaks] = useState(new AnalyserNode({ context, stc: .99 }))
@@ -27,33 +28,22 @@ const Player = ({
   const [station, setStation] = useState(lastStation)
   const [state, setState] = useState(lastState)
 
-  const play = (data) => {
-    [...audio.childNodes].forEach(child => child.remove())
-
-    if (data.src_resolved) {
-      const source = document.createElement(`SOURCE`)
-      source.src = data.src_resolved
-      audio.appendChild(source)
-      audio.load()
-      audio.play().catch(error)
-    } else {
-      setState(`paused`)
-    }
-  }
-
   useEffect(
     () => {
-      context.createMediaElementSource(audio).connect(bands)
+      context.createMediaElementSource(node.current).connect(bands)
       bands.connect(peaks)
       peaks.connect(context.destination)
 
-      audio.addEventListener(`playing`, () => setState(`playing`))
-      audio.addEventListener(`loadstart`, () => setState(`loading`))
-      audio.addEventListener(`pause`, () => setState(`paused`))
+      node.current.addEventListener(`playing`, ({ target }) => {
+        setState(`playing`)
+        console.dir(target)
+      })
+      node.current.addEventListener(`loadstart`, () => setState(`loading`))
+      node.current.addEventListener(`pause`, () => setState(`paused`))
 
       ipcRenderer.on(`station`, (e, data) => setStation(data))
 
-      state === `playing` && play(station)
+      // state === `playing` && play(station)
     }, // eslint-disable-next-line
     []
   )
@@ -71,25 +61,51 @@ const Player = ({
 
   useEffect(
     () => {
-      if (station.id === lastStation.id) return
-
-      play(station)
+      // if (station.id === lastStation.id) return
       setLastStation(station)
+
+        if (hls) { hls.destroy() }
+
+        [...node.current.childNodes].forEach(child => child.remove())
+
+        if (station.hls) {
+          const h = new Hls()
+          h.loadSource(station.hls)
+          h.attachMedia(node.current)
+          h.on(Hls.Events.MANIFEST_PARSED,()  => node.current.play())
+          h.on(Hls.Events.ERROR, (e, data) => {
+            error(data)
+            list.webContents.send(`unresolvable`, { ...station, unresolvable: true })
+            setStation({})
+          })
+          setHls(h)
+        } else if (station.src_resolved) {
+          const source = document.createElement(`SOURCE`)
+          source.src = station.src_resolved
+          node.current.appendChild(source)
+          node.current.load()
+          node.current.play().catch(error)
+          setHls(null)
+        } else {
+          setState(`paused`)
+          setHls(null)
+        }
     }, // eslint-disable-next-line
     [station]
   )
 
   return (
     <StyledPlayer>
+      <video ref={ node } crossOrigin={ `` } width={ `160px` } height={ `90px` }/>
       <button onClick={() => { ipcRenderer.send(`toggle-list`) }}>
         list
       </button>
-      <button onClick={() => { audio.paused && station.src_resolved && play(station) }}>
-        play
-      </button>
-      <button onClick={() => { !audio.paused && audio.pause() }}>
-        stop
-      </button>
+      {/*<button>*/}
+      {/*  play*/}
+      {/*</button>*/}
+      {/*<button onClick={() => { !node.paused && node.pause() }}>*/}
+      {/*  stop*/}
+      {/*</button>*/}
       <Visualization
         state={ state }
         bandsBinCount={ bands.frequencyBinCount }

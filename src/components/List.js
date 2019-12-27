@@ -80,6 +80,7 @@ const List = ({
 
   useEffect(
     () => {
+      ipcRenderer.on(`unresolvable`, (e, station) => setStation(station))
       ipcRenderer.on(`playing`, (e, station) => setPlaying(station))
       ipcRenderer.on(`loading`, () => setPlaying({}))
       ipcRenderer.on(`paused`, () => setPlaying({}))
@@ -143,9 +144,11 @@ const List = ({
 
       sniff({ station: { ...current }, signal })
         .then((station) => {
-          controller.abort()
-          station.src_resolved && player.webContents.send(`station`, station)
-          setStation(station)
+          if (!signal.aborted) {
+            controller.abort()
+            station.src_resolved && player.webContents.send(`station`, station)
+            setStation(station)
+          }
         })
     }, // eslint-disable-next-line
     [controller]
@@ -175,16 +178,20 @@ const List = ({
                 return (
                   <Li
                     key={ listItem.id }
+                    title={ listItem.src }
                     unresolvable={ listItem.unresolvable }
                     playing={ playing.id === listItem.id }
                     processing={ controller !== null }
                     onFocus={ () => current.id !== listItem.id && setCurrent(listItem) }
-                    onDoubleClick={ () =>
-                      listItem.unresolvable
-                        ? false
-                        : listItem.src_resolved
-                          ? player.webContents.send(`station`, listItem)
-                          : current.id !== playing.id && setController(new AbortController())
+                    onDoubleClick={
+                      () => {
+                        if (listItem.unresolvable) return
+                        if (listItem.src_resolved) return player.webContents.send(`station`, listItem)
+                        if (current.id !== playing.id) {
+                          controller && controller.abort()
+                          setController(new AbortController())
+                        }
+                      }
                     }
                   >
                     { listItem.name }

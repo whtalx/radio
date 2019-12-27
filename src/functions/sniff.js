@@ -1,37 +1,37 @@
 import error from './error'
 
-const sniff = ({ url, signal, recursive = false }) => {
-  if (!url) {
+const sniff = ({ recursive = ``, station, signal }) => {
+  const { src } = station
+  const unresolvable = { ...station, unresolvable: true }
+
+  if (!src) {
     console.log(`this should never happen. if you read this, god bless you`)
-    error({ message: `url is ${ url }` })
-    return {}
+    error({ message: `station src is ${ src }` })
+    return unresolvable
   }
 
-  if (recursive) {
-    console.log(`recursive sniff out: `, url)
-  } else {
-    console.log(`sniff out: `, url)
-  }
+  recursive
+    ? console.log(`recursive sniff out: `, recursive)
+    : console.log(`sniff out: `, src)
 
-  return fetch(url, { signal })
+  return fetch(recursive || src, { signal })
     .then((response) => {
-      const [type, subtype] = (response.headers.get(`content-type`) || ``).split(`/`)
+      const [type, subtype] = (response.headers.get(`content-type`) || `/`).split(`/`)
       console.log(`content-type: ${ type }/${ subtype }`)
 
       if (!type || /aac|ogg|mp4|mpeg$|opus/.test(subtype)) {
-        return { src_resolved: url }
+        console.log(`resolved: `, recursive || src)
+        return { ...station, src_resolved: recursive || src }
       } else if (type === `text` && /html/.test(subtype)) {
-        if (!/http(s)?:\/\/[\w.-]+(:\d+)?\/;/.test(url)) {
-          return sniff({
-            url: `${ url.match(/http(s)?:\/\/[\w\d.-]+(:\d+)?/g)[0] }/;`,
-            recursive: true,
+        return /\.m3u(8)?$|http(s)?:\/\/[\w.-]+(:\d+)?\/;/.test(src)
+          ? response.text()
+          : sniff({
+            recursive: `${ src.match(/http(s)?:\/\/[\w\d.-]+(:\d+)?/g)[0] }/;`,
+            station,
             signal,
           })
-        }
-
-        return response.text()
       } else if (type === `video`) {
-        return {}
+        return unresolvable
       }
 
       return response.text()
@@ -53,20 +53,16 @@ const sniff = ({ url, signal, recursive = false }) => {
         const links = result.replace(/#.+\n/g, ``).split(`\n`).filter(i => i)
         const lastLink = /^http/.test(links[links.length - 1])
           ? links[links.length - 1]
-          : url.match(/\S+\//g) + links[links.length - 1]
+          : src.match(/\S+\//g) + links[links.length - 1]
 
-        return sniff({
-          url: lastLink,
-          recursive: true,
-          signal,
-        })
+        return sniff({ recursive: lastLink, station, signal, })
       }
 
-      return {}
+      return unresolvable
     })
-    .catch(e => {
+    .catch((e) => {
       error(e)
-      return {}
+      return unresolvable
     })
 }
 

@@ -4,7 +4,6 @@ import { remote, ipcRenderer } from 'electron'
 import styled, { css, keyframes } from 'styled-components'
 import Header from './Header'
 import sniff from '../functions/sniff'
-import error from '../functions/error'
 import request from '../functions/request'
 import getTags from '../functions/getTags'
 import getStations from '../functions/getStations'
@@ -40,7 +39,7 @@ const Li = styled.li.attrs({
   cursor: pointer;
   position: relative;
   padding-left: 1em;
-  color: ${ props => props.playing ? `hsl(0, 0%, 100%)` : `inherit` };
+  color: ${ props => props.playing ? `hsl(0, 0%, 100%)` : props.unresolvable && `hsl(0, 100%, 50%)` };
 
   :focus {
     border: none;
@@ -142,24 +141,11 @@ const List = ({
       const signal = controller.signal
       signal.addEventListener(`abort`, () => setController(null))
 
-      sniff({
-        url: current.src,
-        signal,
-      })
-        .then(({ src_resolved }) => {
+      sniff({ station: { ...current }, signal })
+        .then((station) => {
           controller.abort()
-          if (src_resolved) {
-            const station = { ...current, src_resolved }
-            setStation(station)
-            player.webContents.send(`station`, station)
-          } else {
-            setCurrent({})
-            player.webContents.send(`station`, {})
-          }
-        })
-        .catch((e) => {
-          controller.abort()
-          error(e)
+          station.src_resolved && player.webContents.send(`station`, station)
+          setStation(station)
         })
     }, // eslint-disable-next-line
     [controller]
@@ -189,13 +175,16 @@ const List = ({
                 return (
                   <Li
                     key={ listItem.id }
+                    unresolvable={ listItem.unresolvable }
                     playing={ playing.id === listItem.id }
                     processing={ controller !== null }
                     onFocus={ () => current.id !== listItem.id && setCurrent(listItem) }
                     onDoubleClick={ () =>
-                      listItem.src_resolved
-                        ? player.webContents.send(`station`, listItem)
-                        : current.id !== playing.id && setController(new AbortController())
+                      listItem.unresolvable
+                        ? false
+                        : listItem.src_resolved
+                          ? player.webContents.send(`station`, listItem)
+                          : current.id !== playing.id && setController(new AbortController())
                     }
                   >
                     { listItem.name }

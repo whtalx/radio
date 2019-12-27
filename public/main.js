@@ -1,7 +1,7 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
-import path from 'path'
-import isDev from 'electron-is-dev'
+import { app, BrowserWindow, Menu, ipcMain, shell } from 'electron'
 import keypress from 'electron-localshortcut'
+import isDev from 'electron-is-dev'
+import path from 'path'
 
 global.player = null
 global.list = null
@@ -36,7 +36,7 @@ const createPlayer = () => {
 
   global.player.once(`ready-to-show`, () => {
     if (isDev) {
-      const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require('electron-devtools-installer')
+      const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require(`electron-devtools-installer`)
       installExtension(REDUX_DEVTOOLS)
       installExtension(REACT_DEVELOPER_TOOLS)
     }
@@ -70,12 +70,14 @@ const createList = () => {
 
   global.list.loadURL(makeURL(`list`))
 
-  keypress.register(global.list, 'Enter', () => {
-    global.list.webContents.send(`key`, `Enter`)
+  global.list.once(`ready-to-show`, () => {
+    keypress.register(global.list, `Enter`, () => {
+      global.list.webContents.send(`key`, `Enter`)
+    })
   })
 
   global.list.on(`closed`, () => {
-    keypress.unregister(global.list, 'Enter')
+    keypress.unregister(global.list, `Enter`)
     global.list = null
   })
 }
@@ -109,3 +111,36 @@ ipcMain.on(`toggle-list`, () => {
 ipcMain.on(`close`, (e, name) => control({ func: `close`, name }))
 ipcMain.on(`minimize`, (e, name) => control({ func: `minimize`, name }))
 ipcMain.on(`hide`, (e, name) => control({ func: `hide`, name }))
+
+if (process.platform === 'darwin') {
+  const menu = [
+    {
+      label: `WebRadio`,
+      submenu: [
+        { role: `about` },
+        {
+          label: `Open GitHub repo`,
+          click: async () => {
+            await shell.openExternal(`https://github.com/whtalx/radio`)
+          }
+        },
+        { type: `separator` },
+        { role: `hide` },
+        { role: `hideothers` },
+        { role: `unhide` },
+        { type: `separator` },
+        { role: `quit` }
+      ]
+    },
+    ...(isDev ? [{
+      label: `View`,
+      submenu: [
+        { role: `reload` },
+        { role: `forcereload` },
+        { role: `toggledevtools` },
+      ],
+    }] : []),
+  ]
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(menu))
+}

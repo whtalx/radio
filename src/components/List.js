@@ -34,16 +34,23 @@ const Ul = styled.ul`
   list-style-type: none;
 `
 
-const Li = styled.li`
+const Li = styled.li.attrs({
+  tabIndex: 1,
+})`
   cursor: pointer;
   position: relative;
   padding-left: 1em;
+  color: ${ props => props.playing ? `hsl(0, 0%, 100%)` : `inherit` };
 
-  ${ props => props.playing && css`color: hsl(0, 0%, 100%);` }
-  ${ props => props.active && css`background-color: hsl(240, 100%, 50%);` }
+  :focus {
+    border: none;
+    outline: none;
+    background-color: hsl(240, 100%, 50%);
+  }
+
   ${
-    props => props.processing && props.active && css`
-      :after {
+    props => props.processing && css`
+      :focus:after {
         content: '\\005C';
         position: absolute;
         top: 0;
@@ -171,7 +178,7 @@ const List = ({
                   <Li
                     key={ listItem.name }
                     title={ country.orig }
-                    onClick={ () => dispatch(listItem.action) }
+                    onDoubleClick={ () => dispatch(listItem.action) }
                   >
                     { country.name }
                   </Li>
@@ -182,10 +189,9 @@ const List = ({
                 return (
                   <Li
                     key={ listItem.id }
-                    active={ current.id === listItem.id }
                     playing={ playing.id === listItem.id }
                     processing={ controller !== null }
-                    onClick={ () => current.id !== listItem.id && setCurrent(listItem) }
+                    onFocus={ () => current.id !== listItem.id && setCurrent(listItem) }
                     onDoubleClick={ () =>
                       listItem.src_resolved
                         ? player.webContents.send(`station`, listItem)
@@ -198,7 +204,7 @@ const List = ({
 
               default:
                 return (
-                  <Li key={ listItem.name } onClick={ () => dispatch(listItem.action) }>
+                  <Li key={ listItem.name } onDoubleClick={ () => dispatch(listItem.action) }>
                     { listItem.name }
                   </Li>
                 )

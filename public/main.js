@@ -4,8 +4,7 @@ import isDev from 'electron-is-dev'
 import path from 'path'
 
 global.player = null
-global.list = null
-let lastBounds
+// global.list = null
 
 const control = ({ func, name }) => {
   global[name] && global[name][func] && global[name][func]()
@@ -13,24 +12,24 @@ const control = ({ func, name }) => {
 
 const makeURL = (view) =>
   isDev
-    ? `http://localhost:3000?${ view }`
-    : `file://${ path.join(__dirname, `../build/index.html?${ view }`) }`
+    ? `http://localhost:3000`//?${ view }`
+    : `file://${ path.join(__dirname, `../build/index.html`) }`//${ view }`) }`
 
 const createPlayer = () => {
   global.player = new BrowserWindow({
-    width: 275,
     height: 116,
-    resizable: false,
-    maximizable: false,
-    fullscreenable: true,
+    width: 275,
     acceptFirstMouse: true,
+    maximizable: false,
+    transparent: false,
+    resizable: false,
+    movable: true,
     frame: false,
+    show: false,
     webPreferences: {
       nodeIntegration: true,
       webSecurity: false,
     },
-    backgroundColor: `#fff`,
-    show: false,
   })
 
   global.player.loadURL(makeURL(`player`))
@@ -47,52 +46,54 @@ const createPlayer = () => {
 
   global.player.on(`closed`, () => {
     global.player = null
+    // global.list && global.list.close()
   })
 
-  global.player.on(`enter-html-full-screen`, () => {
-    if (!global.list.isVisible()) return
-
-    global.list.hide()
-    global.player.once(`leave-html-full-screen`, () => global.list.show())
-  })
+  // global.player.on(`enter-html-full-screen`, () => {
+  //   if (!global.list.isVisible()) return
+  //
+  //   global.list.hide()
+  //   global.player.once(`leave-html-full-screen`, () => global.list.show())
+  // })
 }
 
-const createList = () => {
-  global.list = new BrowserWindow({
-    width: 275,
-    height: 550,
-    resizable: false,
-    maximizable: false,
-    fullscreenable: false,
-    acceptFirstMouse: true,
-    enableLargerThanScreen: true,
-    parent: player,
-    frame: false,
-    webPreferences: {
-      nodeIntegration: true,
-      webSecurity: false,
-    },
-    backgroundColor: `#fff`,
-    show: false,
-  })
-
-  global.list.loadURL(makeURL(`list`))
-
-  global.list.once(`ready-to-show`, () => {
-    keypress.register(global.list, `Enter`, () => {
-      global.list.webContents.send(`key`, `Enter`)
-    })
-  })
-
-  global.list.on(`closed`, () => {
-    keypress.unregister(global.list, `Enter`)
-    global.list = null
-  })
-}
+// const createList = () => {
+//   global.list = new BrowserWindow({
+//     width: 275,
+//     height: 550,
+//     enableLargerThanScreen: true,
+//     acceptFirstMouse: true,
+//     fullscreenable: false,
+//     maximizable: false,
+//     transparent: true,
+//     resizable: false,
+//     parent: player,
+//     frame: false,
+//     webPreferences: {
+//       nodeIntegration: true,
+//       webSecurity: false,
+//     },
+//     // backgroundColor: `#fff`,
+//     show: false,
+//   })
+//
+//   global.list.loadURL(makeURL(`list`))
+//
+//   global.list.once(`ready-to-show`, () => {
+//     keypress.register(global.list, `Enter`, () => {
+//       global.list.webContents.send(`key`, `Enter`)
+//     })
+//   })
+//
+//   global.list.on(`closed`, () => {
+//     keypress.unregister(global.list, `Enter`)
+//     global.list = null
+//   })
+// }
 
 app.on(`ready`, () => {
   createPlayer()
-  createList()
+  // createList()
 })
 
 app.on(`window-all-closed`, () => {
@@ -103,33 +104,33 @@ app.on(`activate`, () => {
   global.player === null && createPlayer()
 })
 
-ipcMain.on(`toggle-list`, () => {
-  if (!global.list) {
-    createList()
-  } else if (global.list.isVisible()) {
-    global.list.hide()
-    return
-  }
+// ipcMain.on(`toggle-list`, () => {
+//   if (!global.list) {
+//     createList()
+//   } else if (global.list.isVisible()) {
+//     global.list.hide()
+//     return
+//   }
+//
+//   // const rect = global.player.getBounds()
+//   // global.list.setBounds({ x: rect.x, y: rect.y + rect.height })
+//   global.list.show()
+// })
 
-  const rect = global.player.getBounds()
-  global.list.setBounds({ x: rect.x, y: rect.y + rect.height })
-  global.list.show()
-})
-
-ipcMain.on(`toggle-fullscreen`, () => {
-  if (global.player.isFullScreen()) {
-    // global.player.fullscreenable = false
-    global.player.setFullScreen(false)
-    global.player.setBounds(lastBounds)
-    global.list.webContents.send(`fullscreen`, false)
-  } else {
-    // global.player.fullscreenable = true
-    lastBounds = global.player.getBounds()
-    global.player.setBounds(screen.getPrimaryDisplay().bounds)
-    global.player.setFullScreen(true)
-    global.list.webContents.send(`fullscreen`, true)
-  }
-})
+// ipcMain.on(`toggle-fullscreen`, () => {
+//   if (global.player.isFullScreen()) {
+//     // global.player.fullscreenable = false
+//     global.player.setFullScreen(false)
+//     global.player.setBounds(lastBounds)
+//     global.list.webContents.send(`fullscreen`, false)
+//   } else {
+//     // global.player.fullscreenable = true
+//     lastBounds = global.player.getBounds()
+//     global.player.setBounds(screen.getPrimaryDisplay().bounds)
+//     global.player.setFullScreen(true)
+//     global.list.webContents.send(`fullscreen`, true)
+//   }
+// })
 
 ipcMain.on(`close`, (e, name) => control({ func: `close`, name }))
 ipcMain.on(`minimize`, (e, name) => control({ func: `minimize`, name }))

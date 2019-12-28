@@ -1,11 +1,12 @@
 const initialState = () => {
   const lastList = localStorage.getItem(`list`)
 
-  if (lastList) return JSON.parse(lastList)
+  if (lastList) return { ...JSON.parse(lastList), visible: false }
 
   return {
       tags: [],
       show: `start`,
+      visible: false,
       history: [`start`],
       stations: [],
       languages: [],
@@ -42,6 +43,7 @@ export default (state = initialState(), { type, payload }) => {
     tags,
     show,
     start,
+    visible,
     history,
     stations,
     languages,
@@ -128,6 +130,12 @@ export default (state = initialState(), { type, payload }) => {
       break
     }
 
+    case `TOGGLE_LIST`: {
+      visible = !visible
+      changed = true
+      break
+    }
+
     default:
       break
   }
@@ -136,6 +144,7 @@ export default (state = initialState(), { type, payload }) => {
     tags,
     show,
     start,
+    visible,
     history,
     stations,
     languages,

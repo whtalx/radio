@@ -24,7 +24,7 @@ const sniff = ({ recursive = ``, station, signal }) => {
       } else if (!type || /aac|ogg|mp4|mpeg$|opus/.test(subtype)) {
         console.log(`resolved: `, url)
         return { ...station, src_resolved: url }
-      } else if (type === `application` && (subtype === `vnd.apple.mpegurl` || subtype === `x-mpegURL`)) {
+      } else if (type === `application` && /vnd\.apple\.mpegurl|x-mpegurl|octet-stream/i.test(subtype)) {
           return { ...station, src_resolved: true, hls: url }
       } else if (type === `text` && /html/.test(subtype)) {
         return /http(s)?:\/\/[\w.-]+(:\d+)?\/;/.test(url)

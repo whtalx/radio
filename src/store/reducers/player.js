@@ -1,30 +1,30 @@
 const initialState = () => {
-  const lastState = localStorage.getItem(`lastState`)
-  const lastStation = localStorage.getItem(`lastStation`)
+  const currentState = localStorage.getItem(`currentState`)
+  const playing = localStorage.getItem(`playing`)
 
   return {
-    lastState: lastState ? JSON.parse(lastState) : `paused`,
-    lastStation: lastStation ? JSON.parse(lastStation) : {},
+    currentState: currentState ? JSON.parse(currentState) : `paused`,
+    playing: playing ? JSON.parse(playing) : {},
   }
 }
 
 export default (state = initialState(), { type, payload }) => {
   switch (type) {
-    case `SET_LAST_STATE`: {
-      const lastState = payload
-      localStorage.setItem(`lastState`, JSON.stringify(lastState))
+    case `SET_CURRENT_STATE`: {
+      const currentState = payload
+      localStorage.setItem(`currentState`, JSON.stringify(currentState))
       return {
         ...state,
-        lastState,
+        currentState,
       }
     }
 
-    case `SET_LAST_STATION`: {
-      const lastStation = payload
-      localStorage.setItem(`lastStation`, JSON.stringify(lastStation))
+    case `SET_PLAYING`: {
+      const station = payload
+      localStorage.setItem(`playing`, JSON.stringify(station))
       return {
         ...state,
-        lastStation,
+        playing: station,
       }
     }
 

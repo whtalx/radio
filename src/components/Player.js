@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { remote, ipcRenderer } from 'electron'
 import { connect } from 'react-redux'
 import Hls from 'hls.js'
 import styled from 'styled-components'
 import error from '../functions/error'
 import Visualization from './Visualization'
 import AnalyserNode from '../classes/AnalyserNode'
+import { remote } from "electron"
 
 const StyledPlayer = styled.div`
   padding: 3px;
   width: 264px;
-  height: 100%;
   min-height: 96px;
+  position: relative;
   display: flex;
   flex-flow: column;
   align-content: center;
@@ -41,22 +41,25 @@ const Video = styled.video`
   }
 `
 
+const Controls = styled.div`
+  height: 82px;
+`
+
 const Player = ({
-  lastState,
-  lastStation,
-  setLastState,
-  setLastStation,
+  list,
+  player,
+  setPlaying,
+  setStation,
+  toggleList,
+  setCurrentState,
 }) => {
   const node = useRef(null)
   const [hls, setHls] = useState(null)
   const [context] = useState(new AudioContext())
   const [bands] = useState(new AnalyserNode({ context, stc: .7 }))
   const [peaks] = useState(new AnalyserNode({ context, stc: .99 }))
-  const [list, setList] = useState(remote.getGlobal(`list`))
-  const [state, setState] = useState(lastState)
-  const [station, setStation] = useState(lastStation)
   const [sourceHeight, setSourceHeight] = useState(0)
-  const [fullscreen, setFullscreen] = useState(remote.getCurrentWindow().isFullScreen())
+  const [fullscreen, setFullscreen] = useState(false)
 
   useEffect(
     () => {
@@ -64,38 +67,25 @@ const Player = ({
       bands.connect(peaks)
       peaks.connect(context.destination)
 
-      node.current.addEventListener(`playing`, () => setState(`playing`))
-      node.current.addEventListener(`loadstart`, () => setState(`loading`))
-      node.current.addEventListener(`pause`, () => setState(`paused`))
+      node.current.addEventListener(`playing`, () => setCurrentState(`playing`))
+      node.current.addEventListener(`loadstart`, () => setCurrentState(`loading`))
+      node.current.addEventListener(`pause`, () => setCurrentState(`paused`))
 
-      ipcRenderer.on(`station`, (e, data) => setStation(data))
-      ipcRenderer.on(`fullscreen`, (e, data) => setFullscreen(data))
-
-      // state === `playing` && play(station)
       return () => document.fullscreenElement && document.exitFullscreen()
     }, // eslint-disable-next-line
     []
   )
 
-  useEffect(
-    () => {
-      if (state === lastState) return
-      if (!list) setList(remote.getGlobal(`list`))
-
-      list.webContents.send(state, station)
-      setLastState(state)
-    }, // eslint-disable-next-line
-    [state]
-  )
 
   useEffect(
     () => {
       // if (station.id === lastStation.id) return
       [...node.current.childNodes].forEach(child => child.remove())
       sourceHeight && setSourceHeight(0)
-      setLastStation(station)
+      // setLastStation(station)
       if (hls) hls.destroy()
 
+      const station = player.playing
       if (station.hls) {
         const h = new Hls()
         h.loadSource(station.hls)
@@ -114,20 +104,20 @@ const Player = ({
           if (data.fatal) {
             switch(data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR: {
-                console.log(`fatal network error encountered, try to recover`)
-                h.startLoad()
+                console.log(`fatal network error encountered`, data)
+                // h.startLoad()
                 break
               }
 
               case Hls.ErrorTypes.MEDIA_ERROR: {
-                console.log(`fatal media error encountered, try to recover`)
+                console.log(`fatal media error encountered`, data)
                 h.recoverMediaError()
                 break
               }
 
               default: {
-                list.webContents.send(`unresolvable`, { ...station, unresolvable: true })
-                setStation({})
+                setStation({ ...player.playing, unresolvable: true })
+                setPlaying({})
                 break
               }
             }
@@ -146,18 +136,34 @@ const Player = ({
 
       hls && setHls(null)
     }, // eslint-disable-next-line
-    [station]
+    [player.playing]
   )
 
   useEffect(
     () => {
       const rect = remote.getCurrentWindow().getBounds()
+
+      if (rect.height < 200 && !sourceHeight) return
+
       remote.getCurrentWindow().setBounds({
         ...rect,
-        height: 116 + sourceHeight,
+        height: sourceHeight
+          ? rect.height + sourceHeight - 8
+          : 116 + (list.visible ? 500 : 0),
       })
     }, // eslint-disable-next-line
     [sourceHeight]
+  )
+
+  useEffect(
+    () => {
+      if (!sourceHeight) return
+
+      document.fullscreenElement
+        ? document.exitFullscreen()
+        : node.current.requestFullscreen()
+    }, // eslint-disable-next-line
+    [fullscreen]
   )
 
   return (
@@ -167,41 +173,36 @@ const Player = ({
         crossOrigin={ `` }
         sourceHeight={ sourceHeight }
         fullscreen={ fullscreen }
-        onDoubleClick={
-          () => {
-            if (!sourceHeight) return// && ipcRenderer.send(`toggle-fullscreen`)
-            if (document.fullscreenElement) {
-              document.exitFullscreen()
-            } else {
-              node.current.requestFullscreen()
-            }
-          }
-        }
+        onDoubleClick={ () => setFullscreen(last => !last) }
       />
-      <button onClick={() => { ipcRenderer.send(`toggle-list`) }}>
-        list
-      </button>
-      {/*<button>*/}
-      {/*  play*/}
-      {/*</button>*/}
-      {/*<button onClick={() => { !node.paused && node.pause() }}>*/}
-      {/*  stop*/}
-      {/*</button>*/}
-      <Visualization
-        state={ state }
-        bandsBinCount={ bands.frequencyBinCount }
-        peaksBinCount={ peaks.frequencyBinCount }
-        bandsFrequencyData={ a => bands.getByteFrequencyData(a) }
-        peaksFrequencyData={ a => peaks.getByteFrequencyData(a) }
-      />
+      <Controls>
+        <button onClick={ toggleList }>
+          list
+        </button>
+        {/*<button>*/}
+        {/*  play*/}
+        {/*</button>*/}
+        {/*<button onClick={() => { !node.paused && node.pause() }}>*/}
+        {/*  stop*/}
+        {/*</button>*/}
+        <Visualization
+          state={ player.currentState }
+          bandsBinCount={ bands.frequencyBinCount }
+          peaksBinCount={ peaks.frequencyBinCount }
+          bandsFrequencyData={ a => bands.getByteFrequencyData(a) }
+          peaksFrequencyData={ a => peaks.getByteFrequencyData(a) }
+        />
+      </Controls>
     </StyledPlayer>
   )
 }
 
-const mapStateToProps = ({ lastState, lastStation }) => ({ lastState, lastStation })
+const mapStateToProps = ({ list, player }) => ({ list, player })
 const mapDispatchToProps = (dispatch) => ({
-  setLastState: payload => dispatch({ type: `SET_LAST_STATE`, payload }),
-  setLastStation: payload => dispatch({ type: `SET_LAST_STATION`, payload }),
+  toggleList: () => dispatch({ type: `TOGGLE_LIST` }),
+  setPlaying: payload => dispatch({ type: `SET_PLAYING`, payload }),
+  setStation: payload => dispatch({ type: `SET_STATION`, payload }),
+  setCurrentState: payload => dispatch({ type: `SET_CURRENT_STATE`, payload }),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Player)

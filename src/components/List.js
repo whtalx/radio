@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
-import { remote, ipcRenderer } from 'electron'
+import { ipcRenderer } from 'electron'
 import styled, { css, keyframes } from 'styled-components'
 import Header from './Header'
 import sniff from '../functions/sniff'
@@ -20,7 +20,7 @@ const barSpin = keyframes`
 
 const Container = styled.div`
   width: 100%;
-  height: 100%;
+  height: 500px;
   position: relative;
   overflow: hidden scroll;
   background-color: hsl(0, 0%, 0%);
@@ -36,9 +36,15 @@ const Ul = styled.ul`
 const Li = styled.li.attrs({
   tabIndex: 1,
 })`
-  cursor: pointer;
+  padding-left: .5em;
+  width: 100%;
+  height: 1.1em;
+  box-sizing: border-box;
   position: relative;
-  padding-left: 1em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
   color: ${ props => props.playing ? `hsl(0, 0%, 100%)` : props.unresolvable && `hsl(0, 100%, 50%)` };
 
   :focus {
@@ -65,8 +71,10 @@ const Li = styled.li.attrs({
 const List = ({
   api,
   list,
+  player,
   setTags,
   dispatch,
+  setPlaying,
   setStation,
   setStations,
   setLanguages,
@@ -74,16 +82,10 @@ const List = ({
 }) => {
   const [current, setCurrent] = useState({})
   const [controller, setController] = useState(null)
-  const [playing, setPlaying] = useState({})
-  const [player] = useState(remote.getGlobal(`player`))
   const [key, setKey] = useState(null)
 
   useEffect(
     () => {
-      ipcRenderer.on(`unresolvable`, (e, station) => setStation(station))
-      ipcRenderer.on(`playing`, (e, station) => setPlaying(station))
-      ipcRenderer.on(`loading`, () => setPlaying({}))
-      ipcRenderer.on(`paused`, () => setPlaying({}))
       ipcRenderer.on(`key`, (e, key) => setKey(key))
     }, // eslint-disable-next-line
     []
@@ -127,7 +129,7 @@ const List = ({
       !controller &&
       current.src &&
       !current.src_resolved &&
-      current.id !== playing.id &&
+      current.id !== player.playing.id &&
       setController(new AbortController())
 
       setKey(null)
@@ -146,8 +148,8 @@ const List = ({
         .then((station) => {
           if (!signal.aborted) {
             controller.abort()
-            station.src_resolved && player.webContents.send(`station`, station)
             setStation(station)
+            station.src_resolved && setPlaying(station)
           }
         })
     }, // eslint-disable-next-line
@@ -180,14 +182,14 @@ const List = ({
                     key={ listItem.id }
                     title={ listItem.src }
                     unresolvable={ listItem.unresolvable }
-                    playing={ playing.id === listItem.id }
+                    playing={ player.playing.id === listItem.id }
                     processing={ controller !== null }
                     onFocus={ () => current.id !== listItem.id && setCurrent(listItem) }
                     onDoubleClick={
                       () => {
                         if (listItem.unresolvable) return
-                        if (listItem.src_resolved) return player.webContents.send(`station`, listItem)
-                        if (current.id !== playing.id) {
+                        if (listItem.src_resolved) return setPlaying(listItem)
+                        if (current.id !== player.playing.id) {
                           controller && controller.abort()
                           setController(new AbortController())
                         }
@@ -212,10 +214,11 @@ const List = ({
   )
 }
 
-const mapStateToProps = ({ api, list }) => ({ api, list })
+const mapStateToProps = ({ api, list, player }) => ({ api, list, player })
 const mapDispatchToProps = (dispatch) => ({
   setTags: payload => dispatch({ type: `SET_TAGS`, payload }),
   dispatch: action => dispatch(action),
+  setPlaying: payload => dispatch({ type: `SET_PLAYING`, payload }),
   setStation: payload => dispatch({ type: `SET_STATION`, payload }),
   setStations: payload => dispatch({ type: `SET_STATIONS`, payload }),
   setLanguages: payload => dispatch({ type: `SET_LANGUAGES`, payload }),

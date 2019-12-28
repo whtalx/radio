@@ -8,9 +8,7 @@ import AnalyserNode from '../classes/AnalyserNode'
 import { remote } from "electron"
 
 const StyledPlayer = styled.div`
-  padding: 3px;
   width: 264px;
-  min-height: 96px;
   position: relative;
   display: flex;
   flex-flow: column;

@@ -15,54 +15,77 @@ const sniff = ({ recursive = ``, station, signal }) => {
   console.log(recursive ? `recursive sniff out: `: `sniff out: `, url)
 
   return fetch(url, { signal })
-    .then((response) => {
+    .then(async (response) => {
       const [type, subtype] = (response.headers.get(`content-type`) || `/`).split(`/`)
-      console.log(`responded with status ${ response.status } and content-type: ${ type || `?` }/${ subtype || `?` }`)
 
-      if (response.status === 404 || response.status === 403) {
-        return unresolvable
-      } else if (!type || /aac|ogg|mp4|mpeg$|opus/.test(subtype)) {
-        console.log(`resolved: `, url)
-        return { ...station, src_resolved: url }
-      } else if (type === `application` && /vnd\.apple\.mpegurl|x-mpegurl|octet-stream/i.test(subtype)) {
-          return { ...station, src_resolved: true, hls: url }
-      } else if (type === `text` && /html/.test(subtype)) {
-        return /http(s)?:\/\/[\w.-]+(:\d+)?\/;/.test(url)
-          ? response.text()
-          : sniff({
-            recursive: `${ url.match(/http(s)?:\/\/[\w\d.-]+(:\d+)?/g)[0] }/;`,
-            station,
-            signal,
-          })
-      } else if (type === `video`) {
+      if (response.status !== 200) {
+        console.log(`responded with status ${ response.status }`)
         return unresolvable
       }
 
-      return response.text()
+      switch (type) {
+        case `audio`:
+        case `video`:
+        case ``: {
+          console.log(`resolved ${ url } with content-type: ${ type || `undefined` }/${ subtype || `undefined` }`)
+          return { ...station, src_resolved: url }
+        }
+
+        case `application`: {
+          console.log(`resolved ${ url } with content-type: ${ type }/${ subtype }`)
+          if (subtype === `ogg`) return { ...station, src_resolved: url }
+
+          return await response.blob()
+              .then(blob => blob.text())
+              .then(
+                (text) =>
+                  text.substr(0,7) === `#EXTM3U`
+                    ? { ...station, src_resolved: true, hls: url }
+                    : text
+              )
+        }
+
+        case `text`: {
+          console.log(`responded ${ url } with content-type: ${ type }/${ subtype }`)
+
+          return /http(s)?:\/\/[\w.-]+(:\d+)?\/;/.test(url)
+            ? response.text()
+            : sniff({
+              recursive: `${ url.match(/http(s)?:\/\/[\w\d.-]+(:\d+)?/g)[0] }/;`,
+              station,
+              signal,
+            })
+        }
+
+        default: {
+          console.log(`responded ${ url } with content-type: ${ type }/${ subtype }`)
+          return station
+        }
+      }
     })
     .then(result => {
       if (typeof result !== `string`) return result
 
-      console.log(result)
-      // const isM3U = result.substr(0,7) === `#EXTM3U`
+      console.log(`parsing\n${ result }`)
 
-      // if (isM3U) {
-      //   const links = result
-      //     .replace(/#.+\n/g, ``)
-      //     .split(`\n`)
-      //     .filter(i => i)
-      //     .map(i => /^http/.test(i) ? i : src.match(/\S+\//g) + i)
-      //   const lastLink = /^http/.test(links[links.length - 1])
-      //     ? links[links.length - 1]
-      //     : src.match(/\S+\//g) + links[links.length - 1]
-      //
-      //   return  sniff({ recursive: links, station, signal, })
-      // }
+      const links = result.match(/http(s)?:\/\/[\w\d.-:/=%&?#]+(?=\s)?/ig)
+        // .replace(/#.+\n/g, ``)
+        // .split(`\n`)
+        // .filter(i => i)
+        // .map(i => /^http/.test(i) ? i : src.match(/\S+\//g) + i)
 
-      return unresolvable
+      if (!links) return unresolvable
+
+      const lastLink = /^http/.test(links[links.length - 1])
+        ? links[links.length - 1]
+        : url.match(/\S+\//g) + links[links.length - 1]
+
+      return sniff({ recursive: lastLink, station, signal, })
+
     })
     .catch((e) => {
       error(e)
+      console.log(e)
       return unresolvable
     })
 }

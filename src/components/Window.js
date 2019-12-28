@@ -50,7 +50,7 @@ const Title = styled.div`
 `
 
 const Content = styled.div`
-  //flex: 0 1 100%;
+  padding: 3px;
   height: auto;
   width: 100%;
   overflow: hidden;
@@ -105,8 +105,8 @@ const Window = ({ visible }) => {
       </Title>
       <Content>
         <Player />
-        { visible && <List />}
       </Content>
+      { visible && <Content><List /></Content>}
     </Wrapper>
   )
 }

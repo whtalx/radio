@@ -1,10 +1,11 @@
-import { app, BrowserWindow, Menu, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, Menu, ipcMain, screen, shell } from 'electron'
 import keypress from 'electron-localshortcut'
 import isDev from 'electron-is-dev'
 import path from 'path'
 
 global.player = null
 global.list = null
+let lastBounds
 
 const control = ({ func, name }) => {
   global[name] && global[name][func] && global[name][func]()
@@ -21,7 +22,7 @@ const createPlayer = () => {
     height: 116,
     resizable: false,
     maximizable: false,
-    fullscreenable: false,
+    fullscreenable: true,
     acceptFirstMouse: true,
     frame: false,
     webPreferences: {
@@ -106,6 +107,21 @@ ipcMain.on(`toggle-list`, () => {
   const rect = global.player.getBounds()
   global.list.setBounds({ x: rect.x, y: rect.y + rect.height })
   global.list.show()
+})
+
+ipcMain.on(`toggle-fullscreen`, () => {
+  if (global.player.isFullScreen()) {
+    // global.player.fullscreenable = false
+    global.player.setFullScreen(false)
+    global.player.setBounds(lastBounds)
+    global.list.webContents.send(`fullscreen`, false)
+  } else {
+    // global.player.fullscreenable = true
+    lastBounds = global.player.getBounds()
+    global.player.setBounds(screen.getPrimaryDisplay().bounds)
+    global.player.setFullScreen(true)
+    global.list.webContents.send(`fullscreen`, true)
+  }
 })
 
 ipcMain.on(`close`, (e, name) => control({ func: `close`, name }))

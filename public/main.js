@@ -48,6 +48,13 @@ const createPlayer = () => {
   global.player.on(`closed`, () => {
     global.player = null
   })
+
+  global.player.on(`enter-html-full-screen`, () => {
+    if (!global.list.isVisible()) return
+
+    global.list.hide()
+    global.player.once(`leave-html-full-screen`, () => global.list.show())
+  })
 }
 
 const createList = () => {

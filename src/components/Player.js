@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { remote, ipcRenderer } from 'electron'
 import { connect } from 'react-redux'
 import Hls from 'hls.js'
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 import error from '../functions/error'
 import Visualization from './Visualization'
 import AnalyserNode from '../classes/AnalyserNode'
@@ -19,24 +19,25 @@ const StyledPlayer = styled.div`
 `
 
 const Video = styled.video`
-  ${
-    props => props.fullscreen
-      ? css`
-        position: absolute;
-        width: 100vw;
-        height: 100vh;
-      `
-      : css`
-        margin: 0 auto;
-        width: 244px;
-        height: ${ props.sourceHeight || 8 }px;
-        border-top-color: hsl(240, 100%, 3%);
-        border-left-color: hsl(240, 100%, 3%);
-        border-right-color: hsl(240, 18%, 27%);
-        border-bottom-color: hsl(240, 18%, 27%);
-        border-style: solid;
-        border-width: 1px;
-      `
+  margin: 0 auto;
+  width: 244px;
+  height: ${ props => props.sourceHeight || 8 }px;
+  border-top-color: hsl(240, 100%, 3%);
+  border-left-color: hsl(240, 100%, 3%);
+  border-right-color: hsl(240, 18%, 27%);
+  border-bottom-color: hsl(240, 18%, 27%);
+  border-style: solid;
+  border-width: 1px;
+
+  :fullscreen {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    border: none;
+
+    ::-webkit-media-controls {
+      display:none !important;
+    }
   }
 `
 
@@ -71,6 +72,7 @@ const Player = ({
       ipcRenderer.on(`fullscreen`, (e, data) => setFullscreen(data))
 
       // state === `playing` && play(station)
+      return () => document.fullscreenElement && document.exitFullscreen()
     }, // eslint-disable-next-line
     []
   )

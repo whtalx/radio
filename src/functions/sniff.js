@@ -14,7 +14,7 @@ const sniff = ({ recursive = ``, station, signal }) => {
 
   console.log(recursive ? `recursive sniff out: `: `sniff out: `, url)
 
-  return fetch(url, { signal })
+  return fetch(url, { referrer: ``, signal })
     .then(async (response) => {
       const [type, subtype] = (response.headers.get(`content-type`) || `/`).split(`/`)
 

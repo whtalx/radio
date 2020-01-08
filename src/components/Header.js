@@ -14,12 +14,6 @@ const StatusBar = styled.div`
   flex-flow: row;
   align-items: center;
   background-color: hsl(0, 0%, 0%);
-  -webkit-app-region: drag;
-
-  span,
-  button {
-    -webkit-app-region: no-drag;
-  }
 `
 
 const NavigateButton = styled.button`

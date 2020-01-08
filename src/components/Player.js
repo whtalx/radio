@@ -28,9 +28,6 @@ const Video = styled.video`
   border-width: 1px;
 
   :fullscreen {
-    margin: 0;
-    width: 100vw;
-    height: 100vh;
     border: none;
 
     ::-webkit-media-controls {

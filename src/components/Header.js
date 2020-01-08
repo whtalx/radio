@@ -37,6 +37,12 @@ const Nav = styled.span`
   cursor: pointer;
 `
 
+const Fav = styled.div`
+  width: 1em;
+  height: 1em;
+  color: ${ props => props.showing ? `hsl(0, 0%, 100%)` : `hsl(120, 100%, 50%)` };
+`
+
 const makeTitle = (props = {}) => {
   const { countrycode, language, tag } = props
   if (tag) return tag
@@ -47,8 +53,9 @@ const makeTitle = (props = {}) => {
 const Header = ({
   list,
   back,
-  forward,
   show,
+  forward,
+  toggleFavourites,
 }) => {
   const [titles, setTitles] = useState({
     start: <Nav key={ `start` } onClick={ () => show(`start`) }>stations</Nav>,
@@ -68,8 +75,10 @@ const Header = ({
     [list.lastSearch]
   )
 
-  return !list.history
-    ? <StatusBar />
+  return list.showFavourites
+    ? <StatusBar>
+      <Fav showing={ true } onClick={ toggleFavourites }>&#9825;</Fav>
+    </StatusBar>
     : <StatusBar>
       <NavigateButton onClick={ back } disabled={ list.history.findIndex(i => i === list.show) === 0 } />
       <NavigateButton onClick={ forward } disabled={ list.history.findIndex(i => i === list.show) === list.history.length - 1 } />
@@ -90,6 +99,7 @@ const Header = ({
             )
         }
       </Status>
+      <Fav showing={ false } onClick={ toggleFavourites }>&#9825;</Fav>
     </StatusBar>
 }
 
@@ -98,6 +108,7 @@ const mapDispatchToProps = (dispatch) => ({
   back: () => dispatch({ type: `LIST_BACK` }),
   forward: () => dispatch({ type: `LIST_FORWARD` }),
   show: (payload) => dispatch({ type: `SHOW`, payload }),
+  toggleFavourites: () => dispatch({ type: `TOGGLE_FAVOURITES` }),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Header)

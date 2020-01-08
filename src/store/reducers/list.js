@@ -4,15 +4,17 @@ const initialState = () => {
   if (lastList) return { ...JSON.parse(lastList), visible: false }
 
   return {
-      tags: [],
-      show: `start`,
-      visible: false,
-      history: [`start`],
-      stations: [],
-      languages: [],
-      lastSearch: {},
-      countrycodes: [],
-        start: [
+    tags: [],
+    show: `start`,
+    visible: false,
+    history: [`start`],
+    stations: [],
+    languages: [],
+    lastSearch: {},
+    favourites: [],
+    countrycodes: [],
+    showFavourites: false,
+    start: [
       {
         name: `by countries`,
         action: {
@@ -48,7 +50,9 @@ export default (state = initialState(), { type, payload }) => {
     stations,
     languages,
     lastSearch,
+    favourites,
     countrycodes,
+    showFavourites,
   } = state
 
   let changed = false
@@ -125,6 +129,12 @@ export default (state = initialState(), { type, payload }) => {
     }
 
     case `SET_STATION`: {
+      const index = favourites.findIndex(station => station.id === payload.id)
+
+      if (index >= 0) {
+        favourites[index] = payload
+      }
+
       stations[stations.findIndex(station => station.id === payload.id)] = payload
       changed = true
       break
@@ -132,6 +142,29 @@ export default (state = initialState(), { type, payload }) => {
 
     case `TOGGLE_LIST`: {
       visible = !visible
+      changed = true
+      break
+    }
+
+    case `ADD_FAVOURITE`: {
+      favourites.push(payload)
+      changed = true
+      break
+    }
+
+    case `REMOVE_FAVOURITE`: {
+      const index = favourites.findIndex(station => station.id === payload.id)
+
+      if (index >= 0) {
+        favourites.splice(index, 1)
+        changed = true
+      }
+
+      break
+    }
+
+    case `TOGGLE_FAVOURITES`: {
+      showFavourites = !showFavourites
       changed = true
       break
     }
@@ -149,7 +182,9 @@ export default (state = initialState(), { type, payload }) => {
     stations,
     languages,
     lastSearch,
+    favourites,
     countrycodes,
+    showFavourites,
   }
 
   changed && localStorage.setItem(`list`, JSON.stringify(list))

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
-import { ipcRenderer } from 'electron'
+import { ipcRenderer, remote } from 'electron'
 import styled, { css, keyframes } from 'styled-components'
 import Header from './Header'
 import sniff from '../functions/sniff'
@@ -10,6 +10,8 @@ import getStations from '../functions/getStations'
 import getLanguages from '../functions/getLanguages'
 import countries from '../functions/iso3166-1-alpha-2'
 import getCountryCodes from '../functions/getCountryCodes'
+
+const { Menu, MenuItem } = remote
 
 const barSpin = keyframes`
   0% { content: '\\005C' }
@@ -55,7 +57,7 @@ const Li = styled.li.attrs({
 
   ${
     props => props.processing && css`
-      :focus:after {
+      :after {
         content: '\\005C';
         position: absolute;
         top: 0;
@@ -78,11 +80,22 @@ const List = ({
   setStation,
   setStations,
   setLanguages,
+  addFavourite,
+  removeFavourite,
   setCountryCodes,
 }) => {
-  const [current, setCurrent] = useState({})
-  const [controller, setController] = useState(null)
   const [key, setKey] = useState(null)
+  const [tune, setTune] = useState(null)
+  const [current, setCurrent] = useState({})
+  const [processing, setProcessing] = useState(null)
+  const [controller, setController] = useState(null)
+  const [contextMenuCalled, setContextMenuCalled] = useState(false)
+
+  const handleContextMenu = (event) => {
+    event.preventDefault()
+    event.target.focus()
+    setContextMenuCalled(true)
+  }
 
   useEffect(
     () => {
@@ -95,22 +108,34 @@ const List = ({
     () => {
       switch (api.type) {
         case `stations`: {
-          request(api).then(data => setStations(getStations(data)))
+          setProcessing(api.search.countrycode || api.search.language || api.search.tag)
+          request(api)
+            .then(data => setStations(getStations(data)))
+            .then(() => setProcessing(null))
           return
         }
 
         case `countrycodes`: {
-          request(api).then(data => setCountryCodes(getCountryCodes(data)))
+          setProcessing(`by countries`)
+          request(api)
+            .then(data => setCountryCodes(getCountryCodes(data)))
+            .then(() => setProcessing(null))
           return
         }
 
         case `languages`: {
-          request(api).then(data => setLanguages(getLanguages(data)))
+          setProcessing(`by languages`)
+          request(api)
+            .then(data => setLanguages(getLanguages(data)))
+            .then(() => setProcessing(null))
           return
         }
 
         case `tags`: {
-          request(api).then(data => setTags(getTags(data)))
+          setProcessing(`by tags`)
+          request(api)
+            .then(data => setTags(getTags(data)))
+            .then(() => setProcessing(null))
           return
         }
 
@@ -123,15 +148,26 @@ const List = ({
 
   useEffect(
     () => {
+      if (!tune) return
+
+      if (tune.unresolvable) {
+        setTune(null)
+      } else if (tune.src_resolved) {
+        setPlaying(tune)
+        setTune(null)
+      } else if (tune.id !== player.playing.id) {
+        controller && controller.abort()
+        setController(new AbortController())
+      }
+    }, // eslint-disable-next-line
+    [tune]
+  )
+
+  useEffect(
+    () => {
       if (!key) return
 
-      key === `Enter` &&
-      !controller &&
-      current.src &&
-      !current.src_resolved &&
-      current.id !== player.playing.id &&
-      setController(new AbortController())
-
+      key === `Enter` && setTune(current)
       setKey(null)
     }, // eslint-disable-next-line
     [key]
@@ -139,10 +175,15 @@ const List = ({
 
   useEffect(
     () => {
-      if (!controller) return
+      if (!controller) {
+        tune && setTune(null)
+        processing && setProcessing(null)
+        return
+      }
 
       const signal = controller.signal
       signal.addEventListener(`abort`, () => setController(null))
+      setProcessing(current.id)
 
       sniff({ station: { ...current }, signal })
         .then((station) => {
@@ -156,58 +197,120 @@ const List = ({
     [controller]
   )
 
+  useEffect(
+    () => {
+      if (!contextMenuCalled) return
+
+      const play = {
+        label: `Play`,
+        enabled: !current.unresolvable,
+        click() {
+          setTune(current)
+        },
+      }
+
+      const stop = {
+        label: `Stop`,
+        click() {
+          player.playing.id === current.id && setPlaying({})
+        },
+      }
+
+      const add = {
+        label: `Add to favourites`,
+        click() {
+          addFavourite(current)
+        },
+      }
+
+      const remove = {
+        label: `Remove from favourites`,
+        click() {
+          removeFavourite(current)
+        },
+      }
+
+      const info = {
+        label: `Information`,
+        click() {
+          console.log(JSON.parse(JSON.stringify(current)))
+        },
+      }
+
+      const menu = new Menu()
+      menu.append(new MenuItem(player.playing.id === current.id ? stop : play))
+      menu.append(new MenuItem(list.favourites.findIndex(station => station.id === current.id) >= 0 ? remove : add))
+      menu.append(new MenuItem(info))
+      menu.popup({ window: remote.getCurrentWindow() })
+      setContextMenuCalled(false)
+    }, // eslint-disable-next-line
+    [contextMenuCalled]
+  )
+
   return (
     <Container>
       <Header />
       <Ul>
         {
-          list.show && list[list.show].map((listItem) => {
-            switch (list.show) {
-              case `countrycodes`: {
-                const country = countries(listItem.name)
-                return (
-                  <Li
-                    key={ listItem.name }
-                    title={ country.orig }
-                    onDoubleClick={ () => dispatch(listItem.action) }
-                  >
-                    { country.name }
-                  </Li>
-                )
+          list.showFavourites
+            ? list.favourites.map((listItem) =>
+              <Li
+                key={ listItem.id }
+                title={ listItem.src }
+                unresolvable={ listItem.unresolvable }
+                playing={ listItem.id === player.playing.id }
+                processing={ listItem.id === processing }
+                onFocus={ () => setCurrent(listItem) }
+                onContextMenu={ handleContextMenu }
+                onDoubleClick={ () => setTune(listItem) }
+              >
+                { listItem.name }
+              </Li>
+            )
+            : list.show && list[list.show] && list[list.show].map((listItem) => {
+              switch (list.show) {
+                case `countrycodes`: {
+                  const country = countries(listItem.name)
+                  return (
+                    <Li
+                      key={ listItem.name }
+                      title={ country.orig }
+                      processing={ listItem.name === processing }
+                      onDoubleClick={ () => dispatch(listItem.action) }
+                    >
+                      { country.name }
+                    </Li>
+                  )
+                }
+
+                case `stations`:
+                  return (
+                    <Li
+                      key={ listItem.id }
+                      title={ listItem.src }
+                      unresolvable={ listItem.unresolvable }
+                      playing={ listItem.id === player.playing.id }
+                      processing={ listItem.id === processing }
+                      onFocus={ () => setCurrent(listItem) }
+                      onContextMenu={ handleContextMenu }
+                      onDoubleClick={ () => setTune(listItem) }
+                    >
+                      { listItem.name }
+                    </Li>
+                  )
+
+                default:
+                  return (
+                    <Li
+                      key={ listItem.name }
+                      processing={ listItem.name === processing }
+                      onDoubleClick={ () => dispatch(listItem.action) }
+                    >
+                      { listItem.name }
+                    </Li>
+                  )
               }
-
-              case `stations`:
-                return (
-                  <Li
-                    key={ listItem.id }
-                    title={ listItem.src }
-                    unresolvable={ listItem.unresolvable }
-                    playing={ player.playing.id === listItem.id }
-                    processing={ controller !== null }
-                    onFocus={ () => current.id !== listItem.id && setCurrent(listItem) }
-                    onDoubleClick={
-                      () => {
-                        if (listItem.unresolvable) return
-                        if (listItem.src_resolved) return setPlaying(listItem)
-                        if (current.id !== player.playing.id) {
-                          controller && controller.abort()
-                          setController(new AbortController())
-                        }
-                      }
-                    }
-                  >
-                    { listItem.name }
-                  </Li>
-                )
-
-              default:
-                return (
-                  <Li key={ listItem.name } onDoubleClick={ () => dispatch(listItem.action) }>
-                    { listItem.name }
-                  </Li>
-                )
-            }
-          })
+            })
         }
       </Ul>
     </Container>
@@ -222,6 +325,8 @@ const mapDispatchToProps = (dispatch) => ({
   setStation: payload => dispatch({ type: `SET_STATION`, payload }),
   setStations: payload => dispatch({ type: `SET_STATIONS`, payload }),
   setLanguages: payload => dispatch({ type: `SET_LANGUAGES`, payload }),
+  addFavourite: payload => dispatch({ type: `ADD_FAVOURITE`, payload }),
+  removeFavourite: payload => dispatch({ type: `REMOVE_FAVOURITE`, payload }),
   setCountryCodes: payload => dispatch({ type: `SET_COUNTRY_CODES`, payload }),
 })
 

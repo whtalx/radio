@@ -130,6 +130,8 @@ const Player = ({
         node.current.appendChild(source)
         node.current.load()
         node.current.play().catch(error)
+      } else if (!station.id) {
+        node.current.pause()
       }
 
       hls && setHls(null)

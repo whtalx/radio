@@ -38,7 +38,7 @@ export default ({
       signal.addEventListener(`abort`, () => setController(null))
 
       const sendBands = () => {
-        if (signal.aborted) return
+        if (signal.aborted || !canvasRef.current) return
 
         const bandsData = new Uint8Array(bandsBinCount)
         bandsFrequencyData(bandsData)

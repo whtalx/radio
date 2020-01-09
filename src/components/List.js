@@ -3,7 +3,6 @@ import { connect } from 'react-redux'
 import { ipcRenderer, remote } from 'electron'
 import styled, { css, keyframes } from 'styled-components'
 import Header from './Header'
-import sniff from '../functions/sniff'
 import request from '../functions/request'
 import getTags from '../functions/getTags'
 import getStations from '../functions/getStations'
@@ -86,9 +85,9 @@ const List = ({
 }) => {
   const [key, setKey] = useState(null)
   const [tune, setTune] = useState(null)
+  const [worker, setWorker] = useState(null)
   const [current, setCurrent] = useState({})
   const [processing, setProcessing] = useState(null)
-  const [controller, setController] = useState(null)
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
 
   const handleContextMenu = (event) => {
@@ -100,6 +99,14 @@ const List = ({
   useEffect(
     () => {
       ipcRenderer.on(`key`, (e, key) => setKey(key))
+      const w = new Worker(`./prefetch.js`)
+      w.addEventListener('message', ({ data }) => {
+        setStation(data)
+        data.src_resolved && setPlaying(data)
+        tune && setTune(null)
+        processing && setProcessing(null)
+      })
+      setWorker(w)
     }, // eslint-disable-next-line
     []
   )
@@ -157,8 +164,7 @@ const List = ({
         setPlaying(tune)
         setTune(null)
       } else if (tune.id !== player.playing.id) {
-        controller && controller.abort()
-        setController(new AbortController())
+        worker.postMessage(current)
       }
     }, // eslint-disable-next-line
     [tune]
@@ -172,30 +178,6 @@ const List = ({
       setKey(null)
     }, // eslint-disable-next-line
     [key]
-  )
-
-  useEffect(
-    () => {
-      if (!controller) {
-        tune && setTune(null)
-        processing && setProcessing(null)
-        return
-      }
-
-      const signal = controller.signal
-      signal.addEventListener(`abort`, () => setController(null))
-      setProcessing(current.id)
-
-      sniff({ station: { ...current }, signal })
-        .then((station) => {
-          if (!signal.aborted) {
-            controller.abort()
-            setStation(station)
-            station.src_resolved && setPlaying(station)
-          }
-        })
-    }, // eslint-disable-next-line
-    [controller]
   )
 
   useEffect(

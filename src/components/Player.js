@@ -31,7 +31,7 @@ const Video = styled.video`
     border: none;
 
     ::-webkit-media-controls {
-      display:none !important;
+      display: none !important;
     }
   }
 `
@@ -65,6 +65,12 @@ const Player = ({
 
   const stop = () => {
     setCurrentState(`paused`)
+
+    if (hls) {
+      hls.destroy()
+      setHls(null)
+    }
+
     node.current.pause()
   }
 
@@ -78,17 +84,15 @@ const Player = ({
       node.current.addEventListener(`loadstart`, () => setCurrentState(`loading`))
 
       return () => document.fullscreenElement && document.exitFullscreen()
-    }, // eslint-disable-next-line
-    []
+    },
+    [] // eslint-disable-line
   )
 
 
   useEffect(
     () => {
-      // if (station.id === lastStation.id) return
       [...node.current.childNodes].forEach(child => child.remove())
       sourceHeight && setSourceHeight(0)
-      // setLastStation(station)
       if (hls) hls.destroy()
 
       const station = player.playing
@@ -134,15 +138,14 @@ const Player = ({
         return
       } else if (station.src_resolved) {
         node.current.src = station.src_resolved
-        // node.current.load()
         play()
       } else if (!station.id) {
         stop()
       }
 
       hls && setHls(null)
-    }, // eslint-disable-next-line
-    [player.playing]
+    },
+    [player.playing] // eslint-disable-line
   )
 
   useEffect(
@@ -157,8 +160,8 @@ const Player = ({
           ? height + sourceHeight - 8
           : 116 + (list.visible ? 500 : 0)
       )
-    }, // eslint-disable-next-line
-    [sourceHeight]
+    },
+    [sourceHeight] // eslint-disable-line
   )
 
   useEffect(
@@ -168,8 +171,8 @@ const Player = ({
       document.fullscreenElement
         ? document.exitFullscreen()
         : node.current.requestFullscreen()
-    }, // eslint-disable-next-line
-    [fullscreen]
+    },
+    [fullscreen] // eslint-disable-line
   )
 
   return (
@@ -188,7 +191,7 @@ const Player = ({
         <button onClick={() => { player.currentState === `paused` && player.playing.id && setPlaying({ ...player.playing }) }}>
           play
         </button>
-        <button onClick={() => { player.currentState === `playing` && stop() }}>
+        <button onClick={() => { player.currentState !== `paused` && stop() }}>
           stop
         </button>
         <Visualization

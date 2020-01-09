@@ -80,20 +80,22 @@ const prefetch = ({ recursive = ``, data, signal }) => {
         : url.match(/\S+\//g) + links[links.length - 1]
 
       return prefetch({ recursive: lastLink, data, signal, })
-
     })
     .catch(() => unresolvable)
 }
 
 self.addEventListener(`message`, (event) => {
   if (!event) return
-  const { data } = event
+
   controller && controller.abort()
+  const { data } = event
   if (data) {
     controller = new AbortController()
 
     const signal = controller.signal
-    signal.addEventListener(`abort`, () => { controller = null })
+    signal.addEventListener(`abort`, () => {
+      controller = null
+    })
 
     prefetch({ data, signal })
       .then((station) => {

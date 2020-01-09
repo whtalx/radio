@@ -26,8 +26,8 @@ export default ({
       state === `playing`
         ? setController(new AbortController())
         : controller && controller.abort()
-    }, // eslint-disable-next-line
-    [state]
+    },
+    [state] // eslint-disable-line
   )
 
   useEffect(
@@ -55,8 +55,8 @@ export default ({
       }
 
       sendBands()
-    }, // eslint-disable-next-line
-    [controller]
+    },
+    [controller] // eslint-disable-line
   )
 
   return <Canvas ref={ canvasRef } />

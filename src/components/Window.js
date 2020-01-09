@@ -116,4 +116,3 @@ const Window = ({ visible }) => {
 const mapStateToProps = ({ list: { visible }}) => ({ visible })
 
 export default connect(mapStateToProps)(Window)
-

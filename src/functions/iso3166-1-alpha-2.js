@@ -501,6 +501,6 @@ export default (code) => {
     case `zw`:
       return { name: `Zimbabwe`, orig: `Nyika yeZimbabwe` }
     default:
-      return {}
+      return { name: code }
   }
 }

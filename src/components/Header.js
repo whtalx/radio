@@ -65,8 +65,8 @@ const Header = ({
         t.stations = <Nav key={ `stations` } onClick={ () => show(`stations`) }>{ makeTitle(list.lastSearch) }</Nav>
         return t
       })
-    },// eslint-disable-next-line
-    [list.lastSearch]
+    },
+    [list.lastSearch] // eslint-disable-line
   )
 
   return list.showFavourites

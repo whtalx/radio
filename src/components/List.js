@@ -43,6 +43,7 @@ const Li = styled.li.attrs({
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
+  line-height: 1.1em;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
@@ -107,8 +108,8 @@ const List = ({
         processing && setProcessing(null)
       })
       setWorker(w)
-    }, // eslint-disable-next-line
-    []
+    },
+    [] // eslint-disable-line
   )
 
   useEffect(
@@ -150,8 +151,8 @@ const List = ({
         default:
           return
       }
-    },// eslint-disable-next-line
-    [api.type]
+    },
+    [api.type] // eslint-disable-line
   )
 
   useEffect(
@@ -166,8 +167,8 @@ const List = ({
       } else if (tune.id !== player.playing.id) {
         worker.postMessage(current)
       }
-    }, // eslint-disable-next-line
-    [tune]
+    },
+    [tune] // eslint-disable-line
   )
 
   useEffect(
@@ -176,8 +177,8 @@ const List = ({
 
       key === `Enter` && setTune(current)
       setKey(null)
-    }, // eslint-disable-next-line
-    [key]
+    },
+    [key] // eslint-disable-line
   )
 
   useEffect(
@@ -226,8 +227,8 @@ const List = ({
       menu.append(new MenuItem(info))
       menu.popup({ window: remote.getCurrentWindow() })
       setContextMenuCalled(false)
-    }, // eslint-disable-next-line
-    [contextMenuCalled]
+    },
+    [contextMenuCalled] // eslint-disable-line
   )
 
   return (

@@ -8,7 +8,7 @@ const query = (props) =>
           : a,
       []
     ).join(`&`)
-  ].join(`?`)).replace(/#/g, '%23')
+  ].join(`?`)).replace(/#/g, `%23`)
 
 export default ({
   protocol = `https:/`,

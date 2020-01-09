@@ -56,6 +56,18 @@ const Player = ({
   const [sourceHeight, setSourceHeight] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
 
+  const play = () => {
+    node.current.play().catch((e) => {
+      setCurrentState(`paused`)
+      error(e)
+    })
+  }
+
+  const stop = () => {
+    setCurrentState(`paused`)
+    node.current.pause()
+  }
+
   useEffect(
     () => {
       context.createMediaElementSource(node.current).connect(bands)
@@ -64,7 +76,6 @@ const Player = ({
 
       node.current.addEventListener(`playing`, () => setCurrentState(`playing`))
       node.current.addEventListener(`loadstart`, () => setCurrentState(`loading`))
-      node.current.addEventListener(`pause`, () => setCurrentState(`paused`))
 
       return () => document.fullscreenElement && document.exitFullscreen()
     }, // eslint-disable-next-line
@@ -85,7 +96,7 @@ const Player = ({
         const h = new Hls()
         h.loadSource(station.hls)
         h.attachMedia(node.current)
-        h.on(Hls.Events.MANIFEST_PARSED,() => node.current.play().catch(error))
+        h.on(Hls.Events.MANIFEST_PARSED, play)
         h.on(Hls.Events.BUFFER_CODECS,(e, { video }) => {
           if (!video) return
 
@@ -122,13 +133,11 @@ const Player = ({
         setHls(h)
         return
       } else if (station.src_resolved) {
-        const source = document.createElement(`SOURCE`)
-        source.src = station.src_resolved
-        node.current.appendChild(source)
-        node.current.load()
-        node.current.play().catch(error)
+        node.current.src = station.src_resolved
+        // node.current.load()
+        play()
       } else if (!station.id) {
-        node.current.pause()
+        stop()
       }
 
       hls && setHls(null)
@@ -176,12 +185,12 @@ const Player = ({
         <button onClick={ toggleList }>
           list
         </button>
-        {/*<button>*/}
-        {/*  play*/}
-        {/*</button>*/}
-        {/*<button onClick={() => { !node.paused && node.pause() }}>*/}
-        {/*  stop*/}
-        {/*</button>*/}
+        <button onClick={() => { player.currentState === `paused` && player.playing.id && setPlaying({ ...player.playing }) }}>
+          play
+        </button>
+        <button onClick={() => { player.currentState === `playing` && stop() }}>
+          stop
+        </button>
         <Visualization
           state={ player.currentState }
           bandsBinCount={ bands.frequencyBinCount }

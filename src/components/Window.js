@@ -12,8 +12,6 @@ const Wrapper = styled.div`
   box-sizing: border-box;
   display: flex;
   flex-flow: column;
-  //justify-content: flex-start;
-  //align-items: center;
   background-image:
     linear-gradient(
       315deg,
@@ -27,8 +25,12 @@ const Wrapper = styled.div`
       hsl(240, 33%, 9%) 100%
     );
   border: 1px solid black;
-  box-shadow:
-    inset 1px 1px 2px hsl(200, 20%, 80%);
+  box-shadow: inset 1px 1px 2px hsl(200, 20%, 80%);
+  -webkit-app-region: drag;
+
+  & > :not(:first-child) {
+    -webkit-app-region: no-drag;
+  }
 `
 
 const Title = styled.div`
@@ -38,7 +40,7 @@ const Title = styled.div`
   align-items: center;
   justify-content: flex-end;
   color: hsl(0, 0%, 100%);
-  -webkit-app-region: drag !important;
+  -webkit-app-region: drag;
 
   button {
     margin-left: 3px;

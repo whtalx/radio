@@ -138,16 +138,16 @@ const Player = ({
 
   useEffect(
     () => {
-      const rect = remote.getCurrentWindow().getBounds()
+      const [width, height] = remote.getCurrentWindow().getContentSize()
 
-      if (rect.height < 200 && !sourceHeight) return
+      if (height < 200 && !sourceHeight) return
 
-      remote.getCurrentWindow().setBounds({
-        ...rect,
-        height: sourceHeight
-          ? rect.height + sourceHeight - 8
-          : 116 + (list.visible ? 500 : 0),
-      })
+      remote.getCurrentWindow().setContentSize(
+        width,
+        sourceHeight
+          ? height + sourceHeight - 8
+          : 116 + (list.visible ? 500 : 0)
+      )
     }, // eslint-disable-next-line
     [sourceHeight]
   )

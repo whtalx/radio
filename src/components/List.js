@@ -108,9 +108,10 @@ const List = ({
     () => {
       switch (api.type) {
         case `stations`: {
-          setProcessing(api.search.countrycode || api.search.language || api.search.tag)
+          const { countrycode, language, tag } = api.search
+          setProcessing(countrycode || language || tag)
           request(api)
-            .then(data => setStations(getStations(data)))
+            .then(data => setStations(getStations(data).map(item => ({ ...item, countrycode, language, tag }))))
             .then(() => setProcessing(null))
           return
         }
@@ -275,6 +276,7 @@ const List = ({
                     <Li
                       key={ listItem.name }
                       title={ country.orig }
+                      playing={ player.playing.countrycode === listItem.name }
                       processing={ listItem.name === processing }
                       onDoubleClick={ () => dispatch(listItem.action) }
                     >
@@ -294,6 +296,30 @@ const List = ({
                       onFocus={ () => setCurrent(listItem) }
                       onContextMenu={ handleContextMenu }
                       onDoubleClick={ () => setTune(listItem) }
+                    >
+                      { listItem.name }
+                    </Li>
+                  )
+
+                case `languages`:
+                  return (
+                    <Li
+                      key={ listItem.name }
+                      processing={ listItem.name === processing }
+                      onDoubleClick={ () => dispatch(listItem.action) }
+                      playing={ player.playing.language === listItem.name }
+                    >
+                      { listItem.name }
+                    </Li>
+                  )
+
+                case `tags`:
+                  return (
+                    <Li
+                      key={ listItem.name }
+                      processing={ listItem.name === processing }
+                      playing={ player.playing.tag === listItem.name }
+                      onDoubleClick={ () => dispatch(listItem.action) }
                     >
                       { listItem.name }
                     </Li>

@@ -56,41 +56,41 @@ export default (state = initialState(), { type, payload }) => {
   } = state
 
   let changed = false
+  const showList = (elem) => {
+    show = elem
+    history = history.splice(0, elem === `stations` ? 2 : 1)
+    history.push(elem)
+    changed = true
+  }
 
   switch (type) {
     case `SET_COUNTRY_CODES`: {
+      tags = []
+      languages = []
       countrycodes = payload
-      show = `countrycodes`
-      history = history.splice(0, 1)
-      history.push(show)
-      changed = true
+      showList(`countrycodes`)
       break
     }
 
     case `SET_LANGUAGES`: {
+      tags = []
       languages = payload
-      show = `languages`
-      history = history.splice(0, 1)
-      history.push(show)
-      changed = true
+      countrycodes = []
+      showList(`languages`)
       break
     }
 
     case `SET_TAGS`: {
       tags = payload
-      show = `tags`
-      history = history.splice(0, 1)
-      history.push(show)
-      changed = true
+      languages = []
+      countrycodes = []
+      showList(`tags`)
       break
     }
 
     case `SET_STATIONS`: {
       stations = payload
-      show =  `stations`
-      history = history.splice(0, 2)
-      history.push(show)
-      changed = true
+      showList(`stations`)
       break
     }
 

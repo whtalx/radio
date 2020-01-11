@@ -4,8 +4,8 @@ import visualize from '../functions/visualize'
 
 const Canvas = styled.canvas`
   position: absolute;
-  right: 15px;
-  bottom: 15px;
+  right: 2px;
+  bottom: 3px;
   width: 79px;
   height: 19px;
 `

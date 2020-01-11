@@ -1,19 +1,40 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { connect } from 'react-redux'
+import { ipcRenderer, remote } from 'electron'
 import Hls from 'hls.js'
 import styled from 'styled-components'
 import error from '../functions/error'
 import Visualization from './Visualization'
 import AnalyserNode from '../classes/AnalyserNode'
-import { remote } from "electron"
 
 const StyledPlayer = styled.div`
   width: 264px;
-  position: relative;
+  height: 100%;
   display: flex;
   flex-flow: column;
   align-content: center;
   justify-content: flex-start;
+
+  section {
+    display: flex;
+  }
+`
+
+const Display = styled.div`
+  width: 92px;
+  height: 44px;
+  position: relative;
+`
+
+const Title = styled.div`
+  width: calc(100% - 100px);
+  height: 1.1em;
+  font-size: 1em;
+  line-height: 1.1em;
+  background-color: hsl(0, 0%, 0%);
+  color: hsl(120, 100%, 50%);
+  overflow: hidden;
+  white-space: nowrap;
 `
 
 const Video = styled.video`
@@ -81,13 +102,20 @@ const Player = ({
       peaks.connect(context.destination)
 
       node.current.addEventListener(`playing`, () => setCurrentState(`playing`))
-      node.current.addEventListener(`loadstart`, () => setCurrentState(`loading`))
+      node.current.addEventListener(`loadstart`, () => {
+        setCurrentState(/(file|localhost):/.test(node.current.src) ? `paused` : `loading`)
+      })
 
-      return () => document.fullscreenElement && document.exitFullscreen()
+      node.current.addEventListener(`pause`, () => {
+        node.current.src = ``
+      })
+
+      ipcRenderer.on(`resolved`, (_, data) => {
+        setPlaying(data)
+      })
     },
     [] // eslint-disable-line
   )
-
 
   useEffect(
     () => {
@@ -177,6 +205,20 @@ const Player = ({
 
   return (
     <StyledPlayer>
+      <section>
+        <Display>
+          <Visualization
+            state={ player.currentState }
+            bandsBinCount={ bands.frequencyBinCount }
+            peaksBinCount={ peaks.frequencyBinCount }
+            bandsFrequencyData={ a => bands.getByteFrequencyData(a) }
+            peaksFrequencyData={ a => peaks.getByteFrequencyData(a) }
+          />
+        </Display>
+        <Title>
+          { player.playing.title || player.playing.name }
+        </Title>
+      </section>
       <Video
         ref={ node }
         crossOrigin={ `` }
@@ -194,13 +236,6 @@ const Player = ({
         <button onClick={() => { player.currentState !== `paused` && stop() }}>
           stop
         </button>
-        <Visualization
-          state={ player.currentState }
-          bandsBinCount={ bands.frequencyBinCount }
-          peaksBinCount={ peaks.frequencyBinCount }
-          bandsFrequencyData={ a => bands.getByteFrequencyData(a) }
-          peaksFrequencyData={ a => peaks.getByteFrequencyData(a) }
-        />
       </Controls>
     </StyledPlayer>
   )

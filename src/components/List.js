@@ -86,7 +86,7 @@ const List = ({
 }) => {
   const [key, setKey] = useState(null)
   const [tune, setTune] = useState(null)
-  const [worker, setWorker] = useState(null)
+  // const [worker, setWorker] = useState(null)
   const [current, setCurrent] = useState({})
   const [processing, setProcessing] = useState(null)
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
@@ -99,15 +99,18 @@ const List = ({
 
   useEffect(
     () => {
-      ipcRenderer.on(`key`, (e, key) => setKey(key))
-      const w = new Worker(`./prefetch.js`)
-      w.addEventListener('message', ({ data }) => {
-        setStation(data)
-        data.src_resolved && setPlaying(data)
-        tune && setTune(null)
+      ipcRenderer.on(`rejected`, (_, data) => {
         processing && setProcessing(null)
+        setStation({ ...data, unresolvable: true })
       })
-      setWorker(w)
+      // const w = new Worker(`./prefetch.js`)
+      // w.addEventListener('message', ({ data }) => {
+      //   setStation(data)
+      //   data.src_resolved && setPlaying(data)
+      //   tune && setTune(null)
+      //   processing && setProcessing(null)
+      // })
+      // setWorker(w)
     },
     [] // eslint-disable-line
   )
@@ -165,7 +168,8 @@ const List = ({
         setPlaying(tune)
         setTune(null)
       } else if (tune.id !== player.playing.id) {
-        worker.postMessage(current)
+        ipcRenderer.send(`fetch`, current)
+        // worker.postMessage(current)
       }
     },
     [tune] // eslint-disable-line

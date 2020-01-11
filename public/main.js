@@ -1,6 +1,7 @@
-import { app, BrowserWindow, Menu, ipcMain, screen, shell } from 'electron'
+import { app, BrowserWindow, Menu, ipcMain, net, screen, shell } from 'electron'
 import isDev from 'electron-is-dev'
 import path from 'path'
+import resolve from './scripts/resolve'
 
 global.player = null
 
@@ -33,11 +34,11 @@ const createPlayer = () => {
   global.player.loadURL(makeURL(`player`))
 
   global.player.once(`ready-to-show`, () => {
-    if (isDev) {
-      const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require(`electron-devtools-installer`)
-      installExtension(REDUX_DEVTOOLS)
-      installExtension(REACT_DEVELOPER_TOOLS)
-    }
+    // if (isDev) {
+    //   const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require(`electron-devtools-installer`)
+    //   installExtension(REDUX_DEVTOOLS)
+    //   installExtension(REACT_DEVELOPER_TOOLS)
+    // }
 
     global.player.show()
   })
@@ -67,11 +68,7 @@ app.on(`activate`, () => {
   global.player === null && createPlayer()
 })
 
-ipcMain.on(`close`, (e, name) => control({ func: `close`, name }))
-ipcMain.on(`minimize`, (e, name) => control({ func: `minimize`, name }))
-ipcMain.on(`hide`, (e, name) => control({ func: `hide`, name }))
-
-if (process.platform === 'darwin') {
+// if (process.platform === 'darwin') {
   const menu = [
     {
       label: `WebRadio`,
@@ -102,4 +99,35 @@ if (process.platform === 'darwin') {
   ]
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(menu))
+// }
+
+ipcMain.on(`close`, (_, name) => control({ func: `close`, name }))
+ipcMain.on(`minimize`, (_, name) => control({ func: `minimize`, name }))
+ipcMain.on(`hide`, (_, name) => control({ func: `hide`, name }))
+ipcMain.on(`fetch`, fetch)
+
+function fetch(_, data, recursive) {
+  const { src } = data || {}
+
+  if (!src) {
+    console.log(`this should never happen. if you read this, god bless you\npassed data:\n`, data)
+    return
+  }
+
+  const url = recursive || src
+  console.log(`fetching:\n `, url)
+
+  const send = (c, m) => {
+    global.player.webContents.send(c, m)
+  }
+
+  const recurse = (link) => {
+    fetch(undefined, data, link)
+  }
+
+  const request = net.request(url)
+  request.setHeader(`Icy-MetaData`, `1`)
+  request.on(`error`, console.error)
+  request.on(`response`, resolve({ url, data, send, recurse }))
+  request.end()
 }

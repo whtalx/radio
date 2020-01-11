@@ -16,6 +16,7 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^1.2.1",
     "electron-is-dev": "^1.1.0",
     "electron-localshortcut": "^3.2.1",
     "esm": "^3.2.25"

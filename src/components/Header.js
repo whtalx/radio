@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { connect } from 'react-redux'
 import countries from '../functions/iso3166-1-alpha-2'
+import {
+  listShow,
+  listBack,
+  listForward,
+  favouritesToggle,
+} from '../actions'
 
 const StatusBar = styled.div`
   position: sticky;
@@ -46,23 +52,23 @@ const makeTitle = (props = {}) => {
 
 const Header = ({
   list,
-  back,
-  show,
-  forward,
-  toggleFavourites,
+  listShow,
+  listBack,
+  listForward,
+  favouritesToggle,
 }) => {
   const [titles, setTitles] = useState({
-    start: <Nav key={ `start` } onClick={ () => show(`start`) }>stations</Nav>,
-    countrycodes: <Nav key={ `countrycodes` } onClick={ () => show(`countrycodes`) }>from</Nav>,
-    languages: <Nav key={ `languages` } onClick={ () => show(`languages`) }>in</Nav>,
-    tags: <Nav key={ `tags` } onClick={ () => show(`tags`) }>tagged</Nav>,
-    stations: <Nav key={ `stations` } onClick={ () => show(`stations`) }>{ makeTitle(list.lastSearch) }</Nav>,
+    start: <Nav key={ `start` } onClick={ () => listShow(`start`) }>stations</Nav>,
+    countrycodes: <Nav key={ `countrycodes` } onClick={ () => listShow(`countrycodes`) }>from</Nav>,
+    languages: <Nav key={ `languages` } onClick={ () => listShow(`languages`) }>in</Nav>,
+    tags: <Nav key={ `tags` } onClick={ () => listShow(`tags`) }>tagged</Nav>,
+    stations: <Nav key={ `stations` } onClick={ () => listShow(`stations`) }>{ makeTitle(list.lastSearch) }</Nav>,
   })
 
   useEffect(
     () => {
       setTitles(t => {
-        t.stations = <Nav key={ `stations` } onClick={ () => show(`stations`) }>{ makeTitle(list.lastSearch) }</Nav>
+        t.stations = <Nav key={ `stations` } onClick={ () => listShow(`stations`) }>{ makeTitle(list.lastSearch) }</Nav>
         return t
       })
     },
@@ -71,11 +77,11 @@ const Header = ({
 
   return list.showFavourites
     ? <StatusBar>
-      <Fav showing={ true } onClick={ toggleFavourites }>&#9825;</Fav>
+      <Fav showing={ true } onClick={ favouritesToggle }>&#9825;</Fav>
     </StatusBar>
     : <StatusBar>
-      <NavigateButton onClick={ back } disabled={ list.history.findIndex(i => i === list.show) === 0 } />
-      <NavigateButton onClick={ forward } disabled={ list.history.findIndex(i => i === list.show) === list.history.length - 1 } />
+      <NavigateButton onClick={ listBack } disabled={ list.history.findIndex(i => i === list.show) === 0 } />
+      <NavigateButton onClick={ listForward } disabled={ list.history.findIndex(i => i === list.show) === list.history.length - 1 } />
       <Status>
         {
           list.history
@@ -93,16 +99,16 @@ const Header = ({
             )
         }
       </Status>
-      <Fav showing={ false } onClick={ toggleFavourites }>&#9825;</Fav>
+      <Fav showing={ false } onClick={ favouritesToggle }>&#9825;</Fav>
     </StatusBar>
 }
 
-const mapStateToProps = ({ list }) => ({ list })
-const mapDispatchToProps = (dispatch) => ({
-  back: () => dispatch({ type: `LIST_BACK` }),
-  forward: () => dispatch({ type: `LIST_FORWARD` }),
-  show: (payload) => dispatch({ type: `SHOW`, payload }),
-  toggleFavourites: () => dispatch({ type: `TOGGLE_FAVOURITES` }),
-})
+const mapState = ({ list }) => ({ list })
+const mapDispatch = {
+  listShow,
+  listBack,
+  listForward,
+  favouritesToggle,
+}
 
-export default connect(mapStateToProps, mapDispatchToProps)(Header)
+export default connect(mapState, mapDispatch)(Header)

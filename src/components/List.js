@@ -9,6 +9,19 @@ import getStations from '../functions/getStations'
 import getLanguages from '../functions/getLanguages'
 import countries from '../functions/iso3166-1-alpha-2'
 import getCountryCodes from '../functions/getCountryCodes'
+import {
+  setApi,
+  setList,
+  apiSetType,
+  setPlaying,
+  setStation,
+  listSetTags,
+  favouritesAdd,
+  listSetStations,
+  listSetLanguages,
+  favouritesRemove,
+  listSetCountryCodes,
+} from '../actions'
 
 const { Menu, MenuItem } = remote
 
@@ -74,19 +87,19 @@ const List = ({
   api,
   list,
   player,
-  setTags,
-  dispatch,
+  setApi,
+  setList,
+  apiSetType,
   setPlaying,
   setStation,
-  setStations,
-  setLanguages,
-  addFavourite,
-  removeFavourite,
-  setCountryCodes,
+  listSetTags,
+  favouritesAdd,
+  listSetStations,
+  listSetLanguages,
+  favouritesRemove,
+  listSetCountryCodes,
 }) => {
-  const [key, setKey] = useState(null)
   const [tune, setTune] = useState(null)
-  // const [worker, setWorker] = useState(null)
   const [current, setCurrent] = useState({})
   const [processing, setProcessing] = useState(null)
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
@@ -99,20 +112,24 @@ const List = ({
 
   useEffect(
     () => {
+      const string = localStorage.getItem(`list`)
+      string && setList({ ...JSON.parse(string), visible: false })
+
       ipcRenderer.on(`rejected`, (_, data) => {
         processing && setProcessing(null)
         setStation({ ...data, unresolvable: true })
       })
-      // const w = new Worker(`./prefetch.js`)
-      // w.addEventListener('message', ({ data }) => {
-      //   setStation(data)
-      //   data.src_resolved && setPlaying(data)
-      //   tune && setTune(null)
-      //   processing && setProcessing(null)
-      // })
-      // setWorker(w)
     },
     [] // eslint-disable-line
+  )
+
+  useEffect(
+    () => {
+      const string = JSON.stringify(list)
+      const storage = localStorage.getItem(`list`)
+      string !== storage && localStorage.setItem(`list`, string)
+    },
+    [list] // eslint-disable-line
   )
 
   useEffect(
@@ -122,7 +139,7 @@ const List = ({
           const { countrycode, language, tag } = api.search
           setProcessing(countrycode || language || tag)
           request(api)
-            .then(data => setStations(getStations(data).map(item => ({ ...item, countrycode, language, tag }))))
+            .then(data => listSetStations(getStations(data).map(item => ({ ...item, countrycode, language, tag }))))
             .then(() => setProcessing(null))
           return
         }
@@ -130,7 +147,7 @@ const List = ({
         case `countrycodes`: {
           setProcessing(`by countries`)
           request(api)
-            .then(data => setCountryCodes(getCountryCodes(data)))
+            .then(data => listSetCountryCodes(getCountryCodes(data)))
             .then(() => setProcessing(null))
           return
         }
@@ -138,7 +155,7 @@ const List = ({
         case `languages`: {
           setProcessing(`by languages`)
           request(api)
-            .then(data => setLanguages(getLanguages(data)))
+            .then(data => listSetLanguages(getLanguages(data)))
             .then(() => setProcessing(null))
           return
         }
@@ -146,7 +163,7 @@ const List = ({
         case `tags`: {
           setProcessing(`by tags`)
           request(api)
-            .then(data => setTags(getTags(data)))
+            .then(data => listSetTags(getTags(data)))
             .then(() => setProcessing(null))
           return
         }
@@ -177,16 +194,6 @@ const List = ({
 
   useEffect(
     () => {
-      if (!key) return
-
-      key === `Enter` && setTune(current)
-      setKey(null)
-    },
-    [key] // eslint-disable-line
-  )
-
-  useEffect(
-    () => {
       if (!contextMenuCalled) return
 
       const play = {
@@ -207,14 +214,14 @@ const List = ({
       const add = {
         label: `Add to favourites`,
         click() {
-          addFavourite(current)
+          favouritesAdd(current)
         },
       }
 
       const remove = {
         label: `Remove from favourites`,
         click() {
-          removeFavourite(current)
+          favouritesRemove(current)
         },
       }
 
@@ -265,7 +272,7 @@ const List = ({
                       title={ country.orig }
                       playing={ player.playing.countrycode === listItem.name }
                       processing={ listItem.name === processing }
-                      onDoubleClick={ () => dispatch(listItem.action) }
+                      onDoubleClick={ () => setApi(listItem.search) }
                     >
                       { country.name }
                     </Li>
@@ -293,7 +300,7 @@ const List = ({
                     <Li
                       key={ listItem.name }
                       processing={ listItem.name === processing }
-                      onDoubleClick={ () => dispatch(listItem.action) }
+                      onDoubleClick={ () => setApi(listItem.search) }
                       playing={ player.playing.language === listItem.name }
                     >
                       { listItem.name }
@@ -306,7 +313,7 @@ const List = ({
                       key={ listItem.name }
                       processing={ listItem.name === processing }
                       playing={ player.playing.tag === listItem.name }
-                      onDoubleClick={ () => dispatch(listItem.action) }
+                      onDoubleClick={ () => setApi(listItem.search) }
                     >
                       { listItem.name }
                     </Li>
@@ -317,7 +324,7 @@ const List = ({
                     <Li
                       key={ listItem.name }
                       processing={ listItem.name === processing }
-                      onDoubleClick={ () => dispatch(listItem.action) }
+                      onDoubleClick={ () => apiSetType(listItem.type) }
                     >
                       { listItem.name }
                     </Li>
@@ -330,17 +337,19 @@ const List = ({
   )
 }
 
-const mapStateToProps = ({ api, list, player }) => ({ api, list, player })
-const mapDispatchToProps = (dispatch) => ({
-  setTags: payload => dispatch({ type: `SET_TAGS`, payload }),
-  dispatch: action => dispatch(action),
-  setPlaying: payload => dispatch({ type: `SET_PLAYING`, payload }),
-  setStation: payload => dispatch({ type: `SET_STATION`, payload }),
-  setStations: payload => dispatch({ type: `SET_STATIONS`, payload }),
-  setLanguages: payload => dispatch({ type: `SET_LANGUAGES`, payload }),
-  addFavourite: payload => dispatch({ type: `ADD_FAVOURITE`, payload }),
-  removeFavourite: payload => dispatch({ type: `REMOVE_FAVOURITE`, payload }),
-  setCountryCodes: payload => dispatch({ type: `SET_COUNTRY_CODES`, payload }),
-})
+const mapState = ({ api, list, player }) => ({ api, list, player })
+const mapDispatch = {
+  setApi,
+  setList,
+  apiSetType,
+  setPlaying,
+  setStation,
+  listSetTags,
+  favouritesAdd,
+  listSetStations,
+  listSetLanguages,
+  favouritesRemove,
+  listSetCountryCodes,
+}
 
-export default connect(mapStateToProps, mapDispatchToProps)(List)
+export default connect(mapState, mapDispatch)(List)

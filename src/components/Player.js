@@ -6,6 +6,8 @@ import styled from 'styled-components'
 import error from '../functions/error'
 import Visualization from './Visualization'
 import AnalyserNode from '../classes/AnalyserNode'
+import { setPlayer, setPlaying, playerSetState } from '../reducers/player'
+import { listToggle, setStation } from '../reducers/list'
 
 const StyledPlayer = styled.div`
   width: 264px;
@@ -64,10 +66,11 @@ const Controls = styled.div`
 const Player = ({
   list,
   player,
+  setPlayer,
+  listToggle,
   setPlaying,
   setStation,
-  toggleList,
-  setCurrentState,
+  playerSetState,
 }) => {
   const node = useRef(null)
   const [hls, setHls] = useState(null)
@@ -79,13 +82,13 @@ const Player = ({
 
   const play = () => {
     node.current.play().catch((e) => {
-      setCurrentState(`paused`)
+      playerSetState(`paused`)
       error(e)
     })
   }
 
   const stop = () => {
-    setCurrentState(`paused`)
+    playerSetState(`paused`)
 
     if (hls) {
       hls.destroy()
@@ -97,13 +100,16 @@ const Player = ({
 
   useEffect(
     () => {
+      const string = localStorage.getItem(`player`)
+      string && setPlayer(JSON.parse(string))
+
       context.createMediaElementSource(node.current).connect(bands)
       bands.connect(peaks)
       peaks.connect(context.destination)
 
-      node.current.addEventListener(`playing`, () => setCurrentState(`playing`))
+      node.current.addEventListener(`playing`, () => playerSetState(`playing`))
       node.current.addEventListener(`loadstart`, () => {
-        setCurrentState(/(file|localhost):/.test(node.current.src) ? `paused` : `loading`)
+        playerSetState(/(file|localhost):/.test(node.current.src) ? `paused` : `loading`)
       })
 
       node.current.addEventListener(`pause`, () => {
@@ -115,6 +121,15 @@ const Player = ({
       })
     },
     [] // eslint-disable-line
+  )
+
+  useEffect(
+    () => {
+      const string = JSON.stringify(player)
+      const storage = localStorage.getItem(`player`)
+      string !== storage && localStorage.setItem(`player`, string)
+    },
+    [player] // eslint-disable-line
   )
 
   useEffect(
@@ -227,7 +242,7 @@ const Player = ({
         onDoubleClick={ () => setFullscreen(last => !last) }
       />
       <Controls>
-        <button onClick={ toggleList }>
+        <button onClick={ () => listToggle() }>
           list
         </button>
         <button onClick={() => { player.currentState === `paused` && player.playing.id && setPlaying({ ...player.playing }) }}>
@@ -241,12 +256,13 @@ const Player = ({
   )
 }
 
-const mapStateToProps = ({ list, player }) => ({ list, player })
-const mapDispatchToProps = (dispatch) => ({
-  toggleList: () => dispatch({ type: `TOGGLE_LIST` }),
-  setPlaying: payload => dispatch({ type: `SET_PLAYING`, payload }),
-  setStation: payload => dispatch({ type: `SET_STATION`, payload }),
-  setCurrentState: payload => dispatch({ type: `SET_CURRENT_STATE`, payload }),
-})
+const mapState = ({ list, player }) => ({ list, player })
+const mapDispatch = {
+  setPlayer,
+  listToggle,
+  setPlaying,
+  setStation,
+  playerSetState,
+}
 
-export default connect(mapStateToProps, mapDispatchToProps)(Player)
+export default connect(mapState, mapDispatch)(Player)

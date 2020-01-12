@@ -69,7 +69,7 @@ const Content = styled.div`
     1px 1px 2px hsl(200, 20%, 80%);
 `
 
-const Window = ({ visible }) => {
+const Window = ({ list }) => {
   const [buttons] = useState([`minimize`, `close`])
   const [title] = useState(`WebRadio`)
   const [name] = useState(`player`)
@@ -77,13 +77,13 @@ const Window = ({ visible }) => {
   useEffect(
     () => {
       const rect = remote.getCurrentWindow().getBounds()
-      if (rect.height < 500 && !visible) return
+      if (rect.height < 500 && !list) return
       remote.getCurrentWindow().setBounds({
         ...rect,
-        height: visible ? rect.height + 500 : rect.height - 500,
+        height: list ? rect.height + 500 : rect.height - 500,
       })
     },
-    [visible]
+    [list]
   )
 
   return (
@@ -108,11 +108,11 @@ const Window = ({ visible }) => {
       <Content>
         <Player />
       </Content>
-      { visible && <Content><List /></Content>}
+      { list && <Content><List /></Content>}
     </Wrapper>
   )
 }
 
-const mapStateToProps = ({ list: { visible }}) => ({ visible })
+const mapState = ({ list: { visible }}) => ({ list: visible })
 
-export default connect(mapStateToProps)(Window)
+export default connect(mapState)(Window)

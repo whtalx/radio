@@ -1,4 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createReducer } from '@reduxjs/toolkit'
+import { setApi, setStationsList } from '../actions/common'
+import { setType } from '../actions/api'
+
 /*
 const types = [
   `countries`,
@@ -71,32 +74,29 @@ const orders = [
 ]
 */
 
-const initialState = {
-  protocol: `https:/`,
-  server: `de1.api.radio-browser.info`,
-  data: `json`,
-  type: null,
-  search: null,
-}
-
-export default createSlice({
-  name: `todos`,
-  initialState,
-  reducers: {
-    setApi: (state, { payload }) => ({
+export default createReducer(
+  {
+    protocol: `https:/`,
+    server: `de1.api.radio-browser.info`,
+    data: `json`,
+    type: null,
+    search: null,
+  },
+  {
+    [setApi]: (state, { payload }) => ({
       ...state,
       ...payload,
     }),
 
-    apiSetType: (state, { payload }) => ({
+    [setType]: (state, { payload }) => ({
       ...state,
       type: payload,
       search: null,
     }),
 
-    listSetStations: (state) => ({
+    [setStationsList]: (state) => ({
       ...state,
       type: null,
     }),
   }
-}).reducer
+)

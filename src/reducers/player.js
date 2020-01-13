@@ -1,28 +1,22 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createReducer } from '@reduxjs/toolkit'
+import { setPlayer, setPlaying, setState } from '../actions/player'
 
-const initialState = {
-  currentState: `paused`,
-  playing: {},
-}
+export default createReducer(
+  {
+    currentState: `paused`,
+    playing: {},
+  },
+  {
+    [setPlayer]: (state, { payload }) => payload,
 
-const player = createSlice({
-  name: `player`,
-  initialState,
-  reducers: {
-    setPlayer: (state, { payload }) => payload,
-
-    setPlaying: (state, { payload }) => ({
-      ...state,
-      playing: payload,
+    [setPlaying]: (state, { payload }) => ({
+      currentState: payload.id ? `pending` : `paused`,
+      playing: payload
     }),
 
-    playerSetState: (state, { payload }) => ({
+    [setState]: (state, { payload }) => ({
       ...state,
-      type: payload,
-      search: null,
+      currentState: payload,
     }),
   }
-})
-
-export const { setPlayer, setPlaying, playerSetState } = player.actions
-export default player.reducer
+)

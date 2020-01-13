@@ -1,94 +1,38 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { connect } from 'react-redux'
 import { ipcRenderer, remote } from 'electron'
 import Hls from 'hls.js'
-import styled from 'styled-components'
-import error from '../functions/error'
-import Visualization from './Visualization'
-import AnalyserNode from '../classes/AnalyserNode'
-import { setPlayer, setPlaying, playerSetState } from '../reducers/player'
-import { listToggle, setStation } from '../reducers/list'
+import { StyledPlayer, Display, Title, Video, Controls } from './styled'
+import Visualization from '../Visualization'
+import AnalyserNode from '../../classes/AnalyserNode'
+import error from '../../functions/error'
 
-const StyledPlayer = styled.div`
-  width: 264px;
-  height: 100%;
-  display: flex;
-  flex-flow: column;
-  align-content: center;
-  justify-content: flex-start;
-
-  section {
-    display: flex;
-  }
-`
-
-const Display = styled.div`
-  width: 92px;
-  height: 44px;
-  position: relative;
-`
-
-const Title = styled.div`
-  width: calc(100% - 100px);
-  height: 1.1em;
-  font-size: 1em;
-  line-height: 1.1em;
-  background-color: hsl(0, 0%, 0%);
-  color: hsl(120, 100%, 50%);
-  overflow: hidden;
-  white-space: nowrap;
-`
-
-const Video = styled.video`
-  margin: 0 auto;
-  width: 244px;
-  height: ${ props => props.sourceHeight || 8 }px;
-  border-top-color: hsl(240, 100%, 3%);
-  border-left-color: hsl(240, 100%, 3%);
-  border-right-color: hsl(240, 18%, 27%);
-  border-bottom-color: hsl(240, 18%, 27%);
-  border-style: solid;
-  border-width: 1px;
-
-  :fullscreen {
-    border: none;
-
-    ::-webkit-media-controls {
-      display: none !important;
-    }
-  }
-`
-
-const Controls = styled.div`
-  height: 82px;
-`
-
-const Player = ({
+export default ({
   list,
-  player,
-  setPlayer,
   listToggle,
-  setPlaying,
   setStation,
-  playerSetState,
+  player,
+  setState,
+  setPlayer,
+  setPlaying,
 }) => {
   const node = useRef(null)
-  const [hls, setHls] = useState(null)
   const [context] = useState(new AudioContext())
   const [bands] = useState(new AnalyserNode({ context, stc: .7 }))
   const [peaks] = useState(new AnalyserNode({ context, stc: .99 }))
+  const [hls, setHls] = useState(null)
+  const [loaded, setLoaded] = useState(false)
   const [sourceHeight, setSourceHeight] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
 
   const play = () => {
     node.current.play().catch((e) => {
-      playerSetState(`paused`)
+      setState(`paused`)
       error(e)
     })
   }
 
   const stop = () => {
-    playerSetState(`paused`)
+    setState(`paused`)
 
     if (hls) {
       hls.destroy()
@@ -101,15 +45,17 @@ const Player = ({
   useEffect(
     () => {
       const string = localStorage.getItem(`player`)
-      string && setPlayer(JSON.parse(string))
+      const store = string && JSON.parse(string)
+      store && setPlayer({ ...store, currentState: store.currentState === `paused` ? `paused` : `pending` })
 
       context.createMediaElementSource(node.current).connect(bands)
       bands.connect(peaks)
       peaks.connect(context.destination)
+      setLoaded(true)
 
-      node.current.addEventListener(`playing`, () => playerSetState(`playing`))
+      node.current.addEventListener(`playing`, () => setState(`playing`))
       node.current.addEventListener(`loadstart`, () => {
-        playerSetState(/(file|localhost):/.test(node.current.src) ? `paused` : `loading`)
+        setState(/(file|localhost):/.test(node.current.src) ? `paused` : `loading`)
       })
 
       node.current.addEventListener(`pause`, () => {
@@ -125,6 +71,7 @@ const Player = ({
 
   useEffect(
     () => {
+      if (!loaded) return
       const string = JSON.stringify(player)
       const storage = localStorage.getItem(`player`)
       string !== storage && localStorage.setItem(`player`, string)
@@ -134,6 +81,7 @@ const Player = ({
 
   useEffect(
     () => {
+      if (player.currentState !== `pending`) return
       [...node.current.childNodes].forEach(child => child.remove())
       sourceHeight && setSourceHeight(0)
       if (hls) hls.destroy()
@@ -255,14 +203,3 @@ const Player = ({
     </StyledPlayer>
   )
 }
-
-const mapState = ({ list, player }) => ({ list, player })
-const mapDispatch = {
-  setPlayer,
-  listToggle,
-  setPlaying,
-  setStation,
-  playerSetState,
-}
-
-export default connect(mapState, mapDispatch)(Player)

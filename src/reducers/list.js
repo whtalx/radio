@@ -1,31 +1,19 @@
-import { createSlice } from '@reduxjs/toolkit'
-
-const initialState = {
-  tags: [],
-  show: `start`,
-  visible: false,
-  history: [`start`],
-  stations: [],
-  languages: [],
-  lastSearch: {},
-  favourites: [],
-  countrycodes: [],
-  showFavourites: false,
-  start: [
-    {
-      name: `by countries`,
-      type: `countrycodes`,
-    },
-    {
-      name: `by languages`,
-      type: `languages`,
-    },
-    {
-      name: `by tags`,
-      type: `tags`,
-    },
-  ],
-}
+import { createReducer } from '@reduxjs/toolkit'
+import { setApi, setStationsList } from '../actions/common'
+import {
+  show,
+  setList,
+  listToggle,
+  historyBack,
+  historyForward,
+  updateStation,
+  setTagsList,
+  setLanguagesList,
+  setCountryCodesList,
+  favouritesToggle,
+  favouritesRemove,
+  favouritesAdd,
+} from '../actions/list'
 
 const actualize = (element, history) => {
   history = history.splice(0, element === `stations` ? 2 : 1)
@@ -33,17 +21,47 @@ const actualize = (element, history) => {
   return history
 }
 
-const list =  createSlice({
-  name: `list`,
-  initialState,
-  reducers: {
-    setList: (state, { payload }) => payload,
+export default createReducer(
+  {
+    tags: [],
+    show: `start`,
+    visible: false,
+    history: [`start`],
+    stations: [],
+    languages: [],
+    lastSearch: {},
+    favourites: [],
+    countrycodes: [],
+    showFavourites: false,
+    start: [
+      {
+        name: `by countries`,
+        type: `countrycodes`,
+      },
+      {
+        name: `by languages`,
+        type: `languages`,
+      },
+      {
+        name: `by tags`,
+        type: `tags`,
+      },
+    ],
+  },
+  {
+    [setList]: (state, { payload }) => payload,
 
-    setApi: (state, { payload }) => {
+    [setApi]: (state, { payload }) => {
       state.lastSearch = payload.search
     },
 
-    setStation: (state, { payload }) => {
+    [setStationsList]: (state, { payload }) => {
+      state.show = `stations`
+      state.history = actualize(state.show, state.history)
+      state.stations = payload
+    },
+
+    [updateStation]: (state, { payload }) => {
       const station = ({ id }) => id === payload.id
       const index = state.favourites.findIndex(station)
 
@@ -54,11 +72,12 @@ const list =  createSlice({
       state.stations[state.stations.findIndex(station)] = payload
     },
 
-    listToggle: (state) => {
-      state.visible = !state.visible
-    },
+    [listToggle]: (state) => ({
+      ...state,
+      visible: !state.visible
+    }),
 
-    listBack: (state, { payload }) => {
+    [historyBack]: (state) => {
       const index = state.history.findIndex(i => i === state.show) - 1
 
       if (index >= 0) {
@@ -66,7 +85,7 @@ const list =  createSlice({
       }
     },
 
-    listForward: (state, { payload }) => {
+    [historyForward]: (state) => {
       const index = state.history.findIndex(i => i === state.show) + 1
 
       if (index < state.history.length) {
@@ -74,11 +93,11 @@ const list =  createSlice({
       }
     },
 
-    listShow: (state, { payload }) => {
+    [show]: (state, { payload }) => {
       state.show = payload
     },
 
-    listSetTags: (state, { payload }) => {
+    [setTagsList]: (state, { payload }) => {
       state.show = `tags`
       state.history = actualize(state.show, state.history)
       state.tags = payload
@@ -86,7 +105,7 @@ const list =  createSlice({
       state.countrycodes = []
     },
 
-    listSetLanguages: (state, { payload }) => {
+    [setLanguagesList]: (state, { payload }) => {
       state.show = `languages`
       state.history = actualize(state.show, state.history)
       state.tags = []
@@ -94,7 +113,7 @@ const list =  createSlice({
       state.countrycodes = []
     },
 
-    listSetCountryCodes: (state, { payload }) => {
+    [setCountryCodesList]: (state, { payload }) => {
       state.show = `countrycodes`
       state.history = actualize(state.show, state.history)
       state.tags = []
@@ -102,17 +121,11 @@ const list =  createSlice({
       state.countrycodes = payload
     },
 
-    listSetStations: (state, { payload }) => {
-      state.show = `stations`
-      state.history = actualize(state.show, state.history)
-      state.stations = payload
-    },
-
-    favouritesToggle: (state) => {
+    [favouritesToggle]: (state) => {
       state.showFavourites = !state.showFavourites
     },
 
-    favouritesRemove: (state, { payload }) => {
+    [favouritesRemove]: (state, { payload }) => {
       const index = state.favourites.findIndex(({ id }) => id === payload.id)
 
       if (index >= 0) {
@@ -120,26 +133,8 @@ const list =  createSlice({
       }
     },
 
-    favouritesAdd: (state, { payload }) => {
-      state.favourites.push(payload)
+    [favouritesAdd]: (state, { payload }) => {
+      payload.id && state.favourites.push(payload)
     },
   },
-})
-
-export const {
-  setList,
-  setApi,
-  setStation,
-  listToggle,
-  listBack,
-  listForward,
-  listShow,
-  listSetTags,
-  listSetLanguages,
-  listSetCountryCodes,
-  listSetStations,
-  favouritesToggle,
-  favouritesRemove,
-  favouritesAdd,
-} = list.actions
-export default list.reducer
+)

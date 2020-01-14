@@ -77,7 +77,7 @@ const orders = [
 export default createReducer(
   {
     protocol: `https:/`,
-    server: `nl1.api.radio-browser.info`,
+    server: `de1.api.radio-browser.info`,
     data: `json`,
     type: null,
     search: null,

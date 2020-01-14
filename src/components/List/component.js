@@ -7,7 +7,6 @@ import getTags from '../../functions/getTags'
 import getStations from '../../functions/getStations'
 import getLanguages from '../../functions/getLanguages'
 import getCountryCodes from '../../functions/getCountryCodes'
-import countries from '../../functions/iso3166-1-alpha-2'
 
 const { Menu, MenuItem } = remote
 
@@ -118,7 +117,6 @@ export default ({
         setTune(null)
       } else if (tune.id !== player.playing.id) {
         ipcRenderer.send(`fetch`, current)
-        // worker.postMessage(current)
       }
     },
     [tune] // eslint-disable-line

@@ -15,7 +15,7 @@ import { setApi, setStationsList } from '../../actions/common'
 
 const mapState = ({ api, list, player }) => ({ api, list, player })
 const mapDispatch = (dispatch) => ({
-  setApi: payload => dispatch(setApi(payload)),
+  setApi: state => dispatch(setApi(state)),
   setType: type => dispatch(setType(type)),
   setList: state => dispatch(setList(state)),
   setStation: station => dispatch(updateStation(station)),

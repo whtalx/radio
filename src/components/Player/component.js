@@ -82,7 +82,6 @@ export default ({
   useEffect(
     () => {
       if (player.currentState !== `pending`) return
-      [...node.current.childNodes].forEach(child => child.remove())
       sourceHeight && setSourceHeight(0)
       if (hls) hls.destroy()
 

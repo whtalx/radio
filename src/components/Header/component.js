@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { StatusBar, NavigateButton, Status, Nav, Fav } from './styled'
-import makeTitle from '../../functions/makeTitle'
+import { StatusBar, Button, Status, Nav } from './styled'
+import navProps from '../../functions/navProps'
 
 export default ({
   list,
@@ -10,30 +10,32 @@ export default ({
   favouritesToggle,
 }) => {
   const [titles, setTitles] = useState({
-    start: <Nav key={ `start` } onClick={ () => show(`start`) }>stations</Nav>,
-    countrycodes: <Nav key={ `countrycodes` } onClick={ () => show(`countrycodes`) }>from</Nav>,
-    languages: <Nav key={ `languages` } onClick={ () => show(`languages`) }>in</Nav>,
-    tags: <Nav key={ `tags` } onClick={ () => show(`tags`) }>tagged</Nav>,
-    stations: <Nav key={ `stations` } onClick={ () => show(`stations`) }>{ makeTitle(list.lastSearch) }</Nav>,
+    tags: <Nav { ...navProps(`tags`, show) }  />,
+    start: <Nav { ...navProps(`start`, show) } />,
+    stations: <Nav { ...navProps(`stations`, show, list.lastSearch) } />,
+    languages: <Nav { ...navProps(`languages`, show) } />,
+    countrycodes: <Nav { ...navProps(`countrycodes`, show) } />,
   })
 
   useEffect(
     () => {
-      setTitles(t => {
-        t.stations = <Nav key={ `stations` } onClick={ () => show(`stations`) }>{ makeTitle(list.lastSearch) }</Nav>
-        return t
-      })
+      setTitles(t => ({
+        ...t,
+        stations: <Nav { ...navProps(`stations`, show, list.lastSearch) } />,
+      }))
     },
-    [list.lastSearch] // eslint-disable-line
+    [list] // eslint-disable-line
   )
 
   return list.showFavourites
-    ? <StatusBar>
-      <Fav showing={ true } onClick={ favouritesToggle }>&#9825;</Fav>
+    ? <StatusBar favs={ true }>
+      <Button onClick={ favouritesToggle } title={ `Back` }>&lt;</Button>
+      <span>Favourites</span>
+      <Button onClick={ favouritesToggle } title={ `Back` }>&#9825;</Button>
     </StatusBar>
     : <StatusBar>
-      <NavigateButton onClick={ back } disabled={ list.history.findIndex(i => i === list.show) === 0 } />
-      <NavigateButton onClick={ forward } disabled={ list.history.findIndex(i => i === list.show) === list.history.length - 1 } />
+      <Button onClick={ back } disabled={ list.history.findIndex(i => i === list.show) === 0 } title={ `Back` }>&lt;</Button>
+      <Button onClick={ forward } disabled={ list.history.findIndex(i => i === list.show) === list.history.length - 1 } title={ `Forward` }>&gt;</Button>
       <Status>
         {
           list.history
@@ -42,15 +44,15 @@ export default ({
               (all, item, index, orig) =>
                 index === 0
                   ? orig.length === 2
-                  ? [...all, titles[item], ` > `]
+                  ? [...all, titles[item], ` `]
                   : [...all, titles[item]]
                   : index === orig.length - 1
                   ? [...all, titles[item]]
-                  : [...all, ` > `, titles[item], ` > `],
+                  : [...all, ` `, titles[item], ` `],
               []
             )
         }
       </Status>
-      <Fav showing={ false } onClick={ favouritesToggle }>&#9825;</Fav>
+      <Button showing={ false } onClick={ favouritesToggle } title={ `Show favourite stations` }>&#9825;</Button>
     </StatusBar>
 }

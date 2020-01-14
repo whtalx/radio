@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ipcRenderer, remote } from 'electron'
 import Header from '../Header'
 import { Container, Ul, Li } from './styled'
@@ -27,9 +27,11 @@ export default ({
   player,
   setPlaying,
 }) => {
-  const [loaded, setLoaded] = useState(false)
+  const container = useRef(null)
   const [tune, setTune] = useState(null)
   const [current, setCurrent] = useState({})
+  const [offsets, setOffsets] = useState({})
+  const [loaded, setLoaded] = useState(false)
   const [processing, setProcessing] = useState(null)
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
 
@@ -172,8 +174,25 @@ export default ({
     [contextMenuCalled] // eslint-disable-line
   )
 
+  useEffect(
+    () => {
+      if (api.type !== `stations`) return
+      setOffsets(o => ({ ...o, stations: 0 }))
+    },
+    [api.type] // eslint-disable-line
+  )
+
+  useEffect(
+    () => {
+      offsets[list.show]
+        ? container.current.scroll(0, offsets[list.show])
+        : container.current.scroll(0, 0)
+    },
+    [list.show] // eslint-disable-line
+  )
+
   return (
-    <Container>
+    <Container ref={ container } onScroll={ ({ target }) => setOffsets(o => ({ ...o, [list.show]: target.scrollTop })) }>
       <Header />
       <Ul>
         {
@@ -211,16 +230,15 @@ export default ({
                 )
 
               case `countrycodes`: {
-                const country = countries(listItem.name)
                 return (
                   <Li
                     key={ listItem.name }
-                    title={ country.orig }
+                    title={ `Stations: ${ listItem.stationcount }` }
                     processing={ listItem.name === processing }
                     onDoubleClick={ () => setApi(listItem.search) }
                     playing={ player.playing.countrycode === listItem.name }
                   >
-                    { country.name }
+                    { listItem.name }
                   </Li>
                 )
               }

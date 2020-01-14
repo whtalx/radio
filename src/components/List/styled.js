@@ -14,6 +14,22 @@ export const Container = styled.div`
   overflow: hidden scroll;
   background-color: hsl(0, 0%, 0%);
   color: hsl(120, 100%, 50%);
+
+  ::-webkit-scrollbar {
+    -webkit-appearance: none;
+  }
+
+  ::-webkit-scrollbar:vertical {
+    width: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(120, 100%, 50%);
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(120, 30%, 10%);
+  }
 `
 
 export const Ul = styled.ul`

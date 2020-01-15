@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { ipcRenderer, remote } from 'electron'
+import { remote } from 'electron'
 import Hls from 'hls.js'
 import { StyledPlayer, Display, Title, Video, Controls } from './styled'
 import Visualization from '../Visualization'
 import AnalyserNode from '../../classes/AnalyserNode'
 import error from '../../functions/error'
+import makePlayerState from '../../functions/makePlayerState'
 
 export default ({
   list,
@@ -47,17 +48,17 @@ export default ({
       peaks.connect(context.destination)
 
       node.current.addEventListener(`playing`, () => setState(`playing`))
-      node.current.addEventListener(`loadstart`, () => {
-        setState(/(file|localhost):/.test(node.current.src) ? `paused` : `loading`)
+      node.current.addEventListener(`loadstart`, ({ target }) => {
+        setState(makePlayerState(target.currentSrc))
       })
 
       node.current.addEventListener(`pause`, () => {
         node.current.src = ``
       })
 
-      ipcRenderer.on(`resolved`, (_, data) => {
-        setPlaying(data)
-      })
+      // ipcRenderer.on(`resolved`, (_, data) => {
+      //   setPlaying(data)
+      // })
     },
     [] // eslint-disable-line
   )

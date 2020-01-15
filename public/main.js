@@ -4,6 +4,7 @@ import path from 'path'
 import resolve from './scripts/resolve'
 
 global.player = null
+let request = null
 
 const control = ({ func, name }) => {
   global[name] && global[name][func] && global[name][func]()
@@ -104,9 +105,9 @@ app.on(`activate`, () => {
 ipcMain.on(`close`, (_, name) => control({ func: `close`, name }))
 ipcMain.on(`minimize`, (_, name) => control({ func: `minimize`, name }))
 ipcMain.on(`hide`, (_, name) => control({ func: `hide`, name }))
-ipcMain.on(`fetch`, fetch)
+ipcMain.on(`fetch`, prefetch)
 
-function fetch(_, data, recursive) {
+function prefetch(_, data, recursive) {
   const { src } = data || {}
 
   if (!src) {
@@ -114,18 +115,25 @@ function fetch(_, data, recursive) {
     return
   }
 
+  if (request && !recursive) {
+    console.log(`aborting previous request`)
+    request.abort()
+    request = null
+  }
+
   const url = recursive || src
   console.log(`fetching:\n `, url)
 
   const send = (c, m) => {
     global.player.webContents.send(c, m)
+    request = null
   }
 
   const recurse = (link) => {
-    fetch(undefined, data, link)
+    prefetch(undefined, data, link)
   }
 
-  const request = net.request(url)
+  request = net.request(url)
   request.setHeader(`Icy-MetaData`, `1`)
   request.on(`error`, console.error)
   request.on(`response`, resolve({ url, data, send, recurse }))

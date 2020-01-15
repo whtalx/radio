@@ -9,20 +9,14 @@ const getState = () => {
   const storedPlayer = localStorage.getItem(`player`)
   const list = storedList && JSON.parse(storedList)
   const player = storedPlayer && JSON.parse(storedPlayer)
+
   player && player.currentState === `playing` && (player.currentState = `pending`)
-  return {
-    list,
-    player
-  }
+
+  return { list, player }
 }
 
-
 const store = configureStore({
-  reducer: combineReducers({
-    player,
-    list,
-    api,
-  }),
+  reducer: combineReducers({ api, list, player }),
   middleware: getDefaultMiddleware(),
   preloadedState: getState(),
 })

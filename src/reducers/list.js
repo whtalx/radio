@@ -2,7 +2,6 @@ import { createReducer } from '@reduxjs/toolkit'
 import { setApi, setStationsList } from '../actions/common'
 import {
   show,
-  setList,
   listToggle,
   historyBack,
   historyForward,
@@ -49,8 +48,6 @@ export default createReducer(
     ],
   },
   {
-    [setList]: (state, { payload }) => payload,
-
     [setApi]: (state, { payload }) => {
       state.lastSearch = payload.search
     },

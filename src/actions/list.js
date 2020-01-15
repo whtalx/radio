@@ -1,8 +1,5 @@
 import { createAction } from '@reduxjs/toolkit'
 
-// set "list" store state
-export const setList = createAction(`SET_LIST`)
-
 // set "tags" list
 export const setTagsList = createAction(`SET_TAGS_LIST`)
 

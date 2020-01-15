@@ -1,7 +1,6 @@
 import { connect } from 'react-redux'
 import List from './component'
 import {
-  setList,
   updateStation,
   setTagsList,
   setLanguagesList,
@@ -17,7 +16,6 @@ const mapState = ({ api, list, player }) => ({ api, list, player })
 const mapDispatch = (dispatch) => ({
   setApi: state => dispatch(setApi(state)),
   setType: type => dispatch(setType(type)),
-  setList: state => dispatch(setList(state)),
   setStation: station => dispatch(updateStation(station)),
   setTags: tags => dispatch(setTagsList(tags)),
   setStations: stations => dispatch(setStationsList(stations)),
@@ -25,7 +23,7 @@ const mapDispatch = (dispatch) => ({
   setCountryCodes: countryCodes => dispatch(setCountryCodesList(countryCodes)),
   favouritesAdd: station => dispatch(favouritesAdd(station)),
   favouritesRemove: station => dispatch(favouritesRemove(station)),
-  setPlaying,
+  setPlaying: station => dispatch(setPlaying(station)),
 })
 
 export default connect(mapState, mapDispatch)(List)

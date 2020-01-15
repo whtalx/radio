@@ -13,7 +13,7 @@ export default ({ list }) => {
   useEffect(
     () => {
       const rect = remote.getCurrentWindow().getBounds()
-      if (rect.height < 500 && !list) return
+      if ((rect.height < 500 && !list) || (rect.height > 500 && list)) return
       remote.getCurrentWindow().setBounds({
         ...rect,
         height: list ? rect.height + 509 : rect.height - 509,

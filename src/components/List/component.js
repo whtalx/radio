@@ -15,7 +15,6 @@ export default ({
   setApi,
   setType,
   list,
-  setList,
   setStation,
   setTags,
   setStations,
@@ -30,7 +29,6 @@ export default ({
   const [tune, setTune] = useState(null)
   const [current, setCurrent] = useState({})
   const [offsets, setOffsets] = useState({})
-  const [loaded, setLoaded] = useState(false)
   const [processing, setProcessing] = useState(null)
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
 
@@ -42,25 +40,17 @@ export default ({
 
   useEffect(
     () => {
-      const storage = localStorage.getItem(`list`)
-      storage && setList({ ...JSON.parse(storage) })
-      setLoaded(true)
+      ipcRenderer.on(`resolved`, (_, data) => {
+        setProcessing(null)
+        setStation(data)
+      })
+
       ipcRenderer.on(`rejected`, (_, data) => {
-        processing && setProcessing(null)
+        setProcessing(null)
         setStation({ ...data, unresolvable: true })
       })
     },
     [] // eslint-disable-line
-  )
-
-  useEffect(
-    () => {
-      if (!loaded) return
-      const string = JSON.stringify(list)
-      const storage = localStorage.getItem(`list`)
-      string !== storage && localStorage.setItem(`list`, string)
-    },
-    [list] // eslint-disable-line
   )
 
   useEffect(
@@ -116,6 +106,7 @@ export default ({
         setPlaying(tune)
         setTune(null)
       } else if (tune.id !== player.playing.id) {
+        setProcessing(tune.id)
         ipcRenderer.send(`fetch`, current)
       }
     },
@@ -205,77 +196,70 @@ export default ({
                 onFocus={ () => setCurrent(listItem) }
                 onContextMenu={ handleContextMenu }
                 onDoubleClick={ () => setTune(listItem) }
-              >
-                { listItem.name }
-              </Li>
+                children={ listItem.name }
+              />
             )
             : list.show && list[list.show] && list[list.show].map((listItem) => {
-            switch (list.show) {
-              case `stations`:
-                return (
-                  <Li
-                    key={ listItem.id }
-                    title={ listItem.src }
-                    unresolvable={ listItem.unresolvable }
-                    playing={ listItem.id === player.playing.id }
-                    processing={ listItem.id === processing }
-                    onFocus={ () => setCurrent(listItem) }
-                    onContextMenu={ handleContextMenu }
-                    onDoubleClick={ () => setTune(listItem) }
-                  >
-                    { listItem.name }
-                  </Li>
-                )
+              switch (list.show) {
+                case `stations`:
+                  return (
+                    <Li
+                      key={ listItem.id }
+                      title={ listItem.src }
+                      unresolvable={ listItem.unresolvable }
+                      playing={ listItem.id === player.playing.id }
+                      processing={ listItem.id === processing }
+                      onFocus={ () => setCurrent(listItem) }
+                      onContextMenu={ handleContextMenu }
+                      onDoubleClick={ () => setTune(listItem) }
+                      children={ listItem.name }
+                    />
+                  )
 
-              case `countrycodes`: {
-                return (
-                  <Li
-                    key={ listItem.name }
-                    title={ `Stations: ${ listItem.stationcount }` }
-                    processing={ listItem.name === processing }
-                    onDoubleClick={ () => setApi(listItem.search) }
-                    playing={ player.playing.countrycode === listItem.name }
-                  >
-                    { listItem.name }
-                  </Li>
-                )
+                case `countrycodes`:
+                  return (
+                    <Li
+                      key={ listItem.name }
+                      title={ `Stations: ${ listItem.stationcount }` }
+                      processing={ listItem.search.countrycode === processing }
+                      onDoubleClick={ () => setApi(listItem.search) }
+                      playing={ player.playing.countrycode === listItem.search.countrycode }
+                      children={ listItem.name }
+                    />
+                  )
+
+                case `languages`:
+                  return (
+                    <Li
+                      key={ listItem.name }
+                      processing={ listItem.name === processing }
+                      onDoubleClick={ () => setApi(listItem.search) }
+                      playing={ player.playing.language === listItem.name }
+                      children={ listItem.name }
+                    />
+                  )
+
+                case `tags`:
+                  return (
+                    <Li
+                      key={ listItem.name }
+                      processing={ listItem.name === processing }
+                      onDoubleClick={ () => setApi(listItem.search) }
+                      playing={ player.playing.tag === listItem.name }
+                      children={ listItem.name }
+                    />
+                  )
+
+                default:
+                  return (
+                    <Li
+                      key={ listItem.name }
+                      processing={ listItem.name === processing }
+                      onDoubleClick={ () => setType(listItem.type) }
+                      children={ listItem.name }
+                    />
+                  )
               }
-
-              case `languages`:
-                return (
-                  <Li
-                    key={ listItem.name }
-                    processing={ listItem.name === processing }
-                    onDoubleClick={ () => setApi(listItem.search) }
-                    playing={ player.playing.language === listItem.name }
-                  >
-                    { listItem.name }
-                  </Li>
-                )
-
-              case `tags`:
-                return (
-                  <Li
-                    key={ listItem.name }
-                    processing={ listItem.name === processing }
-                    onDoubleClick={ () => setApi(listItem.search) }
-                    playing={ player.playing.tag === listItem.name }
-                  >
-                    { listItem.name }
-                  </Li>
-                )
-
-              default:
-                return (
-                  <Li
-                    key={ listItem.name }
-                    processing={ listItem.name === processing }
-                    onDoubleClick={ () => setType(listItem.type) }
-                  >
-                    { listItem.name }
-                  </Li>
-                )
-            }
           })
         }
       </Ul>

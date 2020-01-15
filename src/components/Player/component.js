@@ -12,7 +12,6 @@ export default ({
   setStation,
   player,
   setState,
-  setPlayer,
   setPlaying,
 }) => {
   const node = useRef(null)
@@ -20,7 +19,6 @@ export default ({
   const [bands] = useState(new AnalyserNode({ context, stc: .7 }))
   const [peaks] = useState(new AnalyserNode({ context, stc: .99 }))
   const [hls, setHls] = useState(null)
-  const [loaded, setLoaded] = useState(false)
   const [sourceHeight, setSourceHeight] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
 
@@ -38,20 +36,15 @@ export default ({
       hls.destroy()
       setHls(null)
     }
-
-    node.current.pause()
+    node.current.src = ``
+    node.current.load()
   }
 
   useEffect(
     () => {
-      const string = localStorage.getItem(`player`)
-      const store = string && JSON.parse(string)
-      store && setPlayer({ ...store, currentState: store.currentState === `paused` ? `paused` : `pending` })
-
       context.createMediaElementSource(node.current).connect(bands)
       bands.connect(peaks)
       peaks.connect(context.destination)
-      setLoaded(true)
 
       node.current.addEventListener(`playing`, () => setState(`playing`))
       node.current.addEventListener(`loadstart`, () => {
@@ -67,16 +60,6 @@ export default ({
       })
     },
     [] // eslint-disable-line
-  )
-
-  useEffect(
-    () => {
-      if (!loaded) return
-      const string = JSON.stringify(player)
-      const storage = localStorage.getItem(`player`)
-      string !== storage && localStorage.setItem(`player`, string)
-    },
-    [player] // eslint-disable-line
   )
 
   useEffect(

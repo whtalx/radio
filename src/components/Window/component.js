@@ -6,7 +6,7 @@ import Player from '../Player'
 import List from '../List'
 
 export default ({ list }) => {
-  const [buttons] = useState([`minimize`, `close`])
+  const [buttons] = useState([`minimize`, `hide`])
   const [title] = useState(`WebRadio`)
   const [name] = useState(`player`)
 

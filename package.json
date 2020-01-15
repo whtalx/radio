@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "electron-is-dev": "^1.1.0",
+    "electron-store": "^5.1.0",
     "esm": "^3.2.25"
   },
   "devDependencies": {

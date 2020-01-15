@@ -1,16 +1,18 @@
+import prefetch from './prefetch'
 import streamToString from './streamToString'
 
-export default ({ url, data, send, recurse }) => async (response) => {
+export default ({ url, data }) => async (response) => {
   response.on(`error`, (e) => {
     console.log(`stream destroyed:\n `, e)
     const { groups } = /recursive call:\s(?<link>[\S]+)/.exec(e) || {}
-    groups && recurse(groups.link)
+    global.request = null
+    groups && prefetch(undefined, data, groups.link)
   })
 
   const { headers, statusCode, statusMessage } = response
 
   if (statusCode !== 200) {
-    send(`rejected`, data)
+    global.player.webContents.send(`rejected`, data)
     response.destroy(`Response status ${ statusCode }: ${ statusMessage }`)
     return
   }
@@ -22,7 +24,7 @@ export default ({ url, data, send, recurse }) => async (response) => {
   }
 
   const resolve = ({ url, hls }) => {
-    send(
+    global.player.webContents.send(
       `resolved`,
       {
         ...data,

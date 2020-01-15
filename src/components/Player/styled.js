@@ -2,7 +2,7 @@ import styled from 'styled-components'
 
 export const StyledPlayer = styled.div`
   width: 264px;
-  height: 100%;
+  height: max-content;
   display: flex;
   flex-flow: column;
   align-content: center;
@@ -22,11 +22,14 @@ export const Display = styled.div`
 export const Title = styled.div`
   width: calc(100% - 100px);
   height: 1.1em;
+  overflow: hidden;
   font-size: 1em;
   line-height: 1.1em;
   background-color: hsl(0, 0%, 0%);
   color: hsl(120, 100%, 50%);
-  overflow: hidden;
+`
+
+export const Tick = styled.span`
   white-space: nowrap;
 `
 

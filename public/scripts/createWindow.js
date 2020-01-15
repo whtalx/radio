@@ -9,6 +9,7 @@ export default () => {
     height: 116,
     x,
     y,
+    backgroundColor: `#000`,
     acceptFirstMouse: true,
     maximizable: false,
     transparent: false,

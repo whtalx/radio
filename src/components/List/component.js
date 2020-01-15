@@ -121,14 +121,16 @@ export default ({
         label: `Play`,
         enabled: !current.unresolvable,
         click() {
-          setTune(current)
+          player.playing.id === current.id
+            ? remote.getCurrentWebContents().send(`player`, `play`)
+            : setTune(current)
         },
       }
 
       const stop = {
         label: `Stop`,
         click() {
-          player.playing.id === current.id && setPlaying({})
+          remote.getCurrentWebContents().send(`player`, `stop`)
         },
       }
 
@@ -154,7 +156,7 @@ export default ({
       }
 
       const menu = new Menu()
-      menu.append(new MenuItem(player.playing.id === current.id ? stop : play))
+      menu.append(new MenuItem(player.playing.id === current.id ? player.currentState === `paused` ? play : stop : play))
       menu.append(new MenuItem(list.favourites.findIndex(station => station.id === current.id) >= 0 ? remove : add))
       menu.append(new MenuItem(info))
       menu.popup({ window: remote.getCurrentWindow() })

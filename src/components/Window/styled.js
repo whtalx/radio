@@ -4,6 +4,7 @@ export const Wrapper = styled.div`
   padding: 3px;
   height: 100vh;
   box-sizing: border-box;
+  overflow: hidden;
   display: flex;
   flex-flow: column;
   background-image:
@@ -47,10 +48,11 @@ export const Title = styled.div`
 
 export const Content = styled.div`
   padding: 3px;
-  height: auto;
   width: 100%;
-  overflow: hidden;
+  height: auto;
+  min-height: 99px;
   box-sizing: border-box;
+  overflow: hidden;
   display: flex;
   flex-flow: column;
   align-items: center;

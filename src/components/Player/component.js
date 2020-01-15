@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { remote } from 'electron'
+import { remote, ipcRenderer } from 'electron'
 import Hls from 'hls.js'
-import { StyledPlayer, Display, Title, Video, Controls } from './styled'
+import { StyledPlayer, Display, Title, Tick, Video, Controls } from './styled'
 import Visualization from '../Visualization'
 import AnalyserNode from '../../classes/AnalyserNode'
 import error from '../../functions/error'
@@ -23,22 +23,21 @@ export default ({
   const [sourceHeight, setSourceHeight] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
 
-  const play = () => {
-    node.current.play().catch((e) => {
-      setState(`paused`)
-      error(e)
-    })
-  }
-
   const stop = () => {
-    setState(`paused`)
-
     if (hls) {
       hls.destroy()
       setHls(null)
+      sourceHeight && setSourceHeight(0)
     }
+
     node.current.src = ``
-    node.current.load()
+  }
+
+  const play = () => {
+    node.current.play().catch((e) => {
+      error(e)
+      stop()
+    })
   }
 
   useEffect(
@@ -48,17 +47,20 @@ export default ({
       peaks.connect(context.destination)
 
       node.current.addEventListener(`playing`, () => setState(`playing`))
-      node.current.addEventListener(`loadstart`, ({ target }) => {
-        setState(makePlayerState(target.currentSrc))
-      })
+      node.current.addEventListener(`loadstart`, ({ target: { src } }) => setState(makePlayerState(src)))
 
-      node.current.addEventListener(`pause`, () => {
-        node.current.src = ``
-      })
+      ipcRenderer.on(`player`, (_, data) => {
+        switch (data) {
+          case `play`:
+            return setPlaying({ ...player.playing })
 
-      // ipcRenderer.on(`resolved`, (_, data) => {
-      //   setPlaying(data)
-      // })
+          case `stop`:
+            return stop()
+
+          default:
+            return
+        }
+      })
     },
     [] // eslint-disable-line
   )
@@ -132,7 +134,7 @@ export default ({
         width,
         sourceHeight
           ? height + sourceHeight - 8
-          : 116 + (list.visible ? 500 : 0)
+          : 116 + (list.visible ? 509 : 0)
       )
     },
     [sourceHeight] // eslint-disable-line
@@ -162,7 +164,9 @@ export default ({
           />
         </Display>
         <Title>
-          { player.playing.title || player.playing.name }
+          <Tick>
+            { player.playing.title || player.playing.name }
+          </Tick>
         </Title>
       </section>
       <Video

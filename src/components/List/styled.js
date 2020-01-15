@@ -10,6 +10,7 @@ const barSpin = keyframes`
 export const Container = styled.div`
   width: 100%;
   height: 500px;
+  box-sizing: border-box;
   position: relative;
   overflow: hidden scroll;
   background-color: hsl(0, 0%, 0%);

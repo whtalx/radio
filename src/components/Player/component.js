@@ -16,6 +16,7 @@ export default ({
   setPlaying,
 }) => {
   const node = useRef(null)
+  const [controller, setController] = useState(null)
   const [context] = useState(new AudioContext())
   const [bands] = useState(new AnalyserNode({ context, stc: .7 }))
   const [peaks] = useState(new AnalyserNode({ context, stc: .99 }))
@@ -30,6 +31,7 @@ export default ({
       sourceHeight && setSourceHeight(0)
     }
 
+    controller && controller.abort()
     node.current.src = ``
   }
 
@@ -46,6 +48,8 @@ export default ({
       bands.connect(peaks)
       peaks.connect(context.destination)
 
+      node.current.autoplay = true
+      node.current.addEventListener(`pause`, stop)
       node.current.addEventListener(`playing`, () => setState(`playing`))
       node.current.addEventListener(`loadstart`, ({ target: { src } }) => setState(makePlayerState(src)))
 
@@ -69,11 +73,17 @@ export default ({
     () => {
       if (player.currentState !== `pending`) return
       sourceHeight && setSourceHeight(0)
-      if (hls) hls.destroy()
+      hls && hls.destroy()
+      controller && controller.abort()
 
       const station = player.playing
       if (station.hls) {
-        const h = new Hls()
+        const h = new Hls({ liveDurationInfinity: true, fetchSetup: function(context, initParams) {
+            initParams.mode = `cors`
+            initParams.credentials = `omit`
+            initParams.referrer = ``
+            return new Request(context.url, initParams)
+          }})
         h.loadSource(station.hls)
         h.attachMedia(node.current)
         h.on(Hls.Events.MANIFEST_PARSED, play)
@@ -113,8 +123,7 @@ export default ({
         setHls(h)
         return
       } else if (station.src_resolved) {
-        node.current.src = station.src_resolved
-        play()
+        setController(new AbortController())
       } else if (!station.id) {
         stop()
       }
@@ -122,6 +131,48 @@ export default ({
       hls && setHls(null)
     },
     [player.playing] // eslint-disable-line
+  )
+
+  useEffect(
+    () => {
+      if (!controller) return
+      const { signal } = controller
+      signal.onabort = () => setController(null)
+
+      const opt = {
+        mode: `cors`,
+        referrer: ``,
+        credentials: `omit`,
+        // headers: new Headers({ 'Icy-MetaData': `1` }),
+        signal,
+      }
+
+      const mediaSource = new MediaSource()
+      node.current.src = URL.createObjectURL(mediaSource)
+
+      mediaSource.addEventListener('sourceopen', () => {
+        fetch(player.playing.src_resolved, opt)
+          .then((response) => {
+            let mime = response.headers.get(`content-type`) || `audio/mpeg`
+            mime === `audio/aacp` && (mime = `audio/aac`)
+            mime === `application/ogg` && (mime = `audio/ogg`)
+            const sourceBuffer = mediaSource.addSourceBuffer(mime)
+            const reader = response.body.getReader()
+
+            reader
+              .read()
+              .then(function pump({ value }) {
+                sourceBuffer.updating
+                  ? sourceBuffer.onupdateend = () => { sourceBuffer.appendBuffer(value.buffer) }
+                  : sourceBuffer.appendBuffer(value.buffer)
+                return reader.read().then(pump)
+              })
+              .catch(error)
+          })
+          .catch(error)
+      })
+    },
+    [controller] // eslint-disable-line
   )
 
   useEffect(
@@ -171,7 +222,6 @@ export default ({
       </section>
       <Video
         ref={ node }
-        crossOrigin={ `` }
         sourceHeight={ sourceHeight }
         fullscreen={ fullscreen }
         onDoubleClick={ () => setFullscreen(last => !last) }

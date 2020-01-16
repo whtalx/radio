@@ -1,7 +1,6 @@
 import styled from 'styled-components'
 
 export const StyledPlayer = styled.div`
-  width: 264px;
   height: max-content;
   display: flex;
   flex-flow: column;
@@ -20,7 +19,7 @@ export const Display = styled.div`
 `
 
 export const Title = styled.div`
-  width: calc(100% - 100px);
+  width: 150px;
   height: 1.1em;
   overflow: hidden;
   font-size: 1em;

@@ -44,11 +44,11 @@ export default ({
               (all, item, index, orig) =>
                 index === 0
                   ? orig.length === 2
-                  ? [...all, titles[item], ` `]
-                  : [...all, titles[item]]
+                    ? [...all, titles[item], ` `]
+                    : [...all, titles[item]]
                   : index === orig.length - 1
-                  ? [...all, titles[item]]
-                  : [...all, ` `, titles[item], ` `],
+                    ? [...all, titles[item]]
+                    : [...all, ` `, titles[item], ` `],
               []
             )
         }

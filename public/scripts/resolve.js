@@ -4,7 +4,7 @@ import streamToString from './streamToString'
 export default ({ url, data }) => async (response) => {
   response.on(`error`, (e) => {
     console.log(`stream destroyed:\n `, e)
-    const { groups } = /recursive call:\s(?<link>[\S]+)/.exec(e) || {}
+    const { groups } = /recursive call:\s(?<link>[\w\d.\-:;/=%&?#@]+)/.exec(e) || {}
     global.request = null
     groups && prefetch(undefined, data, groups.link)
   })
@@ -23,7 +23,7 @@ export default ({ url, data }) => async (response) => {
     response.destroy(`resolved ${ link }\n  with content-type: ${ type }/${ subtype }`)
   }
 
-  const resolve = ({ url, hls }) => {
+  const resolve = ({ url, hls, mime }) => {
     global.player.webContents.send(
       `resolved`,
       {
@@ -41,24 +41,26 @@ export default ({ url, data }) => async (response) => {
     case `video`:
     case `undefined`: {
       resolve({ url })
+      // sendChunks(response)
       return
     }
 
     case `application`: {
       if (subtype === `ogg`) {
         resolve({ url })
+        // sendChunks(response)
         return
       }
 
       const text = await streamToString(response)
-      if (text.substr(0, 7) === `#EXTM3U`) {
+
+      if (/EXT-X-TARGETDURATION/.test(text)) {
         resolve({ hls: url })
         return
       }
-
       console.log(`parsing\n${ text }`)
 
-      const links = text.match(/http(s)?:\/\/[\w\d.-:/=%&?#]+(?=\s)?/ig)
+      const links = text.match(/http(s)?:\/\/[\w\d.\-:/=%&?#@]+(?=\s)?/ig)
       // .replace(/#.+\n/g, ``)
       // .split(`\n`)
       // .filter(i => i)
@@ -86,4 +88,12 @@ export default ({ url, data }) => async (response) => {
       return
     }
   }
+}
+
+function sendChunks(stream) {
+  global.player.webContents.send(`mime`, stream.headers[`content-type`] || `audio/mpeg`)
+
+  stream.on(`data`, (chunk) => {
+    chunk && global.player.webContents.send(`chunk`, chunk)
+  })
 }

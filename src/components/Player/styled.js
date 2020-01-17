@@ -55,3 +55,8 @@ export const Video = styled.video`
 export const Controls = styled.div`
   height: 36px;
 `
+
+export const Time = styled.p`
+  color: hsl(120, 100%, 50%);
+  font: 14px monospace;
+`

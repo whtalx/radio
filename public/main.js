@@ -11,6 +11,7 @@ global.store = new Store({ serialize: value => JSON.stringify(value) })
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(menu()))
 
+app.commandLine.appendArgument(`disable-background-timer-throttling`)
 app.on(`ready`, createWindow)
 app.on(`window-all-closed`, () => process.platform !== 'darwin' && app.quit())
 app.on(`activate`, () => {

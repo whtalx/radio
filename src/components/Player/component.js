@@ -1,11 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { remote, ipcRenderer } from 'electron'
 import Hls from 'hls.js'
-import { StyledPlayer, Display, Title, Tick, Video, Controls } from './styled'
+import { StyledPlayer, Display, Title, Tick, Video, Controls, Time } from './styled'
 import Visualization from '../Visualization'
 import AnalyserNode from '../../classes/AnalyserNode'
 import error from '../../functions/error'
+import formatTime from '../../functions/formatTime'
 import makePlayerState from '../../functions/makePlayerState'
+
+const timer = new Worker(`./workers/timer.js`)
+const streamer = new Worker(`./workers/streamer.js`)
+const context = new AudioContext()
+const bands = new AnalyserNode({ context, stc: .7 })
+const peaks = new AnalyserNode({ context, stc: .99 })
 
 export default ({
   list,
@@ -15,23 +22,27 @@ export default ({
   setState,
   setPlaying,
 }) => {
+  const hls = useRef(null)
   const node = useRef(null)
-  const [controller, setController] = useState(null)
-  const [context] = useState(new AudioContext())
-  const [bands] = useState(new AnalyserNode({ context, stc: .7 }))
-  const [peaks] = useState(new AnalyserNode({ context, stc: .99 }))
-  const [hls, setHls] = useState(null)
-  const [sourceHeight, setSourceHeight] = useState(0)
+  const station = useRef(player.playing)
+  const mediaSource = useRef(null)
+  const sourceBuffer = useRef(null)
+  const [time, setTime] = useState(null)
   const [fullscreen, setFullscreen] = useState(false)
+  const [sourceHeight, setSourceHeight] = useState(0)
 
   const stop = () => {
-    if (hls) {
-      hls.destroy()
-      setHls(null)
+    timer.postMessage({ type: `stop` })
+    streamer.postMessage({ type: `stop` })
+    mediaSource.current && (mediaSource.current = null)
+    sourceBuffer.current && (sourceBuffer.current = null)
+
+    if (hls.current) {
+      hls.current.destroy()
+      hls.current = null
       sourceHeight && setSourceHeight(0)
     }
 
-    controller && controller.abort()
     node.current.src = ``
   }
 
@@ -50,13 +61,59 @@ export default ({
 
       node.current.autoplay = true
       node.current.addEventListener(`pause`, stop)
-      node.current.addEventListener(`playing`, () => setState(`playing`))
-      node.current.addEventListener(`loadstart`, ({ target: { src } }) => setState(makePlayerState(src)))
+      node.current.addEventListener(`playing`, () => {
+        setState(`playing`)
+        timer.postMessage({ type: `start` })
+      })
+
+      node.current.addEventListener(`loadstart`, ({ target: { src } }) =>
+        setState(makePlayerState(src))
+      )
+
+      timer.onmessage = ({ data }) => {
+        setTime(data || Math.floor(node.current.currentTime))
+      }
+
+      streamer.onmessage = ({ data: { type, payload }}) => {
+        switch (type) {
+          case `mime`: {
+            if (!mediaSource.current) return
+
+            sourceBuffer.current = mediaSource.current.addSourceBuffer(payload)
+            sourceBuffer.current.onupdateend = () =>
+              streamer.postMessage({ type: `ready` })
+
+            streamer.postMessage({ type: `ready` })
+            return
+          }
+
+          case `buffer`: {
+            sourceBuffer.current && sourceBuffer.current.appendBuffer(payload)
+            return
+          }
+
+          case `error`: {
+            error(payload)
+            return
+          }
+
+          default:
+            return
+        }
+      }
+
+      ipcRenderer.on(`visible`, () =>
+        !node.current.paused && timer.postMessage({ type: `continue` })
+      )
+
+      ipcRenderer.on(`invisible`, () =>
+        !node.current.paused && timer.postMessage({ type: `pause` })
+      )
 
       ipcRenderer.on(`player`, (_, data) => {
         switch (data) {
           case `play`:
-            return setPlaying({ ...player.playing })
+            return setPlaying(station.current)
 
           case `stop`:
             return stop()
@@ -71,23 +128,31 @@ export default ({
 
   useEffect(
     () => {
-      if (player.currentState !== `pending`) return
+      timer.postMessage({ type: `stop` })
+      streamer.postMessage({ type: `stop` })
+      hls.current && hls.current.destroy()
       sourceHeight && setSourceHeight(0)
-      hls && hls.destroy()
-      controller && controller.abort()
+      mediaSource.current && (mediaSource.current = null)
+      sourceBuffer.current && (sourceBuffer.current = null)
 
-      const station = player.playing
-      if (station.hls) {
-        const h = new Hls({ liveDurationInfinity: true, fetchSetup: function(context, initParams) {
+      if (player.currentState !== `pending`) return
+
+      const { current } = station
+
+      if (current.hls) {
+        hls.current = new Hls({
+          liveDurationInfinity: true,
+          fetchSetup: (context, initParams) => {
             initParams.mode = `cors`
             initParams.credentials = `omit`
             initParams.referrer = ``
             return new Request(context.url, initParams)
-          }})
-        h.loadSource(station.hls)
-        h.attachMedia(node.current)
-        h.on(Hls.Events.MANIFEST_PARSED, play)
-        h.on(Hls.Events.BUFFER_CODECS,(e, { video }) => {
+          }
+        })
+        hls.current.loadSource(current.hls)
+        hls.current.attachMedia(node.current)
+        hls.current.on(Hls.Events.MANIFEST_PARSED, play)
+        hls.current.on(Hls.Events.BUFFER_CODECS,(e, { video }) => {
           if (!video) return
 
           const { width, height } = video.metadata
@@ -96,18 +161,18 @@ export default ({
           setSourceHeight(Math.floor(height * 244 / width))
         })
 
-        h.on(Hls.Events.ERROR, (e, data) => {
+        hls.current.on(Hls.Events.ERROR, (e, data) => {
           if (data.fatal) {
             switch(data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR: {
                 console.log(`fatal network error encountered`, data)
-                // h.startLoad()
+                // hls.current.startLoad()
                 break
               }
 
               case Hls.ErrorTypes.MEDIA_ERROR: {
                 console.log(`fatal media error encountered`, data)
-                h.recoverMediaError()
+                hls.current.recoverMediaError()
                 break
               }
 
@@ -119,60 +184,20 @@ export default ({
             }
           }
         })
-
-        setHls(h)
         return
-      } else if (station.src_resolved) {
-        setController(new AbortController())
-      } else if (!station.id) {
+      } else if (current.src_resolved) {
+        mediaSource.current = new MediaSource()
+        node.current.src = URL.createObjectURL(mediaSource.current)
+        mediaSource.current.addEventListener('sourceopen', () => {
+          streamer.postMessage({ type: `start`, payload: current.src_resolved })
+        })
+      } else if (!current.id) {
         stop()
       }
 
-      hls && setHls(null)
+      hls.current && (hls.current = null)
     },
     [player.playing] // eslint-disable-line
-  )
-
-  useEffect(
-    () => {
-      if (!controller) return
-      const { signal } = controller
-      signal.onabort = () => setController(null)
-
-      const opt = {
-        mode: `cors`,
-        referrer: ``,
-        credentials: `omit`,
-        // headers: new Headers({ 'Icy-MetaData': `1` }),
-        signal,
-      }
-
-      const mediaSource = new MediaSource()
-      node.current.src = URL.createObjectURL(mediaSource)
-
-      mediaSource.addEventListener('sourceopen', () => {
-        fetch(player.playing.src_resolved, opt)
-          .then((response) => {
-            let mime = response.headers.get(`content-type`) || `audio/mpeg`
-            mime === `audio/aacp` && (mime = `audio/aac`)
-            mime === `application/ogg` && (mime = `audio/ogg`)
-            const sourceBuffer = mediaSource.addSourceBuffer(mime)
-            const reader = response.body.getReader()
-
-            reader
-              .read()
-              .then(function pump({ value }) {
-                sourceBuffer.updating
-                  ? sourceBuffer.onupdateend = () => { sourceBuffer.appendBuffer(value.buffer) }
-                  : sourceBuffer.appendBuffer(value.buffer)
-                return reader.read().then(pump)
-              })
-              .catch(error)
-          })
-          .catch(error)
-      })
-    },
-    [controller] // eslint-disable-line
   )
 
   useEffect(
@@ -206,6 +231,7 @@ export default ({
     <StyledPlayer>
       <section>
         <Display>
+          <Time>{ formatTime(time) }</Time>
           <Visualization
             state={ player.currentState }
             bandsBinCount={ bands.frequencyBinCount }
@@ -230,7 +256,7 @@ export default ({
         <button onClick={ () => listToggle() }>
           list
         </button>
-        <button onClick={() => { player.currentState === `paused` && player.playing.id && setPlaying({ ...player.playing }) }}>
+        <button onClick={() => { player.currentState === `paused` && station.current.id && setPlaying({ ...station.current }) }}>
           play
         </button>
         <button onClick={() => { player.currentState !== `paused` && stop() }}>

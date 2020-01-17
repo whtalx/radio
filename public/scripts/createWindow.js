@@ -1,6 +1,6 @@
-import { BrowserWindow, screen } from 'electron'
-import makeURL from './makeURL'
+import { BrowserWindow, screen } from "electron"
 import isDev from 'electron-is-dev'
+import makeURL from './makeURL'
 
 export default () => {
   const [x, y] = global.store.get(`position`) || []
@@ -18,13 +18,17 @@ export default () => {
     frame: false,
     show: false,
     webPreferences: {
+      // nodeIntegrationInWorker: true,
       nodeIntegration: true,
       webSecurity: false,
     },
   })
 
   global.player.loadURL(makeURL(`player`))
-
+  global.player.on(`show`, () => global.player.webContents.send(`visible`))
+  global.player.on(`restore`, () => global.player.webContents.send(`visible`))
+  global.player.on(`hide`, () => global.player.webContents.send(`invisible`))
+  global.player.on(`minimize`, () => global.player.webContents.send(`invisible`))
   global.player.once(`ready-to-show`, () => {
     if (isDev) {
       const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require(`electron-devtools-installer`)
@@ -43,7 +47,7 @@ export default () => {
     global.player = null
   })
 
-  if (process.platform === 'win32') {
+  if (process.platform === `win32`) {
     global.player.on(`enter-full-screen`, () => {
       const [width, height] = global.player.getSize()
       const bounds = screen.getPrimaryDisplay().bounds

@@ -9,7 +9,6 @@ import formatTime from '../../functions/formatTime'
 import makePlayerState from '../../functions/makePlayerState'
 
 const timer = new Worker(`./workers/timer.js`)
-const streamer = new Worker(`./workers/streamer.js`)
 const context = new AudioContext()
 const bands = new AnalyserNode({ context, stc: .7 })
 const peaks = new AnalyserNode({ context, stc: .99 })
@@ -17,7 +16,7 @@ const peaks = new AnalyserNode({ context, stc: .99 })
 export default ({
   list,
   listToggle,
-  setStation,
+  updateStation,
   player,
   setState,
   setPlaying,
@@ -25,17 +24,14 @@ export default ({
   const hls = useRef(null)
   const node = useRef(null)
   const station = useRef(player.playing)
-  const mediaSource = useRef(null)
-  const sourceBuffer = useRef(null)
   const [time, setTime] = useState(null)
+  const [title, setTitle] = useState(``)
   const [fullscreen, setFullscreen] = useState(false)
   const [sourceHeight, setSourceHeight] = useState(0)
 
   const stop = () => {
     timer.postMessage({ type: `stop` })
-    streamer.postMessage({ type: `stop` })
-    mediaSource.current && (mediaSource.current = null)
-    sourceBuffer.current && (sourceBuffer.current = null)
+    ipcRenderer.send(`abort`)
 
     if (hls.current) {
       hls.current.destroy()
@@ -44,6 +40,7 @@ export default ({
     }
 
     node.current.src = ``
+    title && setTitle(``)
   }
 
   const play = () => {
@@ -74,34 +71,6 @@ export default ({
         setTime(data || Math.floor(node.current.currentTime))
       }
 
-      streamer.onmessage = ({ data: { type, payload }}) => {
-        switch (type) {
-          case `mime`: {
-            if (!mediaSource.current) return
-
-            sourceBuffer.current = mediaSource.current.addSourceBuffer(payload)
-            sourceBuffer.current.onupdateend = () =>
-              streamer.postMessage({ type: `ready` })
-
-            streamer.postMessage({ type: `ready` })
-            return
-          }
-
-          case `buffer`: {
-            sourceBuffer.current && sourceBuffer.current.appendBuffer(payload)
-            return
-          }
-
-          case `error`: {
-            error(payload)
-            return
-          }
-
-          default:
-            return
-        }
-      }
-
       ipcRenderer.on(`visible`, () =>
         !node.current.paused && timer.postMessage({ type: `continue` })
       )
@@ -110,10 +79,18 @@ export default ({
         !node.current.paused && timer.postMessage({ type: `pause` })
       )
 
+      ipcRenderer.on(`served`, () =>
+        node.current.src = `http://[::1]:8520`
+      )
+
+      ipcRenderer.on(`metadata`, (_, data) =>
+        setTitle(data.StreamTitle || ``)
+      )
+
       ipcRenderer.on(`player`, (_, data) => {
         switch (data) {
           case `play`:
-            return setPlaying(station.current)
+            return ipcRenderer.send(`request`, station.current)
 
           case `stop`:
             return stop()
@@ -129,14 +106,11 @@ export default ({
   useEffect(
     () => {
       timer.postMessage({ type: `stop` })
-      streamer.postMessage({ type: `stop` })
       hls.current && hls.current.destroy()
       sourceHeight && setSourceHeight(0)
-      mediaSource.current && (mediaSource.current = null)
-      sourceBuffer.current && (sourceBuffer.current = null)
 
       if (player.currentState !== `pending`) return
-
+      station.current = player.playing
       const { current } = station
 
       if (current.hls) {
@@ -177,25 +151,17 @@ export default ({
               }
 
               default: {
-                setStation({ ...player.playing, unresolvable: true })
+                updateStation({ ...player.playing, unresolvable: true })
                 setPlaying({})
                 break
               }
             }
           }
         })
-        return
-      } else if (current.src_resolved) {
-        mediaSource.current = new MediaSource()
-        node.current.src = URL.createObjectURL(mediaSource.current)
-        mediaSource.current.addEventListener('sourceopen', () => {
-          streamer.postMessage({ type: `start`, payload: current.src_resolved })
-        })
       } else if (!current.id) {
         stop()
       }
 
-      hls.current && (hls.current = null)
     },
     [player.playing] // eslint-disable-line
   )
@@ -242,7 +208,7 @@ export default ({
         </Display>
         <Title>
           <Tick>
-            { player.playing.title || player.playing.name }
+            { title || player.playing.name }
           </Tick>
         </Title>
       </section>
@@ -256,7 +222,7 @@ export default ({
         <button onClick={ () => listToggle() }>
           list
         </button>
-        <button onClick={() => { player.currentState === `paused` && station.current.id && setPlaying({ ...station.current }) }}>
+        <button onClick={() => { player.currentState === `paused` && station.current.id && ipcRenderer.send(`request`, station.current) }}>
           play
         </button>
         <button onClick={() => { player.currentState !== `paused` && stop() }}>

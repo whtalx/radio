@@ -1,9 +1,14 @@
-import { BrowserWindow, screen } from "electron"
+import { BrowserWindow, screen, session } from 'electron'
 import isDev from 'electron-is-dev'
 import makeURL from './makeURL'
 
 export default () => {
+  global.session = session.fromPartition(`sess`)
+  global.session.setUserAgent(`curl/7.22.0 (x86_64-pc-linux-gnu) libcurl/7.22.0 OpenSSL/1.0.1 zlib/1.2.3.4 libidn/1.23 librtmp/2.3`)
+  // global.session.setUserAgent(`WinampMPEG/2.7`)
+
   const [x, y] = global.store.get(`position`) || []
+
   global.player = new BrowserWindow({
     width: 275,
     height: 116,

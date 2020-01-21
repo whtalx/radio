@@ -16,14 +16,14 @@ const mapState = ({ api, list, player }) => ({ api, list, player })
 const mapDispatch = (dispatch) => ({
   setApi: state => dispatch(setApi(state)),
   setType: type => dispatch(setType(type)),
-  setStation: station => dispatch(updateStation(station)),
+  updateStation: station => dispatch(updateStation(station)),
+  favouritesAdd: station => dispatch(favouritesAdd(station)),
+  favouritesRemove: station => dispatch(favouritesRemove(station)),
   setTags: tags => dispatch(setTagsList(tags)),
   setStations: stations => dispatch(setStationsList(stations)),
   setLanguages: languages => dispatch(setLanguagesList(languages)),
   setCountryCodes: countryCodes => dispatch(setCountryCodesList(countryCodes)),
-  favouritesAdd: station => dispatch(favouritesAdd(station)),
-  favouritesRemove: station => dispatch(favouritesRemove(station)),
-  setPlaying: station => dispatch(setPlaying(station)),
+  setPlaying: station => dispatch(setPlaying(station))
 })
 
 export default connect(mapState, mapDispatch)(List)

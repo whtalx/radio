@@ -8,10 +8,7 @@ const getState = () => {
   const storedList = localStorage.getItem(`list`)
   const storedPlayer = localStorage.getItem(`player`)
   const list = storedList && JSON.parse(storedList)
-  const player = storedPlayer && JSON.parse(storedPlayer)
-
-  player && player.currentState === `playing` && (player.currentState = `pending`)
-
+  const player = storedPlayer && { playing: JSON.parse(storedPlayer).playing, currentState: `paused` }
   return { list, player }
 }
 

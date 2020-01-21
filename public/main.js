@@ -1,26 +1,42 @@
 import { app, Menu, ipcMain } from 'electron'
+import http from 'http'
 import Store from 'electron-store'
 import createWindow from './scripts/createWindow'
-import prefetch from './scripts/prefetch'
+import request from './scripts/request'
 import control from './scripts/control'
+import abort from './scripts/abort'
 import menu from './scripts/menu'
 
 global.player = null
+global.stream = null
 global.request = null
-global.store = new Store({ serialize: value => JSON.stringify(value) })
+global.session = null
+global.server = http.createServer().listen(8520)
+global.store = new Store({ serialize: JSON.stringify })
 
+server.on('request', (request, response) => {
+  if (global.stream) {
+    response.headers = global.stream.rawHeaders
+    response.statusCode = 200
+    global.stream.pipe(response)
+  } else {
+    response.statusCode = 503
+    response.end()
+  }
+})
 Menu.setApplicationMenu(Menu.buildFromTemplate(menu()))
 
 app.commandLine.appendArgument(`disable-background-timer-throttling`)
 app.on(`ready`, createWindow)
-app.on(`window-all-closed`, () => process.platform !== 'darwin' && app.quit())
+app.on(`window-all-closed`, () => process.platform !== `darwin` && app.quit())
 app.on(`activate`, () => {
   global.player === null
     ? createWindow()
     : !global.player.isVisible() && global.player.show()
 })
 
-ipcMain.on(`minimize`, (_, name) => control({ func: `minimize`, name }))
-ipcMain.on(`close`, (_, name) => control({ func: `close`, name }))
-ipcMain.on(`hide`, (_, name) => control({ func: `hide`, name }))
-ipcMain.on(`fetch`, prefetch)
+ipcMain.on(`abort`, abort)
+ipcMain.on(`request`, request)
+ipcMain.on(`hide`, control`hide`)
+ipcMain.on(`close`, control`close`)
+ipcMain.on(`minimize`, control`minimize`)

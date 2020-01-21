@@ -1,16 +1,18 @@
-import prefetch from './prefetch'
+import serve from './serve'
+import request from './request'
 import streamToString from './streamToString'
 
 export default ({ url, data }) => async (response) => {
   response.on(`error`, (e) => {
     console.log(`stream destroyed:\n `, e)
-    const { groups } = /recursive call:\s(?<link>[\w\d.\-:;/=%&?#@]+)/.exec(e) || {}
     global.request = null
-    groups && prefetch(undefined, data, groups.link)
+    const { groups } = /recursive call:\s(?<link>[\w\d.\-:;/=%&?#@]+)/.exec(e) || {}
+    groups && request(undefined, data, groups.link)
   })
 
   const { headers, statusCode, statusMessage } = response
 
+  console.log(headers)
   if (statusCode !== 200) {
     global.player.webContents.send(`rejected`, data)
     response.destroy(`Response status ${ statusCode }: ${ statusMessage }`)
@@ -23,17 +25,27 @@ export default ({ url, data }) => async (response) => {
     response.destroy(`resolved ${ link }\n  with content-type: ${ type }/${ subtype }`)
   }
 
-  const resolve = ({ url, hls, mime }) => {
-    global.player.webContents.send(
-      `resolved`,
-      {
-        ...data,
-        hls,
-        src_resolved: hls ? true : url,
-        title: headers[`icy-name`] || headers[`ice-name`]
-      }
-    )
-    shut(url || hls)
+  const resolve = ({ url, hls }) => {
+    if (url) {
+      serve(response)
+      global.player.webContents.send(
+        `resolved`,
+        {
+          ...data,
+          src_resolved: url,
+        }
+      )
+    } else if (hls) {
+      global.player.webContents.send(
+        `resolved`,
+        {
+          ...data,
+          hls,
+          src_resolved: true,
+        }
+      )
+      shut(hls)
+    }
   }
 
   switch (type) {
@@ -41,14 +53,12 @@ export default ({ url, data }) => async (response) => {
     case `video`:
     case `undefined`: {
       resolve({ url })
-      // sendChunks(response)
       return
     }
 
     case `application`: {
       if (subtype === `ogg`) {
         resolve({ url })
-        // sendChunks(response)
         return
       }
 
@@ -88,12 +98,4 @@ export default ({ url, data }) => async (response) => {
       return
     }
   }
-}
-
-function sendChunks(stream) {
-  global.player.webContents.send(`mime`, stream.headers[`content-type`] || `audio/mpeg`)
-
-  stream.on(`data`, (chunk) => {
-    chunk && global.player.webContents.send(`chunk`, chunk)
-  })
 }

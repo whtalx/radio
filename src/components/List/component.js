@@ -15,7 +15,7 @@ export default ({
   setApi,
   setType,
   list,
-  setStation,
+  updateStation,
   setTags,
   setStations,
   setLanguages,
@@ -26,8 +26,8 @@ export default ({
   setPlaying,
 }) => {
   const container = useRef(null)
-  const [tune, setTune] = useState(null)
-  const [current, setCurrent] = useState({})
+  const [selected, setSelected] = useState(null)
+  const [focused, setFocused] = useState({})
   const [offsets, setOffsets] = useState({})
   const [processing, setProcessing] = useState(null)
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
@@ -42,12 +42,12 @@ export default ({
     () => {
       ipcRenderer.on(`resolved`, (_, data) => {
         setProcessing(null)
-        setStation(data)
+        updateStation(data)
       })
 
       ipcRenderer.on(`rejected`, (_, data) => {
         setProcessing(null)
-        setStation({ ...data, unresolvable: true })
+        updateStation({ ...data, unresolvable: true })
       })
     },
     [] // eslint-disable-line
@@ -98,19 +98,26 @@ export default ({
 
   useEffect(
     () => {
-      if (!tune) return
+      if (!selected) return
 
-      if (tune.unresolvable) {
-        setTune(null)
-      } else if (tune.src_resolved) {
-        setPlaying(tune)
-        setTune(null)
-      } else if (tune.id !== player.playing.id) {
-        setProcessing(tune.id)
-        ipcRenderer.send(`fetch`, current)
+      if (selected.unresolvable) {
+        setSelected(null)
+        return
       }
+
+      if (selected.hls) {
+        setPlaying(selected)
+      } else if (selected.src_resolved) {
+        setPlaying(selected)
+        ipcRenderer.send(`request`, selected)
+      } else if (selected.id !== player.playing.id) {
+        setProcessing(selected.id)
+        ipcRenderer.send(`request`, selected)
+      }
+
+      setSelected(null)
     },
-    [tune] // eslint-disable-line
+    [selected] // eslint-disable-line
   )
 
   useEffect(
@@ -119,11 +126,11 @@ export default ({
 
       const play = {
         label: `Play`,
-        enabled: !current.unresolvable,
+        enabled: !focused.unresolvable,
         click() {
-          player.playing.id === current.id
+          player.playing.id === focused.id
             ? remote.getCurrentWebContents().send(`player`, `play`)
-            : setTune(current)
+            : setSelected(focused)
         },
       }
 
@@ -137,27 +144,27 @@ export default ({
       const add = {
         label: `Add to favourites`,
         click() {
-          favouritesAdd(current)
+          favouritesAdd(focused)
         },
       }
 
       const remove = {
         label: `Remove from favourites`,
         click() {
-          favouritesRemove(current)
+          favouritesRemove(focused)
         },
       }
 
       const info = {
         label: `Information`,
         click() {
-          console.log(JSON.parse(JSON.stringify(current)))
+          console.log(JSON.parse(JSON.stringify(focused)))
         },
       }
 
       const menu = new Menu()
-      menu.append(new MenuItem(player.playing.id === current.id ? player.currentState === `paused` ? play : stop : play))
-      menu.append(new MenuItem(list.favourites.findIndex(station => station.id === current.id) >= 0 ? remove : add))
+      menu.append(new MenuItem(player.playing.id === focused.id ? player.currentState === `paused` ? play : stop : play))
+      menu.append(new MenuItem(list.favourites.findIndex(station => station.id === focused.id) >= 0 ? remove : add))
       menu.append(new MenuItem(info))
       menu.popup({ window: remote.getCurrentWindow() })
       setContextMenuCalled(false)
@@ -168,6 +175,7 @@ export default ({
   useEffect(
     () => {
       if (api.type !== `stations`) return
+
       setOffsets(o => ({ ...o, stations: 0 }))
     },
     [api.type] // eslint-disable-line
@@ -195,9 +203,9 @@ export default ({
                 unresolvable={ listItem.unresolvable }
                 playing={ listItem.id === player.playing.id }
                 processing={ listItem.id === processing }
-                onFocus={ () => setCurrent(listItem) }
+                onFocus={ () => setFocused(listItem) }
                 onContextMenu={ handleContextMenu }
-                onDoubleClick={ () => setTune(listItem) }
+                onDoubleClick={ () => setSelected(listItem) }
                 children={ listItem.name }
               />
             )
@@ -211,9 +219,9 @@ export default ({
                       unresolvable={ listItem.unresolvable }
                       playing={ listItem.id === player.playing.id }
                       processing={ listItem.id === processing }
-                      onFocus={ () => setCurrent(listItem) }
+                      onFocus={ () => setFocused(listItem) }
                       onContextMenu={ handleContextMenu }
-                      onDoubleClick={ () => setTune(listItem) }
+                      onDoubleClick={ () => setSelected(listItem) }
                       children={ listItem.name }
                     />
                   )

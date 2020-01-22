@@ -13,7 +13,6 @@ export default (stream) => {
   } else {
     console.log(`serving radio stream without meta tags`)
     global.stream = stream
-    global.stream.on('readable', () => console.log(global.stream.headers))
   }
 
   global.player.webContents.send(`served`)

@@ -16,8 +16,6 @@ global.store = new Store({ serialize: JSON.stringify })
 
 server.on('request', (request, response) => {
   if (global.stream) {
-    response.headers = global.stream.rawHeaders
-    response.statusCode = 200
     global.stream.pipe(response)
   } else {
     response.statusCode = 503

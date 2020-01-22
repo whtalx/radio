@@ -12,7 +12,6 @@ export default ({ url, data }) => async (response) => {
 
   const { headers, statusCode, statusMessage } = response
 
-  console.log(headers)
   if (statusCode !== 200) {
     global.player.webContents.send(`rejected`, data)
     response.destroy(`Response status ${ statusCode }: ${ statusMessage }`)

@@ -10,7 +10,7 @@ const _parseMetadata = metadata => {
   const data = Buffer.isBuffer(metadata)
     ? metadata.toString()
     : metadata || ``
-  const parts = [...data.replace(/0*$/, ``).matchAll(METADATA_REGEX)]
+  const parts = [...data.replace(/\0*$/, ``).matchAll(METADATA_REGEX)]
 
   return parts.reduce((metadata, item) => (metadata[item[1]] = String(item[2])) && metadata, {})
 }

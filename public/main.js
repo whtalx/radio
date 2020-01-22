@@ -35,6 +35,6 @@ app.on(`activate`, () => {
 
 ipcMain.on(`abort`, abort)
 ipcMain.on(`request`, request)
-ipcMain.on(`hide`, control`hide`)
 ipcMain.on(`close`, control`close`)
 ipcMain.on(`minimize`, control`minimize`)
+ipcMain.on(`hide`, control(process.platform === `darwin` ? `hide` : `close`))

@@ -3,7 +3,7 @@ import request from './request'
 import streamToString from './streamToString'
 
 export default ({ url, data }) => async (response) => {
-  response.on(`error`, (e) => {
+  response.socket.on(`error`, (e) => {
     console.log(`stream destroyed:\n `, e)
     global.request = null
     const { groups } = /recursive call:\s(?<link>[\w\d.\-:;/=%&?#@]+)/.exec(e) || {}
@@ -13,6 +13,11 @@ export default ({ url, data }) => async (response) => {
   const { headers, statusCode, statusMessage } = response
 
   if (statusCode !== 200) {
+    if (statusCode > 300 && statusCode < 304) {
+      response.destroy(`recursive call: ${ response.headers.location }`)
+      return
+    }
+
     global.player.webContents.send(`rejected`, data)
     response.destroy(`Response status ${ statusCode }: ${ statusMessage }`)
     return

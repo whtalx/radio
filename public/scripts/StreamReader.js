@@ -1,18 +1,18 @@
 import { Transform } from 'stream'
 
-const INIT_STATE = 1
-const BUFFERING_STATE = 2
-const PASSTHROUGH_STATE = 3
-const METADATA_BLOCK_SIZE = 16
-const METADATA_REGEX = /(\w+)=['"](.+?)['"];/g
+const INIT = 1
+const BUFFERING = 2
+const PASSTHROUGH = 3
 
 const _parseMetadata = metadata => {
-  const data = Buffer.isBuffer(metadata)
-    ? metadata.toString()
-    : metadata || ``
-  const parts = [...data.replace(/\0*$/, ``).matchAll(METADATA_REGEX)]
-
-  return parts.reduce((metadata, item) => (metadata[item[1]] = String(item[2])) && metadata, {})
+  return (Buffer.isBuffer(metadata) ? metadata.toString() : metadata || ``)
+    .replace(/0*$/, ``)
+    .split(`;`)
+    .map((item) => {
+      const g = /(?<key>(.+?))=['"](?<value>(.+?)?)['"]/.exec(item)
+      return g ? { [g.groups.key]: g.groups.value } : undefined
+    })
+    .reduce((metadata, item) => item ? { ...metadata, ...item } : metadata, {})
 }
 
 const _trampoline = function (fn) {
@@ -28,23 +28,23 @@ const _processData = (stream, chunk, done) => {
     stream._bytesLeft -= chunk.length
   }
 
-  if (stream._currentState === BUFFERING_STATE) {
+  if (stream._currentState === BUFFERING) {
     stream._buffers.push(chunk)
     stream._buffersLength += chunk.length
-  } else if (stream._currentState === PASSTHROUGH_STATE) {
+  } else if (stream._currentState === PASSTHROUGH) {
     stream.push(chunk)
   }
 
   if (stream._bytesLeft === 0) {
     const cb = stream._callback
 
-    if (cb && stream._currentState === BUFFERING_STATE && stream._buffers.length > 1) {
+    if (cb && stream._currentState === BUFFERING && stream._buffers.length > 1) {
       chunk = Buffer.concat(stream._buffers, stream._buffersLength)
-    } else if (stream._currentState !== BUFFERING_STATE) {
+    } else if (stream._currentState !== BUFFERING) {
       chunk = null
     }
 
-    stream._currentState = INIT_STATE
+    stream._currentState = INIT
     stream._callback = null
     stream._buffers.splice(0)
     stream._buffersLength = 0
@@ -55,29 +55,28 @@ const _processData = (stream, chunk, done) => {
   return done
 }
 
-const _onData = _trampoline((stream, chunk, done) => {
-  if (chunk.length <= stream._bytesLeft) {
-    return () => _processData(stream, chunk, done)
-  } else {
-    return () => {
+const _onData = _trampoline((stream, chunk, done) =>
+  chunk.length <= stream._bytesLeft
+    ? () => _processData(stream, chunk, done)
+    : () => {
       const buffer = chunk.slice(0, stream._bytesLeft)
 
-      return _processData(stream, buffer, error => {
-        if (error) return done(error)
-        if (chunk.length > buffer.length) {
-          return () => _onData(stream, chunk.slice(buffer.length), done)
-        }
-      })
+      return _processData(stream, buffer, (error) =>
+        error
+          ? done(error)
+          : chunk.length > buffer.length
+            ? () => _onData(stream, chunk.slice(buffer.length), done)
+            : undefined
+      )
     }
-  }
-})
+)
 
 export default class StreamReader extends Transform {
   constructor (icyMetaInt) {
     super()
 
     this._bytesLeft = 0                     // How many bytes left to read
-    this._currentState = INIT_STATE         // Current state of reader, what the reader should do with received bytes
+    this._currentState = INIT               // Current state of reader, what the reader should do with received bytes
     this._callback = null                   // Callback for the next chunk
     this._buffers = []                      // Array of collected Buffers
     this._buffersLength = 0                 // How many bytes already read
@@ -88,14 +87,14 @@ export default class StreamReader extends Transform {
 
   _bytes (length, cb) {
     this._bytesLeft = length
-    this._currentState = BUFFERING_STATE
+    this._currentState = BUFFERING
     this._callback = cb
     return this
   }
 
   _passthrough (length, cb) {
     this._bytesLeft = length
-    this._currentState = PASSTHROUGH_STATE
+    this._currentState = PASSTHROUGH
     this._callback = cb
     return this
   }
@@ -109,7 +108,7 @@ export default class StreamReader extends Transform {
   }
 
   _onMetaSectionLengthByte (chunk) {
-    const length = chunk[0] * METADATA_BLOCK_SIZE
+    const length = chunk[0] * 16
 
     if (length > 0) {
       this._bytes(length, this._onMetaData)

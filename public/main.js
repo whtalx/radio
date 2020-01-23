@@ -14,7 +14,7 @@ global.session = null
 global.server = http.createServer().listen(8520)
 global.store = new Store({ serialize: JSON.stringify })
 
-server.on('request', (request, response) => {
+server.on(`request`, (request, response) => {
   if (global.stream) {
     global.stream.pipe(response)
   } else {
@@ -22,16 +22,17 @@ server.on('request', (request, response) => {
     response.end()
   }
 })
+
 Menu.setApplicationMenu(Menu.buildFromTemplate(menu()))
 
 app.commandLine.appendArgument(`disable-background-timer-throttling`)
 app.on(`ready`, createWindow)
 app.on(`window-all-closed`, () => process.platform !== `darwin` && app.quit())
-app.on(`activate`, () => {
+app.on(`activate`, () =>
   global.player === null
     ? createWindow()
     : !global.player.isVisible() && global.player.show()
-})
+)
 
 ipcMain.on(`abort`, abort)
 ipcMain.on(`request`, request)

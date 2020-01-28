@@ -7,8 +7,8 @@ import api from './reducers/api'
 const getState = () => {
   const storedList = localStorage.getItem(`list`)
   const storedPlayer = localStorage.getItem(`player`)
-  const list = storedList && JSON.parse(storedList)
-  const player = storedPlayer && { playing: JSON.parse(storedPlayer).playing, currentState: `paused` }
+  const list = storedList ? JSON.parse(storedList) : undefined
+  const player = storedPlayer ? { playing: JSON.parse(storedPlayer).playing, currentState: `paused` } : undefined
   return { list, player }
 }
 

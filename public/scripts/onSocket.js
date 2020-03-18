@@ -1,4 +1,4 @@
-export default (socket) => {
+export function onSocket(socket) {
   let listeners
   const substitute = (chunk) =>
     /icy/i.test(chunk.slice(0, 3))

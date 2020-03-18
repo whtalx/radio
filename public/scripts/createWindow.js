@@ -1,8 +1,8 @@
 import { BrowserWindow, screen } from 'electron'
 import isDev from 'electron-is-dev'
-import makeURL from './makeURL'
+import { makeURL } from './makeURL'
 
-export default () => {
+export function createWindow() {
   const [x, y] = global.store.get(`position`) || []
 
   global.player = new BrowserWindow({
@@ -41,7 +41,7 @@ export default () => {
   })
 
   global.player.on(`close`, () => {
-    store.set(`position`, global.player.getPosition())
+    global.store.set(`position`, global.player.getPosition())
   })
 
   global.player.on(`closed`, () => {

@@ -1,20 +1,22 @@
 import { app, Menu, ipcMain } from 'electron'
-import http from 'http'
 import Store from 'electron-store'
-import createWindow from './scripts/createWindow'
-import request from './scripts/request'
-import control from './scripts/control'
-import abort from './scripts/abort'
-import menu from './scripts/menu'
+import http from 'http'
+import {
+  createWindow,
+  request,
+  control,
+  abort,
+  menu,
+} from './scripts'
 
 global.player = null
 global.stream = null
 global.request = null
 global.session = null
-global.server = http.createServer().listen(8520)
+global.server = http.createServer().listen(0, () => console.log('Serving on port ' + global.server.address().port))
 global.store = new Store({ serialize: JSON.stringify })
 
-server.on(`request`, (request, response) => {
+global.server.on(`request`, (request, response) => {
   if (global.stream) {
     global.stream.pipe(response)
   } else {

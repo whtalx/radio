@@ -28,7 +28,9 @@ export const Title = styled.div`
   color: hsl(120, 100%, 50%);
 `
 
-export const Tick = styled.span`
+export const Tick = styled.span.attrs((props) => ({
+  title: props.children,
+}))`
   white-space: nowrap;
 `
 

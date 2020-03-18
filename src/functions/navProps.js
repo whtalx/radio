@@ -1,6 +1,6 @@
-import countries from './iso3166-1-alpha-2'
+import { countries } from '.'
 
-export default (type, callback, search = {}) => {
+export function navProps(type, callback, search = {}) {
   const props = {
     key: type,
     onClick: () => callback(type),

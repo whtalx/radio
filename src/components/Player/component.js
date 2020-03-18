@@ -3,15 +3,18 @@ import { remote, ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import { StyledPlayer, Display, Title, Tick, Video, Controls, Time } from './styled'
 import Visualization from '../Visualization'
-import AnalyserNode from '../../classes/AnalyserNode'
-import error from '../../functions/error'
-import formatTime from '../../functions/formatTime'
-import makePlayerState from '../../functions/makePlayerState'
+import {
+  Analyser,
+  error,
+  formatTime,
+  makePlayerState,
+  Timer
+} from '../../functions'
 
-const timer = new Worker(`./workers/timer.js`)
+const timer = Timer()
 const context = new AudioContext()
-const bands = new AnalyserNode({ context, stc: .7 })
-const peaks = new AnalyserNode({ context, stc: .99 })
+const bands = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .7 })
+const peaks = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .99 })
 
 export default ({
   list,
@@ -29,7 +32,7 @@ export default ({
   const [fullscreen, setFullscreen] = useState(false)
   const [sourceHeight, setSourceHeight] = useState(0)
 
-  const stop = () => {
+  function stop() {
     timer.postMessage({ type: `stop` })
     ipcRenderer.send(`abort`)
 
@@ -43,11 +46,31 @@ export default ({
     title && setTitle(``)
   }
 
-  const play = () => {
+  function play() {
     node.current.play().catch((e) => {
       error(e)
       stop()
     })
+  }
+
+  function handleClick(button) {
+    switch (button) {
+      case `list`:
+        return () => listToggle()
+
+      case `play`:
+        return () => {
+          player.currentState === `paused` &&
+          station.current.id &&
+          ipcRenderer.send(`request`, station.current)
+        }
+
+      case `stop`:
+        return () => player.currentState !== `paused` && stop()
+
+      default:
+        return
+    }
   }
 
   useEffect(
@@ -67,9 +90,8 @@ export default ({
         setState(makePlayerState(src))
       )
 
-      timer.onmessage = ({ data }) => {
-        setTime(data || Math.floor(node.current.currentTime))
-      }
+      timer.onmessage = (o) =>
+        setTime(o || Math.floor(node.current.currentTime))
 
       ipcRenderer.on(`visible`, () =>
         !node.current.paused && timer.postMessage({ type: `continue` })
@@ -79,16 +101,16 @@ export default ({
         !node.current.paused && timer.postMessage({ type: `pause` })
       )
 
-      ipcRenderer.on(`served`, () =>
-        node.current.src = `http://[::1]:8520`
+      ipcRenderer.on(`served`, (_, port) =>
+        node.current.src = `http://[::1]:${ port }`
       )
 
-      ipcRenderer.on(`metadata`, (_, data) =>
+      ipcRenderer.on(`metadata`, (_, data = {}) =>
         setTitle(data.StreamTitle || ``)
       )
 
-      ipcRenderer.on(`player`, (_, data) => {
-        switch (data) {
+      ipcRenderer.on(`player`, (_, command) => {
+        switch (command) {
           case `play`:
             return ipcRenderer.send(`request`, station.current)
 
@@ -105,6 +127,7 @@ export default ({
 
   useEffect(
     () => {
+      setTitle(``)
       timer.postMessage({ type: `stop` })
       hls.current && hls.current.destroy()
       sourceHeight && setSourceHeight(0)
@@ -219,13 +242,13 @@ export default ({
         onDoubleClick={ () => setFullscreen(last => !last) }
       />
       <Controls>
-        <button onClick={ () => listToggle() }>
+        <button onClick={ handleClick(`list`) }>
           list
         </button>
-        <button onClick={() => { player.currentState === `paused` && station.current.id && ipcRenderer.send(`request`, station.current) }}>
+        <button onClick={ handleClick(`play`) }>
           play
         </button>
-        <button onClick={() => { player.currentState !== `paused` && stop() }}>
+        <button onClick={ handleClick(`stop`) }>
           stop
         </button>
       </Controls>

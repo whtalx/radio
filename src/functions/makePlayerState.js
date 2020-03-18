@@ -1,4 +1,5 @@
-export default (src) =>
-  /blob:|http:\/\/\[::1]:8520/.test(src)
+export function makePlayerState(src) {
+  return /blob:|http:\/\/\[::1]:8520/.test(src)
     ? `loading`
     : `paused`
+}

@@ -1,6 +1,6 @@
-import StreamReader from './StreamReader'
+import { StreamReader } from '.'
 
-export default (stream) => {
+export function serve(stream) {
   if (stream.headers[`icy-metaint`]) {
     console.log(`serving radio stream with meta tags`)
     global.stream = new StreamReader(stream.headers[`icy-metaint`])
@@ -15,5 +15,5 @@ export default (stream) => {
     global.stream = stream
   }
 
-  global.player.webContents.send(`served`)
+  global.player.webContents.send(`served`, global.server.address().port)
 }

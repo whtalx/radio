@@ -1,4 +1,4 @@
-export default () => {
+export function abort() {
   console.log(`aborting previous request`)
   global.request && global.request.abort()
   global.request = null

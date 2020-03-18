@@ -1,9 +1,9 @@
 import URL from 'url'
 import http from 'http'
 import https from 'https'
-import onSocket from './onSocket'
+import { onSocket } from '.'
 
-export default ({ url, callback }) => {
+export function makeRequest({ url, callback }) {
   if (!url || !callback) return
 
   const options = URL.parse(url)

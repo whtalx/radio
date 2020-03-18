@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ipcRenderer, remote } from 'electron'
 import Header from '../Header'
 import { Container, Ul, Li } from './styled'
-import request from '../../functions/request'
-import getTags from '../../functions/getTags'
-import getStations from '../../functions/getStations'
-import getLanguages from '../../functions/getLanguages'
-import getCountryCodes from '../../functions/getCountryCodes'
+import {
+  request,
+  getTags,
+  getStations,
+  getLanguages,
+  getCountryCodes,
+} from '../../functions'
 
 const { Menu, MenuItem } = remote
 
@@ -209,7 +211,7 @@ export default ({
                 children={ listItem.name }
               />
             )
-            : list.show && list[list.show] && list[list.show].map((listItem) => {
+            : list.show && list[list.show] && list[list.show].map((listItem, index) => {
               switch (list.show) {
                 case `stations`:
                   return (
@@ -229,10 +231,10 @@ export default ({
                 case `countrycodes`:
                   return (
                     <Li
-                      key={ listItem.name }
+                      key={ listItem.name + index }
+                      onDoubleClick={ () => setApi(listItem.search) }
                       title={ `Stations: ${ listItem.stationcount }` }
                       processing={ listItem.search.countrycode === processing }
-                      onDoubleClick={ () => setApi(listItem.search) }
                       playing={ player.playing.countrycode === listItem.search.countrycode }
                       children={ listItem.name }
                     />
@@ -241,9 +243,10 @@ export default ({
                 case `languages`:
                   return (
                     <Li
-                      key={ listItem.name }
+                      key={ listItem.name + index }
                       processing={ listItem.name === processing }
                       onDoubleClick={ () => setApi(listItem.search) }
+                      title={ `Stations: ${ listItem.stationcount }` }
                       playing={ player.playing.language === listItem.name }
                       children={ listItem.name }
                     />
@@ -252,9 +255,10 @@ export default ({
                 case `tags`:
                   return (
                     <Li
-                      key={ listItem.name }
+                      key={ listItem.name + index }
                       processing={ listItem.name === processing }
                       onDoubleClick={ () => setApi(listItem.search) }
+                      title={ `Stations: ${ listItem.stationcount }` }
                       playing={ player.playing.tag === listItem.name }
                       children={ listItem.name }
                     />
@@ -263,7 +267,7 @@ export default ({
                 default:
                   return (
                     <Li
-                      key={ listItem.name }
+                      key={ listItem.name + index }
                       processing={ listItem.name === processing }
                       onDoubleClick={ () => setType(listItem.type) }
                       children={ listItem.name }

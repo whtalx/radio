@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { StatusBar, Button, Status, Nav } from './styled'
-import navProps from '../../functions/navProps'
+import { navProps } from '../../functions'
 
 export default ({
   list,

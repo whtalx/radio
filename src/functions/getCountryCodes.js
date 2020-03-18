@@ -1,7 +1,7 @@
-import countries from './iso3166-1-alpha-2'
+import { countries } from '.'
 
-export default (list) =>
-  list
+export function getCountryCodes(list) {
+  return list
     .map(({ name, stationcount }) => ({
       ...countries(name),
       search: { countrycode: name },
@@ -11,6 +11,7 @@ export default (list) =>
       a.name === b.name
         ? 0
         : a.name < b.name
-          ? -1
-          : 1
+        ? -1
+        : 1
     )
+}

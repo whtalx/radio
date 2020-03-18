@@ -1,4 +1,4 @@
-export default ({ canvas, bands, peaks }) => {
+export function visualize({ canvas, bands, peaks }) {
   const ctx = canvas.getContext(`2d`)
   const { width, height } = canvas
   const wx = width / 79

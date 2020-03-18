@@ -1,7 +1,7 @@
-import makeEndpoint from './makeEndpoint'
-import error from './error'
+import { makeEndpoint, error } from '.'
 
-export default (props) =>
-  fetch(typeof props === `string` ? props : makeEndpoint(props))
+export function request(props) {
+  return fetch(typeof props === `string` ? props : makeEndpoint(props))
     .then(response => response.json())
     .catch(error)
+}

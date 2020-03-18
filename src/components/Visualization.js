@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
-import visualize from '../functions/visualize'
+import { visualize } from '../functions'
 
 const Canvas = styled.canvas`
   position: absolute;

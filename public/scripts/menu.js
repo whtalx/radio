@@ -1,7 +1,7 @@
 import { shell } from 'electron'
 import isDev from 'electron-is-dev'
 
-export default () => {
+export function menu() {
   const menu = [{
     label: `WebRadio`,
     submenu: [

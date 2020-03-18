@@ -1,4 +1,4 @@
-export default (time) => {
+export function formatTime(time) {
   if (!Number.isFinite(time)) return `--:--`
 
   const minutes = Math.floor(time / 60)

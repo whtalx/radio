@@ -1,5 +1,6 @@
-export default (list) =>
-  list.map((tag) => ({
+export function getTags(list) {
+  return list.map((tag) => ({
     ...tag,
     search: { tag: tag.name },
   }))
+}

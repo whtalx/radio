@@ -1,4 +1,4 @@
-export default (code) => {
+export function countries(code) {
   switch (code.toLowerCase()) {
     case `af`:
       return { name : `Afghanistan`, orig: `افغانستان` }

@@ -1,5 +1,5 @@
-export default (error) =>
-  error.type === `abort`
+export function error(error) {
+  return error.type === `abort`
     ? undefined
     : /200\s\(OK/i.test(error.message)
       ? undefined
@@ -10,3 +10,4 @@ export default (error) =>
         : /user\saborted/i.test(error.message)
           ? undefined
           : console.log
+}

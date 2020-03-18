@@ -1,5 +1,5 @@
-export default (list) =>
-  list.reduce(
+export function getStations(list) {
+  return list.reduce(
     (stations, station) => {
       const { url, url_resolved, changeuuid, name } = station
       const src = (url_resolved || url).replace(/^(%20)/, ``)
@@ -9,3 +9,4 @@ export default (list) =>
     },
     []
   )
+}

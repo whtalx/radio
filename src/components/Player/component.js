@@ -75,9 +75,14 @@ export default ({
 
   useEffect(
     () => {
-      context.createMediaElementSource(node.current).connect(bands)
-      bands.connect(peaks)
-      peaks.connect(context.destination)
+      context.audioWorklet.addModule(`workers/worklet.js`).then(() => {
+        const worklet = new AudioWorkletNode(context, `gain-processor`)
+        worklet.port.onmessage = ({ data }) => console.log(data)
+        context.createMediaElementSource(node.current).connect(worklet)
+        worklet.connect(bands)
+        worklet.connect(peaks)
+        worklet.connect(context.destination)
+      })
 
       node.current.autoplay = true
       node.current.addEventListener(`pause`, stop)

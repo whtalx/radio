@@ -1,22 +1,22 @@
 export function Timer() {
   const self = {}
-  const tick = (message = null) => self.onmessage(message)
-
   let timer = null
 
-  self.onmessage = o => void o
+  const tick = (message = null) =>
+    self.onmessage && self.onmessage(message)
 
   self.postMessage = ({ type }) => {
     switch (type) {
       case `start`:
       case `continue`: {
-        tick()
         timer = setInterval(tick, 1000)
+        tick()
         return
       }
 
       case `stop`: {
         clearInterval(timer)
+        timer = null
         tick(`ы`)
         return
       }

@@ -1,5 +1,4 @@
 export * from './error'
-export * from './timer'
 export * from './request'
 export * from './getTags'
 export * from './analyser'

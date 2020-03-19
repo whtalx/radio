@@ -8,10 +8,9 @@ import {
   error,
   formatTime,
   makePlayerState,
-  Timer
 } from '../../functions'
 
-const timer = Timer()
+let timer
 const context = new AudioContext()
 const bands = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .7 })
 const peaks = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .99 })
@@ -33,8 +32,10 @@ export default ({
   const [sourceHeight, setSourceHeight] = useState(0)
 
   function stop() {
-    timer.postMessage({ type: `stop` })
     ipcRenderer.send(`abort`)
+    timer && clearInterval(timer)
+    setTime(null)
+    timer = null
 
     if (hls.current) {
       hls.current.destroy()
@@ -90,22 +91,11 @@ export default ({
       node.current.addEventListener(`pause`, stop)
       node.current.addEventListener(`playing`, () => {
         setState(`playing`)
-        timer.postMessage({ type: `start` })
+        setTime(0)
       })
 
       node.current.addEventListener(`loadstart`, ({ target: { src } }) =>
         setState(makePlayerState(src))
-      )
-
-      timer.onmessage = (o) =>
-        setTime(o || Math.floor(node.current.currentTime))
-
-      ipcRenderer.on(`visible`, () =>
-        !node.current.paused && timer.postMessage({ type: `continue` })
-      )
-
-      ipcRenderer.on(`invisible`, () =>
-        !node.current.paused && timer.postMessage({ type: `pause` })
       )
 
       ipcRenderer.on(`served`, (_, port) =>
@@ -134,10 +124,12 @@ export default ({
 
   useEffect(
     () => {
-      setTitle(``)
-      timer.postMessage({ type: `stop` })
-      hls.current && hls.current.destroy()
       sourceHeight && setSourceHeight(0)
+      hls.current && hls.current.destroy()
+      timer && clearInterval(timer)
+      setTime(null)
+      setTitle(``)
+      timer = null
 
       if (player.currentState !== `pending`) return
       station.current = player.playing
@@ -221,6 +213,15 @@ export default ({
         : node.current.requestFullscreen()
     },
     [fullscreen] // eslint-disable-line
+  )
+
+  useEffect(
+    () => {
+      if (!Number.isFinite(time)) return
+      timer && clearInterval(timer)
+      timer = setInterval(() => setTime(time + 1), 1000)
+    },
+    [time] // eslint-disable-line
   )
 
   return (

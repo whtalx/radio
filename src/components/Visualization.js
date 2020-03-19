@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
+import { ipcRenderer } from 'electron'
 import styled from 'styled-components'
 import { visualize } from '../functions'
 
@@ -10,6 +11,8 @@ const Canvas = styled.canvas`
   height: 19px;
 `
 
+const bands = [2,3,4,5,6,7,10,15,21,30,42,60,84,116,167,237,334,464,696]
+
 export default ({
   state,
   bandsBinCount,
@@ -17,28 +20,42 @@ export default ({
   bandsFrequencyData,
   peaksFrequencyData,
 }) => {
-  const canvasRef = useRef(null)
-  const [controller, setController] = useState(null)
-  const [bands] = useState([2,3,4,5,6,7,10,15,21,30,42,60,84,116,167,237,334,464,696])
+  const status = useRef(state)
+  const canvas = useRef(null)
+  const controller = useRef(null)
 
   useEffect(
     () => {
+      ipcRenderer.on(`visible`, () =>
+        status.current === `playing` && (controller.current = new AbortController())
+      )
+
+      ipcRenderer.on(`invisible`, () =>
+        controller.current && !controller.current.signal.aborted && controller.current.abort()
+      )
+    },
+    [] // eslint-disable-line
+  )
+
+  useEffect(
+    () => {
+      status.current = state
       state === `playing`
-        ? setController(new AbortController())
-        : controller && controller.abort()
+        ? controller.current = new AbortController()
+        : controller.current && controller.current.abort()
     },
     [state] // eslint-disable-line
   )
 
   useEffect(
     () => {
-      if (!controller) return
+      if (!controller.current) return
 
-      const signal = controller.signal
-      signal.addEventListener(`abort`, () => setController(null))
+      controller.current.signal.addEventListener(`abort`, () => controller.current = null)
 
       const sendBands = () => {
-        if (signal.aborted || !canvasRef.current) return
+        const { signal } = controller.current || {}
+        if (!signal || signal.aborted || !canvas.current) return
 
         const bandsData = new Uint8Array(bandsBinCount)
         bandsFrequencyData(bandsData)
@@ -46,7 +63,7 @@ export default ({
         peaksFrequencyData(peaksData)
 
         visualize({
-          canvas: canvasRef.current,
+          canvas: canvas.current,
           bands: bands.map(i => bandsData[i]),
           peaks: bands.map(i => peaksData[i]),
         })
@@ -56,8 +73,8 @@ export default ({
 
       sendBands()
     },
-    [controller] // eslint-disable-line
+    [controller.current] // eslint-disable-line
   )
 
-  return <Canvas ref={ canvasRef } />
+  return <Canvas ref={ canvas } />
 }

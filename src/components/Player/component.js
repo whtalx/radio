@@ -10,7 +10,6 @@ import {
   makePlayerState,
 } from '../../functions'
 
-let timer
 const context = new AudioContext()
 const bands = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .7 })
 const peaks = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .99 })
@@ -25,6 +24,7 @@ export default ({
 }) => {
   const hls = useRef(null)
   const node = useRef(null)
+  const timer = useRef(NaN)
   const station = useRef(player.playing)
   const [time, setTime] = useState(null)
   const [title, setTitle] = useState(``)
@@ -33,9 +33,7 @@ export default ({
 
   function stop() {
     ipcRenderer.send(`abort`)
-    timer && clearInterval(timer)
-    setTime(null)
-    timer = null
+    stopTimer()
 
     if (hls.current) {
       hls.current.destroy()
@@ -76,6 +74,19 @@ export default ({
     }
   }
 
+  function stopTimer() {
+    clearInterval(timer.current)
+    timer.current = null
+    setTime(null)
+  }
+
+  function startTimer() {
+    clearInterval(timer.current)
+    const tick = () => setTime(Math.floor(node.current.currentTime))
+    timer.current = setInterval(tick, 1000)
+    tick()
+  }
+
   useEffect(
     () => {
       context.audioWorklet.addModule(`workers/worklet.js`).then(() => {
@@ -91,11 +102,19 @@ export default ({
       node.current.addEventListener(`pause`, stop)
       node.current.addEventListener(`playing`, () => {
         setState(`playing`)
-        setTime(0)
+        startTimer()
       })
 
       node.current.addEventListener(`loadstart`, ({ target: { src } }) =>
         setState(makePlayerState(src))
+      )
+
+      ipcRenderer.on(`visible`, () =>
+        timer.current && startTimer()
+      )
+
+      ipcRenderer.on(`invisible`, () =>
+        timer.current && clearInterval(timer.current)
       )
 
       ipcRenderer.on(`served`, (_, port) =>
@@ -126,10 +145,8 @@ export default ({
     () => {
       sourceHeight && setSourceHeight(0)
       hls.current && hls.current.destroy()
-      timer && clearInterval(timer)
-      setTime(null)
       setTitle(``)
-      timer = null
+      stopTimer()
 
       if (player.currentState !== `pending`) return
       station.current = player.playing
@@ -215,20 +232,13 @@ export default ({
     [fullscreen] // eslint-disable-line
   )
 
-  useEffect(
-    () => {
-      if (!Number.isFinite(time)) return
-      timer && clearInterval(timer)
-      timer = setInterval(() => setTime(time + 1), 1000)
-    },
-    [time] // eslint-disable-line
-  )
-
   return (
     <StyledPlayer>
       <section>
         <Display>
-          <Time>{ formatTime(time) }</Time>
+          <Time>
+            { formatTime(time) }
+          </Time>
           <Visualization
             state={ player.currentState }
             bandsBinCount={ bands.frequencyBinCount }

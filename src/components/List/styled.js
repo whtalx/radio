@@ -7,14 +7,25 @@ const barSpin = keyframes`
   to { content: '\\007C' }
 `
 
-export const Container = styled.div`
-  width: 100%;
-  height: 500px;
+export const Wrapper = styled.div`
+  width: 260px;
+  height: 480px;
   box-sizing: border-box;
-  position: relative;
+  border-color: hsl(240, 100%, 3%);
+  border-style: solid;
+  border-width: 1px 0 0 1px;
+`
+
+export const Container = styled.div`
+  width: 256px;
+  height: 477px;
+  box-sizing: border-box;
   overflow: hidden scroll;
-  background-color: hsl(0, 0%, 0%);
+  background-color: hsl(240, 100%, 3%);
   color: hsl(120, 100%, 50%);
+  border-bottom: 2px solid hsl(240, 100%, 3%);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 hsl(212, 17%, 58%);
 
   ::-webkit-scrollbar {
     -webkit-appearance: none;

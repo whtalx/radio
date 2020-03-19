@@ -62,7 +62,9 @@ export default ({
         return () => {
           player.currentState === `paused` &&
           station.current.id &&
-          ipcRenderer.send(`request`, station.current)
+          (station.current.hls
+            ? setPlaying({ ...station.current })
+            : ipcRenderer.send(`request`, station.current))
         }
 
       case `stop`:
@@ -203,7 +205,7 @@ export default ({
       remote.getCurrentWindow().setContentSize(
         width,
         sourceHeight
-          ? height + sourceHeight - 8
+          ? height + sourceHeight - 32
           : 116 + (list.visible ? 509 : 0)
       )
     },

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ipcRenderer, remote } from 'electron'
 import Header from '../Header'
-import { Container, Ul, Li } from './styled'
+import { Container, Ul, Li, Wrapper } from './styled'
 import {
   request,
   getTags,
@@ -193,90 +193,92 @@ export default ({
   )
 
   return (
-    <Container ref={ container } onScroll={ ({ target }) => setOffsets(o => ({ ...o, [list.show]: target.scrollTop })) }>
-      <Header />
-      <Ul>
-        {
-          list.showFavourites
-            ? list.favourites.map((listItem) =>
-              <Li
-                key={ listItem.id }
-                title={ listItem.src }
-                unresolvable={ listItem.unresolvable }
-                playing={ listItem.id === player.playing.id }
-                processing={ listItem.id === processing }
-                onFocus={ () => setFocused(listItem) }
-                onContextMenu={ handleContextMenu }
-                onDoubleClick={ () => setSelected(listItem) }
-                children={ listItem.name }
-              />
-            )
-            : list.show && list[list.show] && list[list.show].map((listItem, index) => {
-              switch (list.show) {
-                case `stations`:
-                  return (
-                    <Li
-                      key={ listItem.id }
-                      title={ listItem.src }
-                      unresolvable={ listItem.unresolvable }
-                      playing={ listItem.id === player.playing.id }
-                      processing={ listItem.id === processing }
-                      onFocus={ () => setFocused(listItem) }
-                      onContextMenu={ handleContextMenu }
-                      onDoubleClick={ () => setSelected(listItem) }
-                      children={ listItem.name }
-                    />
-                  )
+    <Wrapper>
+      <Container ref={ container } onScroll={ ({ target }) => setOffsets(o => ({ ...o, [list.show]: target.scrollTop })) }>
+        <Header />
+        <Ul>
+          {
+            list.showFavourites
+              ? list.favourites.map((listItem) =>
+                <Li
+                  key={ listItem.id }
+                  title={ listItem.src }
+                  unresolvable={ listItem.unresolvable }
+                  playing={ listItem.id === player.playing.id }
+                  processing={ listItem.id === processing }
+                  onFocus={ () => setFocused(listItem) }
+                  onContextMenu={ handleContextMenu }
+                  onDoubleClick={ () => setSelected(listItem) }
+                  children={ listItem.name }
+                />
+              )
+              : list.show && list[list.show] && list[list.show].map((listItem, index) => {
+                switch (list.show) {
+                  case `stations`:
+                    return (
+                      <Li
+                        key={ listItem.id }
+                        title={ listItem.src }
+                        unresolvable={ listItem.unresolvable }
+                        playing={ listItem.id === player.playing.id }
+                        processing={ listItem.id === processing }
+                        onFocus={ () => setFocused(listItem) }
+                        onContextMenu={ handleContextMenu }
+                        onDoubleClick={ () => setSelected(listItem) }
+                        children={ listItem.name }
+                      />
+                    )
 
-                case `countrycodes`:
-                  return (
-                    <Li
-                      key={ listItem.name + index }
-                      onDoubleClick={ () => setApi(listItem.search) }
-                      title={ `Stations: ${ listItem.stationcount }` }
-                      processing={ listItem.search.countrycode === processing }
-                      playing={ player.playing.countrycode === listItem.search.countrycode }
-                      children={ listItem.name }
-                    />
-                  )
+                  case `countrycodes`:
+                    return (
+                      <Li
+                        key={ listItem.name + index }
+                        onDoubleClick={ () => setApi(listItem.search) }
+                        title={ `Stations: ${ listItem.stationcount }` }
+                        processing={ listItem.search.countrycode === processing }
+                        playing={ player.playing.countrycode === listItem.search.countrycode }
+                        children={ listItem.name }
+                      />
+                    )
 
-                case `languages`:
-                  return (
-                    <Li
-                      key={ listItem.name + index }
-                      processing={ listItem.name === processing }
-                      onDoubleClick={ () => setApi(listItem.search) }
-                      title={ `Stations: ${ listItem.stationcount }` }
-                      playing={ player.playing.language === listItem.name }
-                      children={ listItem.name }
-                    />
-                  )
+                  case `languages`:
+                    return (
+                      <Li
+                        key={ listItem.name + index }
+                        processing={ listItem.name === processing }
+                        onDoubleClick={ () => setApi(listItem.search) }
+                        title={ `Stations: ${ listItem.stationcount }` }
+                        playing={ player.playing.language === listItem.name }
+                        children={ listItem.name }
+                      />
+                    )
 
-                case `tags`:
-                  return (
-                    <Li
-                      key={ listItem.name + index }
-                      processing={ listItem.name === processing }
-                      onDoubleClick={ () => setApi(listItem.search) }
-                      title={ `Stations: ${ listItem.stationcount }` }
-                      playing={ player.playing.tag === listItem.name }
-                      children={ listItem.name }
-                    />
-                  )
+                  case `tags`:
+                    return (
+                      <Li
+                        key={ listItem.name + index }
+                        processing={ listItem.name === processing }
+                        onDoubleClick={ () => setApi(listItem.search) }
+                        title={ `Stations: ${ listItem.stationcount }` }
+                        playing={ player.playing.tag === listItem.name }
+                        children={ listItem.name }
+                      />
+                    )
 
-                default:
-                  return (
-                    <Li
-                      key={ listItem.name + index }
-                      processing={ listItem.name === processing }
-                      onDoubleClick={ () => setType(listItem.type) }
-                      children={ listItem.name }
-                    />
-                  )
-              }
-          })
-        }
-      </Ul>
-    </Container>
+                  default:
+                    return (
+                      <Li
+                        key={ listItem.name + index }
+                        processing={ listItem.name === processing }
+                        onDoubleClick={ () => setType(listItem.type) }
+                        children={ listItem.name }
+                      />
+                    )
+                }
+            })
+          }
+        </Ul>
+      </Container>
+    </Wrapper>
   )
 }

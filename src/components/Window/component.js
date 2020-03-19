@@ -1,15 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { remote, ipcRenderer } from 'electron'
-import { Helmet } from 'react-helmet'
-import { Wrapper, Title, Content } from './styled'
+import { Wrapper, Title, Content, Frame, Shadow, Spacer, Close, Minimize } from './styled'
 import Player from '../Player'
 import List from '../List'
 
-export default ({ list }) => {
-  const [buttons] = useState([`minimize`, `hide`])
-  const [title] = useState(`WebRadio`)
-  const [name] = useState(`player`)
-
+export default ({ list, listToggle }) => {
   useEffect(
     () => {
       const rect = remote.getCurrentWindow().getBounds()
@@ -22,29 +17,63 @@ export default ({ list }) => {
     [list]
   )
 
+
+  const windows = [
+    window({
+      key: `player_window`,
+      title: `WebRadio`,
+      height: `auto`,
+      buttons: [
+        <Minimize
+          key={ `player_minimize` }
+          title={ `minimize` }
+          onClick={ control(`minimize`) }
+        />,
+        <Close
+          key={ `player_close` }
+          title={ `close` }
+          onClick={ control(`hide`) }
+        />,
+      ],
+      children: <Player />,
+    }),
+  ]
+
+  list && windows.push(window({
+      key: `list_window`,
+      title: `Stations`,
+      height: 509,
+      buttons: [
+        <Close
+          key={ `list_close` }
+          title={ `close` }
+          onClick={ listToggle }
+        />,
+      ],
+      children: <List />,
+    }))
+
+  return windows
+}
+
+function window({ key, title, height, buttons, children }) {
   return (
-    <Wrapper>
-      <Helmet>
-        <title>
-          { title }
-        </title>
-      </Helmet>
+    <Wrapper key={ key } h={ height }>
+      <Frame />
+      <Shadow />
       <Title>
-        { title }
-        {
-          buttons.map((button) =>
-            <button
-              key={ title + button }
-              title={ button }
-              onClick={() => ipcRenderer.send(button, name) }
-            />
-          )
-        }
+        <Spacer />
+        &nbsp;{ title }&nbsp;
+        <Spacer />
+        { buttons }
       </Title>
       <Content>
-        <Player />
+        {  children }
       </Content>
-      { list && <Content><List /></Content>}
     </Wrapper>
   )
+}
+
+function control(command, window = `player`) {
+  return () => ipcRenderer.send(command, window)
 }

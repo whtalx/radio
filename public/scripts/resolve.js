@@ -2,51 +2,44 @@ import { serve, request, streamToString } from '.'
 
 export function resolve({ url, data }) {
   return async (response) => {
-    response.socket.on(`error`, (e) => {
-      // console.log(`stream destroyed:\n `, e)
-      global.request = null
-      const { groups } = /recursive call:\s(?<link>[\w\d.\-:;/=%&?#@]+)/.exec(e) || {}
-      groups && request(undefined, data, groups.link)
-    })
+    // response.socket.on(`error`, (e) => {
+    //   global.request = null
+    //   const { groups } = /recursive call:\s(?<link>[\w\d.\-:;/=%&?#@]+)/.exec(e) || {}
+    //   groups && request(undefined, data, groups.link)
+    // })
 
     const { headers, statusCode, statusMessage } = response
 
     if (statusCode !== 200) {
       if (statusCode > 300 && statusCode < 304) {
-        response.destroy(`recursive call: ${ response.headers.location }`)
+        console.log(`recursive call: ${ response.headers.location }`)
+        request(undefined, data, response.headers.location)
+        response.destroy()
         return
       }
 
       global.player.webContents.send(`rejected`, data)
-      response.destroy(`Response status ${ statusCode }: ${ statusMessage }`)
+      console.log(`Response status ${ statusCode }: ${ statusMessage }`)
+      response.destroy()
       return
     }
 
     const [type, subtype] = (headers[`content-type`] || `undefined/undefined`).split(`/`)
 
     const shut = (link) => {
-      response.destroy(`resolved ${ link }\n  with content-type: ${ type }/${ subtype }`)
+      console.log(`resolved ${ link }\n  with content-type: ${ type }/${ subtype }`)
+      response.destroy()
     }
 
     const resolve = ({ url, hls }) => {
+      console.log(`resolved with content-type: ${ type }/${ subtype }`)
+
       if (url) {
+        global.player.webContents.send(`resolved`, { ...data, src_resolved: url })
         serve(response)
-        global.player.webContents.send(
-          `resolved`,
-          {
-            ...data,
-            src_resolved: url,
-          }
-        )
       } else if (hls) {
-        global.player.webContents.send(
-          `resolved`,
-          {
-            ...data,
-            hls,
-            src_resolved: true,
-          }
-        )
+        global.stream && (global.stream = null)
+        global.player.webContents.send(`resolved`, { ...data, hls, src_resolved: true })
         shut(hls)
       }
     }
@@ -87,7 +80,9 @@ export function resolve({ url, data }) {
             .filter(i => /^File/g.test(i))
             .map(i => i.replace(/File\d=/g, ``))
         } else {
-          response.destroy(`can't parse`)
+          global.player.webContents.send(`rejected`, data)
+          console.log(`can't parse`)
+          response.destroy()
           return
         }
 
@@ -97,18 +92,27 @@ export function resolve({ url, data }) {
           ? links[links.length - 1]
           : url.match(/\S+\//) + links[links.length - 1]
 
-        response.destroy(`recursive call: ${ lastLink }`)
+        console.log(`recursive call: ${ lastLink }`)
+        request(undefined, data, lastLink)
+        response.destroy()
         return
       }
 
       case `text`: {
-        /http(s)?:\/\/[\w\d_.-]+(:\d+)?\/;/.test(url)
-          ? shut(response.url)
-          : response.destroy(`recursive call: ${ url.match(/http(s)?:\/\/[\w\d_.-]+(:\d+)?/g)[0] }/;`)
+        if (/http(s)?:\/\/[\w\d_.-]+(:\d+)?\/;/.test(url)) {
+          global.player.webContents.send(`rejected`, data)
+          shut(response.url)
+        } else {
+          const link = url.match(/http(s)?:\/\/[\w\d_.-]+(:\d+)?/g)[0]
+          console.log(`recursive call: ${ link }/;`)
+          request(undefined, data, link)
+          response.destroy()
+        }
         return
       }
 
       default: {
+        global.player.webContents.send(`rejected`, data)
         shut(response.url)
         return
       }

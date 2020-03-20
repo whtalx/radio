@@ -24,17 +24,12 @@ export function request(_, data = {}, redirect) {
 }
 
 function check(data) {
-  const destroy = (response) => {
-    response.destroy()
-    global.stream = null
-    global.request = null
-    global.player.webContents.send(`rejected`, data)
-  }
-
-  return (response) => {
-    const { statusCode } = response
-    statusCode === 200
+  return (response) =>
+    response.statusCode === 200
       ? serve(response)
-      : destroy(response, data)
-  }
+      : (response) => {
+        response.destroy()
+        global.request = null
+        global.player.webContents.send(`rejected`, data)
+      }
 }

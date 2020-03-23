@@ -5,15 +5,17 @@ import {
   createWindow,
   request,
   control,
+  context,
   abort,
   menu,
+  size,
 } from './scripts'
 
 global.player = null
 global.stream = null
 global.request = null
 global.session = null
-global.server = http.createServer().listen(0, () => console.log('Serving on port ' + global.server.address().port))
+global.server = http.createServer().listen()
 global.store = new Store({ serialize: JSON.stringify })
 
 global.server.on(`request`, (request, response) => {
@@ -38,6 +40,11 @@ app.on(`activate`, () =>
 
 ipcMain.on(`abort`, abort)
 ipcMain.on(`request`, request)
-ipcMain.on(`close`, control`close`)
-ipcMain.on(`minimize`, control`minimize`)
+ipcMain.on(`context`, context)
+ipcMain.on(`close`, control(`close`))
+ipcMain.on(`setSize`, size(`setSize`))
+ipcMain.on(`minimize`, control(`minimize`))
+ipcMain.on(`getSizeList`, size(`getSizeList`))
+ipcMain.on(`getSizeVideo`, size(`getSizeVideo`))
+ipcMain.on(`ping`, (e, m) => e.reply(`pong`, m))
 ipcMain.on(`hide`, control(process.platform === `darwin` ? `hide` : `close`))

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { ipcRenderer, remote } from 'electron'
+import { ipcRenderer } from 'electron'
 import Header from '../Header'
 import { Container, Ul, Li, Wrapper } from './styled'
 import {
@@ -9,8 +9,6 @@ import {
   getLanguages,
   getCountryCodes,
 } from '../../functions'
-
-const { Menu, MenuItem } = remote
 
 export default ({
   api,
@@ -27,14 +25,15 @@ export default ({
   player,
   setPlaying,
 }) => {
+  const focused = useRef({})
+  const playing = useRef(player.playing)
   const container = useRef(null)
-  const [selected, setSelected] = useState(null)
-  const [focused, setFocused] = useState({})
   const [offsets, setOffsets] = useState({})
+  const [selected, setSelected] = useState(null)
   const [processing, setProcessing] = useState(null)
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
 
-  const handleContextMenu = (event) => {
+  function handleContextMenu(event) {
     event.preventDefault()
     event.target.focus()
     setContextMenuCalled(true)
@@ -50,6 +49,40 @@ export default ({
       ipcRenderer.on(`rejected`, (_, data) => {
         setProcessing(null)
         updateStation({ ...data, unresolvable: true })
+      })
+
+      ipcRenderer.on(`context`, (_, label) => {
+        switch (label) {
+          case `Play`: {
+            playing.current === focused.current
+              ? ipcRenderer.send(`ping`, `play`)
+              : setSelected(focused.current)
+            return
+          }
+
+          case `Stop`: {
+            ipcRenderer.send(`ping`, `stop`)
+            return
+          }
+
+          case `Add to favourites`: {
+            favouritesAdd(focused.current)
+            return
+          }
+
+          case `Remove from favourites`: {
+            favouritesRemove(focused.current)
+            return
+          }
+
+          case `Information`: {
+            console.log(JSON.parse(JSON.stringify(focused.current)))
+            return
+          }
+
+          default:
+            return
+        }
       })
     },
     [] // eslint-disable-line
@@ -126,49 +159,19 @@ export default ({
     () => {
       if (!contextMenuCalled) return
 
-      const play = {
-        label: `Play`,
-        enabled: !focused.unresolvable,
-        click() {
-          player.playing.id === focused.id
-            ? remote.getCurrentWebContents().send(`player`, `play`)
-            : setSelected(focused)
-        },
-      }
+      const play = { label: `Play`, enabled: !focused.current.unresolvable }
+      const stop = { label: `Stop` }
+      const info = { label: `Information` }
+      const add = { label: `Add to favourites` }
+      const remove = { label: `Remove from favourites` }
 
-      const stop = {
-        label: `Stop`,
-        click() {
-          remote.getCurrentWebContents().send(`player`, `stop`)
-        },
-      }
+      const menus = [
+        player.playing.id === focused.current.id && player.currentState !== `paused` ? stop : play,
+        list.favourites.findIndex(station => station.id === focused.current.id) >= 0 ? remove : add,
+        info,
+      ]
 
-      const add = {
-        label: `Add to favourites`,
-        click() {
-          favouritesAdd(focused)
-        },
-      }
-
-      const remove = {
-        label: `Remove from favourites`,
-        click() {
-          favouritesRemove(focused)
-        },
-      }
-
-      const info = {
-        label: `Information`,
-        click() {
-          console.log(JSON.parse(JSON.stringify(focused)))
-        },
-      }
-
-      const menu = new Menu()
-      menu.append(new MenuItem(player.playing.id === focused.id ? player.currentState === `paused` ? play : stop : play))
-      menu.append(new MenuItem(list.favourites.findIndex(station => station.id === focused.id) >= 0 ? remove : add))
-      menu.append(new MenuItem(info))
-      menu.popup({ window: remote.getCurrentWindow() })
+      ipcRenderer.send(`context`, menus)
       setContextMenuCalled(false)
     },
     [contextMenuCalled] // eslint-disable-line
@@ -176,20 +179,23 @@ export default ({
 
   useEffect(
     () => {
-      if (api.type !== `stations`) return
-
-      setOffsets(o => ({ ...o, stations: 0 }))
+      api.type === `stations` && setOffsets(o => ({ ...o, stations: 0 }))
     },
     [api.type] // eslint-disable-line
   )
 
   useEffect(
     () => {
-      offsets[list.show]
-        ? container.current.scroll(0, offsets[list.show])
-        : container.current.scroll(0, 0)
+      container.current.scroll(0, offsets[list.show] || 0)
     },
     [list.show] // eslint-disable-line
+  )
+
+  useEffect(
+    () => {
+      playing.current = player.playing
+    },
+    [player.playing] // eslint-disable-line
   )
 
   return (
@@ -206,7 +212,7 @@ export default ({
                   unresolvable={ listItem.unresolvable }
                   playing={ listItem.id === player.playing.id }
                   processing={ listItem.id === processing }
-                  onFocus={ () => setFocused(listItem) }
+                  onFocus={ () => focused.current = listItem }
                   onContextMenu={ handleContextMenu }
                   onDoubleClick={ () => setSelected(listItem) }
                   children={ listItem.name }
@@ -222,7 +228,7 @@ export default ({
                         unresolvable={ listItem.unresolvable }
                         playing={ listItem.id === player.playing.id }
                         processing={ listItem.id === processing }
-                        onFocus={ () => setFocused(listItem) }
+                        onFocus={ () => focused.current = listItem }
                         onContextMenu={ handleContextMenu }
                         onDoubleClick={ () => setSelected(listItem) }
                         children={ listItem.name }

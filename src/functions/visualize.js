@@ -4,31 +4,31 @@ export function visualize({ canvas, bands, peaks }) {
   const wx = width / 79
   const hx = height / 19
 
-  const clear = () => {
-    context.clearRect(0,0, width, height);
-    // context.fillStyle = `hsl(0, 0%, 0%)`
-    // context.fillRect(0, 0, width, height);
-    //
-    // [...Array(19).keys()].forEach((y) => {
-    //   [...Array(79).keys()].forEach((x) => {
-    //     if (x % 2 === 0 && y % 2 === 0) {
-    //       context.fillStyle = x === 0
-    //         ? y % 4 === 0
-    //           ? `hsl(216, 60%, 81%)`
-    //           : `hsl(205, 100%, 71%)`
-    //         : y === 18
-    //           ? x % 4 === 0
-    //             ? `hsl(216, 60%, 81%)`
-    //             : `hsl(205, 100%, 71%)`
-    //           : `hsl(240, 41%, 16%)`
-    //
-    //       context.fillRect(x * wx, y * hx, wx, hx)
-    //     }
-    //   })
-    // })
-  }
+  // const clear = () => {
+  //   context.fillStyle = `hsl(0, 0%, 0%)`
+  //   context.fillRect(0, 0, width, height);
+  //
+  //   [...Array(19).keys()].forEach((y) => {
+  //     [...Array(79).keys()].forEach((x) => {
+  //       if (x % 2 === 0 && y % 2 === 0) {
+  //         context.fillStyle = x === 0
+  //           ? y % 4 === 0
+  //             ? `hsl(216, 60%, 81%)`
+  //             : `hsl(205, 100%, 71%)`
+  //           : y === 18
+  //             ? x % 4 === 0
+  //               ? `hsl(216, 60%, 81%)`
+  //               : `hsl(205, 100%, 71%)`
+  //             : `hsl(240, 41%, 16%)`
+  //
+  //         context.fillRect(x * wx, y * hx, wx, hx)
+  //       }
+  //     })
+  //   })
+  // }
 
-  clear()
+  // clear()
+  context.clearRect(0,0, width, height);
 
   const gradient = context.createLinearGradient(0, 0, 0, 16 * hx)
 

@@ -1,18 +1,27 @@
-import React, { useEffect } from 'react'
-import { remote, ipcRenderer } from 'electron'
+import React, { useEffect, useRef } from 'react'
+import { ipcRenderer } from 'electron'
 import { Wrapper, Title, Content, Frame, Shadow, Spacer, Close, Minimize } from './styled'
 import Player from '../Player'
 import List from '../List'
 
 export default ({ list, listToggle }) => {
+  const listVisible = useRef(list)
+
   useEffect(
     () => {
-      const rect = remote.getCurrentWindow().getBounds()
-      if ((rect.height < 500 && !list) || (rect.height > 500 && list)) return
-      remote.getCurrentWindow().setBounds({
-        ...rect,
-        height: list ? rect.height + 509 : rect.height - 509,
+      ipcRenderer.on('sizeList', (e, [width, height]) => {
+        ((height < 500 && listVisible.current) || (height > 500 && !listVisible.current)) &&
+        ipcRenderer.send(`setSize`, [width, listVisible.current ? height + 509 : height - 509])
       })
+    },
+    []
+  )
+
+  useEffect(
+    () => {
+      listVisible.current !== list && ipcRenderer.send(`getSizeList`)
+      listVisible.current = list
+      console.log(listVisible.current);
     },
     [list]
   )

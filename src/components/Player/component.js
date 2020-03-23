@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { remote, ipcRenderer } from 'electron'
+import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import { StyledPlayer, Display, Title, Tick, Video, Controls, Time } from './styled'
 import Visualization from '../Visualization'
@@ -22,14 +22,15 @@ export default ({
   setState,
   setPlaying,
 }) => {
+  const timer = useRef(NaN)
   const hls = useRef(null)
   const node = useRef(null)
-  const timer = useRef(NaN)
   const station = useRef(player.playing)
+  const listVisible = useRef(list.visible)
+  const sourceHeight = useRef(0)
   const [time, setTime] = useState(null)
   const [title, setTitle] = useState(``)
   const [fullscreen, setFullscreen] = useState(false)
-  const [sourceHeight, setSourceHeight] = useState(0)
 
   function stop() {
     ipcRenderer.send(`abort`)
@@ -38,7 +39,7 @@ export default ({
     if (hls.current) {
       hls.current.destroy()
       hls.current = null
-      sourceHeight && setSourceHeight(0)
+      sourceHeight.current !== 0 && (sourceHeight.current = 0)
     }
 
     node.current.src = ``
@@ -125,7 +126,16 @@ export default ({
         setTitle(data.StreamTitle || ``)
       )
 
-      ipcRenderer.on(`player`, (_, command) => {
+      ipcRenderer.on('sizeVideo', (e, [width, height]) =>
+          ipcRenderer.send(`setSize`, [
+            width,
+            sourceHeight.current
+              ? height + sourceHeight.current - 32
+              : 116 + (listVisible.current ? 509 : 0)
+          ])
+      )
+
+      ipcRenderer.on(`pong`, (_, command) => {
         switch (command) {
           case `play`:
             return ipcRenderer.send(`request`, station.current)
@@ -143,7 +153,7 @@ export default ({
 
   useEffect(
     () => {
-      sourceHeight && setSourceHeight(0)
+      sourceHeight.current !== 0 && (sourceHeight.current = 0)
       hls.current && hls.current.destroy()
       setTitle(``)
       stopTimer()
@@ -171,7 +181,7 @@ export default ({
           const { width, height } = video.metadata
           if (!width || !height) return
 
-          setSourceHeight(Math.floor(height * 244 / width))
+          sourceHeight.current = Math.floor(height * 244 / width)
         })
 
         hls.current.on(Hls.Events.ERROR, (e, data) => {
@@ -207,29 +217,26 @@ export default ({
 
   useEffect(
     () => {
-      const [width, height] = remote.getCurrentWindow().getContentSize()
-
-      if (height < 200 && !sourceHeight) return
-
-      remote.getCurrentWindow().setContentSize(
-        width,
-        sourceHeight
-          ? height + sourceHeight - 32
-          : 116 + (list.visible ? 509 : 0)
-      )
+      ipcRenderer.send(`getSizeVideo`)
     },
-    [sourceHeight] // eslint-disable-line
+    [sourceHeight.current] // eslint-disable-line
   )
 
   useEffect(
     () => {
-      if (!sourceHeight) return
+      if (sourceHeight.current === 0) return
 
       document.fullscreenElement
         ? document.exitFullscreen()
         : node.current.requestFullscreen()
     },
     [fullscreen] // eslint-disable-line
+  )
+  useEffect(
+    () => {
+      listVisible.current = list.visible
+    },
+    [list.visible]
   )
 
   return (
@@ -255,7 +262,7 @@ export default ({
       </section>
       <Video
         ref={ node }
-        sourceHeight={ sourceHeight }
+        sourceHeight={ sourceHeight.current }
         fullscreen={ fullscreen }
         onDoubleClick={ () => setFullscreen(last => !last) }
       />

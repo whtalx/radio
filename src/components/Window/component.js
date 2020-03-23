@@ -21,7 +21,6 @@ export default ({ list, listToggle }) => {
     () => {
       listVisible.current !== list && ipcRenderer.send(`getSizeList`)
       listVisible.current = list
-      console.log(listVisible.current);
     },
     [list]
   )

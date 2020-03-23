@@ -84,6 +84,12 @@ export default ({
             return
         }
       })
+
+      return () => {
+        ipcRenderer.removeAllListeners(`resolved`)
+        ipcRenderer.removeAllListeners(`rejected`)
+        ipcRenderer.removeAllListeners(`context`)
+      }
     },
     [] // eslint-disable-line
   )

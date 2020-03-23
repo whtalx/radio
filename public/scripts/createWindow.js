@@ -35,6 +35,7 @@ export function createWindow() {
       const { default: install, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require(`electron-devtools-installer`)
       install(REDUX_DEVTOOLS)
       install(REACT_DEVELOPER_TOOLS)
+      require(`devtron`).install()
     }
 
     global.player.show()

@@ -19,7 +19,7 @@ global.server = http.createServer().listen()
 global.store = new Store({ serialize: JSON.stringify })
 
 global.server.on(`request`, (request, response) => {
-  if (global.stream) {
+  if (global.stream && global.stream.pipe) {
     global.stream.pipe(response)
   } else {
     response.statusCode = 503

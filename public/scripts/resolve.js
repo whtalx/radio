@@ -1,5 +1,7 @@
 import { serve, request, streamToString } from '.'
 
+/* TODO: handle `ECONNREFUSED` */
+
 export function resolve({ url, data }) {
   return async (response) => {
     // response.socket.on(`error`, (e) => {

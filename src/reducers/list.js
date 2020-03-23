@@ -20,6 +20,8 @@ const actualize = (element, history) => {
   return history
 }
 
+/* TODO: investigate case when clicking on li with previous list instead back button does nothing */
+
 export default createReducer(
   {
     tags: [],

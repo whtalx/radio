@@ -14,6 +14,8 @@ const context = new AudioContext()
 const bands = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .7 })
 const peaks = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .99 })
 
+/* TODO: mark station as unresolvable on hls errors */
+
 export default ({
   list,
   listToggle,

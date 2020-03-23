@@ -26,9 +26,11 @@ export default ({
   setPlaying,
 }) => {
   const focused = useRef({})
+  const showing = useRef(list.show)
   const playing = useRef(player.playing)
   const container = useRef(null)
   const [offsets, setOffsets] = useState({})
+  const [showCount, setShowCount] = useState(150)
   const [selected, setSelected] = useState(null)
   const [processing, setProcessing] = useState(null)
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
@@ -37,6 +39,14 @@ export default ({
     event.preventDefault()
     event.target.focus()
     setContextMenuCalled(true)
+  }
+
+  function handleScroll({ target }) {
+    setOffsets(last => ({ ...last, [showing.current]: target.scrollTop }))
+
+    showCount < list[showing.current].length &&
+    target.scrollTop / target.lastElementChild.clientHeight > .7 &&
+      setShowCount(last => last + 100)
   }
 
   useEffect(
@@ -193,6 +203,8 @@ export default ({
   useEffect(
     () => {
       container.current.scroll(0, offsets[list.show] || 0)
+      showing.current = list.show
+      setShowCount(150)
     },
     [list.show] // eslint-disable-line
   )
@@ -206,12 +218,12 @@ export default ({
 
   return (
     <Wrapper>
-      <Container ref={ container } onScroll={ ({ target }) => setOffsets(o => ({ ...o, [list.show]: target.scrollTop })) }>
+      <Container ref={ container } onScroll={ handleScroll }>
         <Header />
         <Ul>
           {
             list.showFavourites
-              ? list.favourites.map((listItem) =>
+              ? list.favourites.slice(0, showCount).map((listItem) =>
                 <Li
                   key={ listItem.id }
                   title={ listItem.src }
@@ -224,7 +236,7 @@ export default ({
                   children={ listItem.name }
                 />
               )
-              : list.show && list[list.show] && list[list.show].map((listItem, index) => {
+              : list.show && list[list.show] && list[list.show].slice(0, showCount).map((listItem, index) => {
                 switch (list.show) {
                   case `stations`:
                     return (

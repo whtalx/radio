@@ -1,9 +1,11 @@
-import { Writable } from 'stream'
+// import { Writable } from 'stream'
 import { StreamReader } from '.'
 
 export function serve(stream) {
   global.stream && global.stream.destroy()
   global.stream = null
+
+  if (!stream.pipe) return
 
   if (stream.headers[`icy-metaint`]) {
     console.log(`serving radio stream with meta tags`)
@@ -13,11 +15,11 @@ export function serve(stream) {
       global.player.webContents.send(`metadata`, metadata)
     })
 
+    stream.pipe(global.stream)
   } else {
     console.log(`serving radio stream without meta tags`)
-    global.stream = new Writable()
+    global.stream = stream
   }
 
-  stream.pipe(global.stream)
   global.player.webContents.send(`served`, global.server.address().port)
 }

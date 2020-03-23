@@ -14,8 +14,6 @@ const context = new AudioContext()
 const bands = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .7 })
 const peaks = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .99 })
 
-/* TODO: mark station as unresolvable on hls errors */
-
 export default ({
   list,
   listToggle,
@@ -53,6 +51,11 @@ export default ({
       error(e)
       stop()
     })
+  }
+
+  function unresolvable(station) {
+    updateStation({ ...station, unresolvable: true })
+    setPlaying({})
   }
 
   function handleClick(button) {
@@ -187,27 +190,31 @@ export default ({
         })
 
         hls.current.on(Hls.Events.ERROR, (e, data) => {
-          if (data.fatal) {
+          // if (data.fatal) {
             switch(data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR: {
-                console.log(`fatal network error encountered`, data)
+                console.log(`network error encountered`, data)
+                const { code } = data.response
+                if (code === 404 || code === 403) {
+                  unresolvable(player.playing)
+                }
                 // hls.current.startLoad()
                 break
               }
 
               case Hls.ErrorTypes.MEDIA_ERROR: {
-                console.log(`fatal media error encountered`, data)
+                console.log(`media error encountered`, data)
                 hls.current.recoverMediaError()
                 break
               }
 
               default: {
-                updateStation({ ...player.playing, unresolvable: true })
-                setPlaying({})
+                console.log(`unknown error encountered`, data)
+                unresolvable(player.playing)
                 break
               }
             }
-          }
+          // }
         })
       } else if (!current.id) {
         stop()

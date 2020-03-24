@@ -9,7 +9,7 @@ import {
   abort,
   menu,
   size,
-} from './scripts'
+} from './functions'
 
 global.player = null
 global.stream = null
@@ -30,7 +30,7 @@ global.server.on(`request`, (request, response) => {
 Menu.setApplicationMenu(Menu.buildFromTemplate(menu()))
 
 app.commandLine.appendArgument(`disable-background-timer-throttling`)
-app.on(`ready`, createWindow)
+app.whenReady().then(createWindow)
 app.on(`window-all-closed`, () => process.platform !== `darwin` && app.quit())
 app.on(`activate`, () =>
   global.player === null

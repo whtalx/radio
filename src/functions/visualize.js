@@ -4,46 +4,21 @@ export function visualize({ canvas, bands, peaks }) {
   const wx = width / 79
   const hx = height / 19
 
-  // const clear = () => {
-  //   context.fillStyle = `hsl(0, 0%, 0%)`
-  //   context.fillRect(0, 0, width, height);
-  //
-  //   [...Array(19).keys()].forEach((y) => {
-  //     [...Array(79).keys()].forEach((x) => {
-  //       if (x % 2 === 0 && y % 2 === 0) {
-  //         context.fillStyle = x === 0
-  //           ? y % 4 === 0
-  //             ? `hsl(216, 60%, 81%)`
-  //             : `hsl(205, 100%, 71%)`
-  //           : y === 18
-  //             ? x % 4 === 0
-  //               ? `hsl(216, 60%, 81%)`
-  //               : `hsl(205, 100%, 71%)`
-  //             : `hsl(240, 41%, 16%)`
-  //
-  //         context.fillRect(x * wx, y * hx, wx, hx)
-  //       }
-  //     })
-  //   })
-  // }
-
-  // clear()
   context.clearRect(0,0, width, height);
 
   const gradient = context.createLinearGradient(0, 0, 0, 16 * hx)
 
-  gradient.addColorStop(0, `hsl(0, 100%, 50%)`)
-  gradient.addColorStop(.25, `hsl(30, 100%, 50%)`)
-  gradient.addColorStop(.5, `hsl(60, 100%, 50%)`)
-  gradient.addColorStop(.75, `hsl(90, 100%, 50%)`)
-  gradient.addColorStop(1, `hsl(120, 100%, 50%)`)
+  gradient.addColorStop(0, `hsl(11, 97%, 47%)`)
+  gradient.addColorStop(.25, `hsl(29, 100%, 45%)`)
+  gradient.addColorStop(.5, `hsl(43, 90%, 48%)`)
+  gradient.addColorStop(.75, `hsl(71, 83%, 52%)`)
+  gradient.addColorStop(.9, `hsl(112, 96%, 44%)`)
+  gradient.addColorStop(1, `hsl(103, 100%, 32%)`)
 
   for (let i = 0; i < bands.length; i++) {
     const band = Math.floor(16 / 255 * bands[i])
     const peak = Math.max(Math.floor(16 / 255 * peaks[i]), band)
-    const x = i === 0
-      ? 2 * wx
-      : (((i - 1) * 4) + 6) * wx
+    const x = i === 0 ? 2 * wx : (((i - 1) * 4) + 6) * wx
 
     context.fillStyle = gradient
     context.fillRect(x, height - band * hx, 3 * wx, band * hx - 3)

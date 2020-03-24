@@ -20,61 +20,63 @@ export default ({
   bandsFrequencyData,
   peaksFrequencyData,
 }) => {
-  const status = useRef(state)
   const canvas = useRef(null)
-  const controller = useRef(null)
+  const animation = useRef(NaN)
+  const controller = useRef(false)
 
   useEffect(
     () => {
-      ipcRenderer.on(`visible`, () =>
-        status.current === `playing` && (controller.current = new AbortController())
-      )
-
-      ipcRenderer.on(`invisible`, () =>
-        controller.current && !controller.current.signal.aborted && controller.current.abort()
-      )
+      ipcRenderer.on(`visible`, start)
+      ipcRenderer.on(`invisible`, stop)
     },
     [] // eslint-disable-line
   )
 
   useEffect(
     () => {
-      status.current = state
       state === `playing`
-        ? controller.current = new AbortController()
-        : controller.current && controller.current.abort()
+        ? controller.current = true
+        : controller.current && (controller.current = false)
     },
     [state] // eslint-disable-line
   )
 
   useEffect(
     () => {
-      if (!controller.current) return
-
-      controller.current.signal.addEventListener(`abort`, () => controller.current = null)
-
-      const sendBands = () => {
-        const { signal } = controller.current || {}
-        if (!signal || signal.aborted || !canvas.current) return
-
-        const bandsData = new Uint8Array(bandsBinCount)
-        bandsFrequencyData(bandsData)
-        const peaksData = new Uint8Array(peaksBinCount)
-        peaksFrequencyData(peaksData)
-
-        visualize({
-          canvas: canvas.current,
-          bands: bands.map(i => bandsData[i]),
-          peaks: bands.map(i => peaksData[i]),
-        })
-
-        requestAnimationFrame(sendBands)
-      }
-
-      sendBands()
+      canvas.current && start()
     },
     [controller.current] // eslint-disable-line
   )
+
+  function start() {
+    cancelAnimationFrame(animation.current)
+    animation.current = requestAnimationFrame(frame)
+  }
+
+  function stop() {
+    cancelAnimationFrame(animation.current)
+    animation.current = NaN
+  }
+
+  function frame() {
+    if (!animation.current || !canvas.current) return
+    const bandsData = new Uint8Array(bandsBinCount)
+    bandsFrequencyData(bandsData)
+    const peaksData = new Uint8Array(peaksBinCount)
+    peaksFrequencyData(peaksData)
+
+    visualize({
+      canvas: canvas.current,
+      bands: bands.map(i => bandsData[i]),
+      peaks: bands.map(i => peaksData[i]),
+    })
+
+    controller.current
+      ? start()
+      : peaksData.reduce((a, i) => a && !i, true)
+        ? stop()
+        : start()
+  }
 
   return <Canvas ref={ canvas } />
 }

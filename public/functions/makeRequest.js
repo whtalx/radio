@@ -14,12 +14,12 @@ export function makeRequest({ url, callback }) {
     'Icy-MetaData': `1`,
   }
 
-  global.request = options.protocol === `https:`
+  global.prefetch = options.protocol === `https:`
     ? https.request(options)
     : http.request(options)
 
-  global.request.on(`error`, console.error)
-  global.request.on(`socket`, onSocket)
-  global.request.on(`response`, callback)
-  global.request.end()
+  global.prefetch.on(`error`, console.error)
+  global.prefetch.on(`socket`, onSocket)
+  global.prefetch.on(`response`, callback)
+  global.prefetch.end()
 }

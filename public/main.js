@@ -14,7 +14,7 @@ import {
 global.player = null
 global.stream = null
 global.request = null
-global.session = null
+global.prefetch = null
 global.server = http.createServer().listen()
 global.store = new Store({ serialize: JSON.stringify })
 

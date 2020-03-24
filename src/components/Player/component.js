@@ -190,12 +190,11 @@ export default ({
         })
 
         hls.current.on(Hls.Events.ERROR, (e, data) => {
-          // if (data.fatal) {
             switch(data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR: {
                 console.log(`network error encountered`, data)
-                const { code } = data.response
-                if (code === 404 || code === 403) {
+                const { code } = data.response || {}
+                if (!code || code === 404 || code === 403) {
                   unresolvable(player.playing)
                 }
                 // hls.current.startLoad()
@@ -214,7 +213,6 @@ export default ({
                 break
               }
             }
-          // }
         })
       } else if (!current.id) {
         stop()

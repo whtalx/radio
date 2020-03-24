@@ -2,22 +2,18 @@ import { serve, request, streamToString } from '.'
 
 export function resolve({ url, data }) {
   return async (response) => {
-    // response.socket.on(`error`, (e) => {
-    //   global.request = null
-    //   const { groups } = /recursive call:\s(?<link>[\w\d.\-:;/=%&?#@]+)/.exec(e) || {}
-    //   groups && request(undefined, data, groups.link)
-    // })
+    response.socket.on(`error`, () => {
+      global.prefetch = null
+    })
 
     const { headers, statusCode, statusMessage } = response
 
-    if (statusCode !== 200) {
+    if (statusCode > 208) {
       console.log(`Response status ${ statusCode }: ${ statusMessage }`)
 
-      if (statusCode > 300 && statusCode < 304) {
-        redirect()
-      } else {
-        global.player.webContents.send(`rejected`, data)
-      }
+      statusCode > 300 && statusCode < 304
+        ? redirect()
+        : global.player.webContents.send(`rejected`, data)
 
       response.destroy()
       return
@@ -46,12 +42,12 @@ export function resolve({ url, data }) {
       }
 
       case `text`: {
-        if (/http(s)?:\/\/[\w\d_.-]+(:\d+)?\/;/.test(url)) {
+        if (/http(s)?:\/\/[\w\d_.-]+(:\d+)?\/;/i.test(url)) {
           global.player.webContents.send(`rejected`, data)
-          shut(response.url)
+          response.destroy()
         } else {
-          const link = url.match(/http(s)?:\/\/[\w\d_.-]+(:\d+)?/g)[0]
-          console.log(`recursive call: ${ link }/;`)
+          const link = url.match(/http(s)?:\/\/[\w\d_.-]+(:\d+)?/ig)[0]
+          console.log(`recursive call:\n\t${ link }/;`)
           request(undefined, data, link)
           response.destroy()
         }
@@ -60,31 +56,28 @@ export function resolve({ url, data }) {
 
       default: {
         global.player.webContents.send(`rejected`, data)
-        shut(response.url)
+        response.destroy()
         return
       }
     }
 
-    function shut(link) {
-      console.log(`resolved ${ link }\n  with content-type: ${ type }/${ subtype }`)
-      response.destroy()
-    }
-
     function resolve({ url, hls }) {
-      console.log(`resolved with content-type: ${ type }/${ subtype }`)
+      console.log(`resolved\n\t${ hls || url }\nwith content-type:\n\t${ type }/${ subtype }`)
 
       if (url) {
         global.player.webContents.send(`resolved`, { ...data, src_resolved: url })
+        global.request = global.prefetch
+        global.prefetch = null
         serve(response)
       } else if (hls) {
         global.stream && (global.stream = null)
         global.player.webContents.send(`resolved`, { ...data, hls, src_resolved: true })
-        shut(hls)
+        response.destroy()
       }
     }
 
     function redirect() {
-      const location = /^http/.test(response.headers.location)
+      const location = /^http/i.test(response.headers.location)
         ? response.headers.location
         : /^\//.test(response.headers.location)
           ? url.match(/\w+:\/\/[^/]+/)[0] + response.headers.location

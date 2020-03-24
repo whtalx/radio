@@ -1,4 +1,3 @@
-// import { Writable } from 'stream'
 import { StreamReader } from '.'
 
 export function serve(stream) {

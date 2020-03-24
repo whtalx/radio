@@ -1,13 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
-import { StyledPlayer, Title, Tick, Video, Controls, Time } from './styled'
-import Visualization from '../Visualization'
+import { StyledPlayer, Title, Tick, Video, Controls } from './styled'
 import Display from '../Display'
 import {
   Analyser,
   error,
-  formatTime,
   makePlayerState,
 } from '../../functions'
 
@@ -250,18 +248,14 @@ export default ({
   return (
     <StyledPlayer>
       <section>
-        <Display>
-          <Time>
-            { formatTime(time) }
-          </Time>
-          <Visualization
+        <Display
+            time={ time }
             state={ player.currentState }
             bandsBinCount={ bands.frequencyBinCount }
             peaksBinCount={ peaks.frequencyBinCount }
             bandsFrequencyData={ a => bands.getByteFrequencyData(a) }
             peaksFrequencyData={ a => peaks.getByteFrequencyData(a) }
-          />
-        </Display>
+        />
         <Title>
           <Tick>
             { title || player.playing.name }

@@ -5,8 +5,8 @@ import { visualize } from '../functions'
 
 const Canvas = styled.canvas`
   position: absolute;
-  right: 2px;
-  bottom: 3px;
+  right: 1px;
+  bottom: 8px;
   width: 79px;
   height: 19px;
 `

@@ -12,15 +12,11 @@ export const StyledPlayer = styled.div`
   }
 `
 
-export const Display = styled.div`
-  width: 92px;
-  height: 44px;
-  position: relative;
-`
-
 export const Title = styled.div`
+  margin-left: 10px;
   width: 150px;
   height: 1.1em;
+  position: relative;
   overflow: hidden;
   font-size: 1em;
   line-height: 1.1em;
@@ -61,4 +57,7 @@ export const Controls = styled.div`
 export const Time = styled.p`
   color: hsl(120, 100%, 50%);
   font: 14px monospace;
+  position: absolute;
+  top: 0;
+  right: 5px;
 `

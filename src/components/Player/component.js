@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
-import { StyledPlayer, Display, Title, Tick, Video, Controls, Time } from './styled'
+import { StyledPlayer, Title, Tick, Video, Controls, Time } from './styled'
 import Visualization from '../Visualization'
+import Display from '../Display'
 import {
   Analyser,
   error,

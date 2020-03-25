@@ -4,16 +4,16 @@ export function visualize({ canvas, bands, peaks }) {
   const wx = width / 79
   const hx = height / 19
 
-  context.clearRect(0,0, width, height);
+  context.clearRect(0,0, width, height)
 
   const gradient = context.createLinearGradient(0, 0, 0, 16 * hx)
 
-  gradient.addColorStop(0, `hsl(11, 97%, 47%)`)
-  gradient.addColorStop(.25, `hsl(29, 100%, 45%)`)
-  gradient.addColorStop(.5, `hsl(43, 90%, 48%)`)
-  gradient.addColorStop(.75, `hsl(71, 83%, 52%)`)
-  gradient.addColorStop(.9, `hsl(112, 96%, 44%)`)
-  gradient.addColorStop(1, `hsl(103, 100%, 32%)`)
+  gradient.addColorStop(.2, `hsl(13, 96%, 42%)`)
+  gradient.addColorStop(.4, `hsl(25, 100%, 42%)`)
+  gradient.addColorStop(.6, `hsl(43, 80%, 48%)`)
+  gradient.addColorStop(.8, `hsl(71, 73%, 52%)`)
+  gradient.addColorStop(.9, `hsl(112, 86%, 44%)`)
+  gradient.addColorStop(1, `hsl(103, 90%, 32%)`)
 
   for (let i = 0; i < bands.length; i++) {
     const band = Math.floor(16 / 255 * bands[i])

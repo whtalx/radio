@@ -44,6 +44,23 @@ export const Shadow = styled.div`
     );
 `
 
+export const Spacer = styled.div`
+  flex-grow: 1.1;
+  height: 7px;
+  box-sizing: border-box;
+  border-radius: 2px;
+  border: 1px solid #0A0D16;
+  background:
+    linear-gradient(
+      180deg,
+      hsl(58, 64%, 67%) 20.61%,
+      hsl(0, 0%, 100%) 34.75%,
+      hsl(47, 17%, 16%) 51.12%,
+      hsl(61, 33%, 42%) 67.11%,
+      hsl(58, 64%, 67%) 78.65%
+    );
+`
+
 export const Title = styled.div`
   width: 265px;
   height: 7px;
@@ -74,6 +91,10 @@ export const Title = styled.div`
     :active {
       outline: 1px solid hsl(55, 28%, 53%);
     }
+  }
+
+  ${ Spacer }:nth-child(1) {
+    flex-grow: ${ ({ buttons }) => `1.${ buttons + 1 }` };
   }
 `
 
@@ -115,30 +136,13 @@ export const Close = styled.button`
   }
 `
 
-export const Spacer = styled.div`
-  flex-grow: 1;
-  height: 7px;
-  box-sizing: border-box;
-  border-radius: 2px;
-  border: 1px solid #0A0D16;
-  background:
-    linear-gradient(
-      180deg,
-      hsl(58, 64%, 67%) 20.61%,
-      hsl(0, 0%, 100%) 34.75%,
-      hsl(47, 17%, 16%) 51.12%,
-      hsl(61, 33%, 42%) 67.11%,
-      hsl(58, 64%, 67%) 78.65%
-    );
-`
-
 export const Content = styled.div`
   width: 260px;
   height: auto;
   min-height: 114px;
   position: relative;
-  left: 8px;
-  top: 17px;
+  left: 10px;
+  top: 21px;
   box-sizing: border-box;
   overflow: hidden;
   -webkit-app-region: no-drag;

@@ -69,7 +69,7 @@ function window({ key, title, height, buttons, children }) {
     <Wrapper key={ key } h={ height }>
       <Frame />
       <Shadow />
-      <Title>
+      <Title buttons={ buttons.length }>
         <Spacer />
         &nbsp;{ title }&nbsp;
         <Spacer />

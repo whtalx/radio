@@ -8,8 +8,8 @@ const barSpin = keyframes`
 `
 
 export const Wrapper = styled.div`
-  width: 260px;
-  height: 480px;
+  width: 257px;
+  height: 478px;
   box-sizing: border-box;
   border-color: hsl(240, 100%, 3%);
   border-style: solid;
@@ -17,8 +17,8 @@ export const Wrapper = styled.div`
 `
 
 export const Container = styled.div`
-  width: 256px;
-  height: 477px;
+  width: 254px;
+  height: 475px;
   box-sizing: border-box;
   overflow: hidden scroll;
   background-color: hsl(240, 100%, 3%);

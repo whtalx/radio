@@ -27,15 +27,20 @@ export default ({
     [list] // eslint-disable-line
   )
 
-  return list.showFavourites
-    ? <StatusBar favs={ true }>
+  function currentListIndex() {
+    return list.history.findIndex(i => i === list.show)
+  }
+
+  return list.showFavourites ? (
+    <StatusBar favs={ true }>
       <Button onClick={ favouritesToggle } title={ `Back` }>&lt;</Button>
       <span>Favourites</span>
       <Button onClick={ favouritesToggle } title={ `Back` }>&#9825;</Button>
     </StatusBar>
-    : <StatusBar>
-      <Button onClick={ back } disabled={ list.history.findIndex(i => i === list.show) === 0 } title={ `Back` }>&lt;</Button>
-      <Button onClick={ forward } disabled={ list.history.findIndex(i => i === list.show) === list.history.length - 1 } title={ `Forward` }>&gt;</Button>
+  ) : (
+    <StatusBar>
+      <Button onClick={ back } disabled={ currentListIndex() === 0 } title={ `Back` }>&lt;</Button>
+      <Button onClick={ forward } disabled={ currentListIndex() === list.history.length - 1 } title={ `Forward` }>&gt;</Button>
       <Status>
         {
           list.history
@@ -55,4 +60,5 @@ export default ({
       </Status>
       <Button showing={ false } onClick={ favouritesToggle } title={ `Show favourite stations` }>&#9825;</Button>
     </StatusBar>
+  )
 }

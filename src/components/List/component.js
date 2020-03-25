@@ -35,20 +35,6 @@ export default ({
   const [processing, setProcessing] = useState(null)
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
 
-  function handleContextMenu(event) {
-    event.preventDefault()
-    event.target.focus()
-    setContextMenuCalled(true)
-  }
-
-  function handleScroll({ target }) {
-    setOffsets(last => ({ ...last, [showing.current]: target.scrollTop }))
-
-    showCount < list[showing.current].length &&
-    target.scrollTop / target.lastElementChild.clientHeight > .7 &&
-      setShowCount(last => last + 100)
-  }
-
   useEffect(
     () => {
       ipcRenderer.on(`resolved`, (_, data) => {
@@ -215,6 +201,20 @@ export default ({
     },
     [player.playing] // eslint-disable-line
   )
+
+  function handleContextMenu(event) {
+    event.preventDefault()
+    event.target.focus()
+    setContextMenuCalled(true)
+  }
+
+  function handleScroll({ target }) {
+    setOffsets(last => ({ ...last, [showing.current]: target.scrollTop }))
+
+    showCount < list[showing.current].length &&
+    target.scrollTop / target.lastElementChild.clientHeight > .7 &&
+    setShowCount(last => last + 100)
+  }
 
   return (
     <Wrapper>

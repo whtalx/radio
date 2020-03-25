@@ -3,15 +3,7 @@ import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import { StyledPlayer, Title, Tick, Video, Controls } from './styled'
 import Display from '../Display'
-import {
-  Analyser,
-  error,
-  makePlayerState,
-} from '../../functions'
-
-const context = new AudioContext()
-const bands = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .7 })
-const peaks = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .99 })
+import { error, makePlayerState } from '../../functions'
 
 export default ({
   list,
@@ -31,78 +23,8 @@ export default ({
   const [title, setTitle] = useState(``)
   const [fullscreen, setFullscreen] = useState(false)
 
-  function stop() {
-    ipcRenderer.send(`abort`)
-    stopTimer()
-
-    if (hls.current) {
-      hls.current.destroy()
-      hls.current = null
-      sourceHeight.current !== 0 && (sourceHeight.current = 0)
-    }
-
-    node.current.src = ``
-    title && setTitle(``)
-  }
-
-  function play() {
-    node.current.play().catch((e) => {
-      error(e)
-      stop()
-    })
-  }
-
-  function unresolvable(station) {
-    updateStation({ ...station, unresolvable: true })
-    setPlaying({})
-  }
-
-  function handleClick(button) {
-    switch (button) {
-      case `list`:
-        return () => listToggle()
-
-      case `play`:
-        return () => {
-          player.currentState === `paused` &&
-          station.current.id &&
-          (station.current.hls
-            ? setPlaying({ ...station.current })
-            : ipcRenderer.send(`request`, station.current))
-        }
-
-      case `stop`:
-        return () => player.currentState !== `paused` && stop()
-
-      default:
-        return
-    }
-  }
-
-  function stopTimer() {
-    clearInterval(timer.current)
-    timer.current = null
-    setTime(null)
-  }
-
-  function startTimer() {
-    clearInterval(timer.current)
-    const tick = () => setTime(Math.floor(node.current.currentTime))
-    timer.current = setInterval(tick, 1000)
-    tick()
-  }
-
   useEffect(
     () => {
-      context.audioWorklet.addModule(`workers/worklet.js`).then(() => {
-        const worklet = new AudioWorkletNode(context, `gain-processor`)
-        worklet.port.onmessage = ({ data }) => console.log(data)
-        context.createMediaElementSource(node.current).connect(worklet)
-        worklet.connect(bands)
-        worklet.connect(peaks)
-        worklet.connect(context.destination)
-      })
-
       node.current.autoplay = true
       node.current.addEventListener(`pause`, stop)
       node.current.addEventListener(`playing`, () => {
@@ -245,17 +167,71 @@ export default ({
     [list.visible]
   )
 
+  function stop() {
+    ipcRenderer.send(`abort`)
+    stopTimer()
+
+    if (hls.current) {
+      hls.current.destroy()
+      hls.current = null
+      sourceHeight.current !== 0 && (sourceHeight.current = 0)
+    }
+
+    node.current.src = ``
+    title && setTitle(``)
+  }
+
+  function play() {
+    node.current.play().catch((e) => {
+      error(e)
+      stop()
+    })
+  }
+
+  function unresolvable(station) {
+    updateStation({ ...station, unresolvable: true })
+    setPlaying({})
+  }
+
+  function handleClick(button) {
+    switch (button) {
+      case `list`:
+        return () => listToggle()
+
+      case `play`:
+        return () => {
+          player.currentState === `paused` &&
+          station.current.id &&
+          (station.current.hls
+            ? setPlaying({ ...station.current })
+            : ipcRenderer.send(`request`, station.current))
+        }
+
+      case `stop`:
+        return () => player.currentState !== `paused` && stop()
+
+      default:
+        return
+    }
+  }
+
+  function stopTimer() {
+    clearInterval(timer.current)
+    timer.current = null
+    setTime(null)
+  }
+
+  function startTimer() {
+    clearInterval(timer.current)
+    const tick = () => setTime(Math.floor(node.current.currentTime))
+    timer.current = setInterval(tick, 1000)
+    tick()
+  }
+
   return (
     <StyledPlayer>
       <section>
-        <Display
-            time={ time }
-            state={ player.currentState }
-            bandsBinCount={ bands.frequencyBinCount }
-            peaksBinCount={ peaks.frequencyBinCount }
-            bandsFrequencyData={ a => bands.getByteFrequencyData(a) }
-            peaksFrequencyData={ a => peaks.getByteFrequencyData(a) }
-        />
+        <Display time={ time } node={ node.current } />
         <Title>
           <Tick>
             { title || player.playing.name }

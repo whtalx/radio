@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import { StyledPlayer, Top, Video, Controls } from './styled'
+import Samplerate from './samplerate'
 import Display from '../Display'
 import Bitrate from './bitrate'
 import Title from './title'
 import { error, makePlayerState } from '../../functions'
-
+// TODO: try Aurora.js (in browser)
 export default ({
   list,
   listToggle,
@@ -236,6 +237,7 @@ export default ({
         <Display time={ time } node={ node.current } />
         <Title title={ title || player.playing.name } />
         <Bitrate bitrate={ player.playing.bitrate } />
+        <Samplerate samplerate={ player.playing.samplerate } />
       </Top>
       <Video
         ref={ node }

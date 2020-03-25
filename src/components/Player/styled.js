@@ -44,7 +44,7 @@ export const Controls = styled.div`
 
 export const Output = styled.div`
   padding: 1px 0 0 1px;
-  height: 13px;
+  height: 15px;
   box-sizing: border-box;
   border-width: 1px 0 0 1px;
   border-style: solid;
@@ -53,11 +53,11 @@ export const Output = styled.div`
 `
 
 export const Title = styled.div`
-  height: 10px;
+  height: 12px;
   box-sizing: border-box;
   position: relative;
-  overflow-x: hidden;
-  font-size: 9px;
+  overflow: hidden;
+  font-size: 10px;
   line-height: 10px;
   background-color: black;
   color: hsl(120, 100%, 50%);

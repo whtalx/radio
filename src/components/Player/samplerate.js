@@ -3,34 +3,36 @@ import styled from 'styled-components'
 import { Output, Title } from './styled'
 
 const Wrapper = styled(Output)`
-  width: 21px;
+  width: 16px;
   position: absolute;
-  left: 96px;
+  left: 141px;
   top: 17px;
   font-family: bm;
   -webkit-font-smoothing: none;
 
   svg {
-    width: 15px;
-    height: 7px;
+    width: 13px;
+    height: 6px;
     position: absolute;
-    left: 23px;
+    left: 18px;
     top: 3px;
   }
 `
 
 const Content = styled(Title)`
-  width: 18px;
+  width: 13px;
   height: 11px;
   font-size: 10px;
 `
 
-export default ({ bitrate }) =>
+export default ({ samplerate }) =>
   <Wrapper>
     <Content>
-      { bitrate }
+      { samplerate }
     </Content>
-    <svg viewBox="0 0 15 7" fillRule="evenodd" fill="white">
-      <path d="M0 0H1V3H2V2H3V3H2V5H3V6H2V5H1V6H0V0ZM4 0V6H7V5H8V3H7V2H5V0H4ZM7 3H5V5H7V3ZM11 2H9V7H10V6H11V5H10V3H11V2ZM12 5V3H11V5H12ZM15 2H13V4H14V3H15V2ZM14 5H13V6H15V4H14V5Z"/>
+    <svg width="13" height="6" viewBox="0 0 13 6" fill="white">
+      <path d="M0 0H1V3H2V2H3V3H2V5H3V6H2V5H1V6H0V0ZM4 1H5V3H7V1H8V6H7V4H5V6H4V1ZM13 2H9V3H11V4H12V3H13V2ZM10 4V5H9V6H13V5H11V4H10Z"/>
     </svg>
   </Wrapper>
+
+

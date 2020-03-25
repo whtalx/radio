@@ -63,9 +63,9 @@ export function resolve({ url, data }) {
 
     function resolve({ url, hls }) {
       console.log(`resolved\n\t${ hls || url }\nwith content-type:\n\t${ type }/${ subtype }`)
-
+      console.log(headers)
       if (url) {
-        global.player.webContents.send(`resolved`, { ...data, src_resolved: url })
+        global.player.webContents.send(`resolved`, { ...data, src_resolved: url, bitrate: (/\d+/.exec(headers[`icy-br`]) || [])[0] })
         global.request = global.prefetch
         global.prefetch = null
         serve(response)

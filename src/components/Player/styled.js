@@ -12,22 +12,10 @@ export const StyledPlayer = styled.div`
   }
 `
 
-export const Title = styled.div`
-  margin-left: 10px;
-  width: 150px;
-  height: 1.1em;
+export const Top = styled.div`
+  width: 100%;
+  height: 50px;
   position: relative;
-  overflow: hidden;
-  font-size: 1em;
-  line-height: 1.1em;
-  background-color: hsl(0, 0%, 0%);
-  color: hsl(120, 100%, 50%);
-`
-
-export const Tick = styled.span.attrs((props) => ({
-  title: props.children,
-}))`
-  white-space: nowrap;
 `
 
 export const Video = styled.video`
@@ -54,10 +42,31 @@ export const Controls = styled.div`
   height: 36px;
 `
 
-export const Time = styled.p`
+export const Output = styled.div`
+  padding: 1px 0 0 1px;
+  height: 13px;
+  box-sizing: border-box;
+  border-width: 1px 0 0 1px;
+  border-style: solid;
+  border-color: black;
   color: hsl(120, 100%, 50%);
-  font: 14px monospace;
-  position: absolute;
-  top: 0;
-  right: 5px;
+`
+
+export const Title = styled.div`
+  height: 10px;
+  box-sizing: border-box;
+  position: relative;
+  overflow-x: hidden;
+  font-size: 9px;
+  line-height: 10px;
+  background-color: black;
+  color: hsl(120, 100%, 50%);
+  border-right: 1px solid black;
+  border-left: 1px solid black;
+  box-shadow: .5px .5px 0 .5px hsl(217, 22%, 63%);
+`
+
+export const Tick = styled.p`
+  width: max-content;
+  white-space: nowrap;
 `

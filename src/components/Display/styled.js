@@ -4,10 +4,10 @@ export const Wrapper = styled.div`
   width: 93px;
   height: 42px;
   box-sizing: content-box;
-  position: relative;
-  border-width: 1px 0 0 1px;
-  border-style: solid;
-  border-color: hsl(240, 0%, 0%);
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-top: 1px solid black;
 `
 
 export const Visualisation = styled.canvas`

@@ -55,7 +55,7 @@ function parseMetadata(metadata) {
     .replace(/0*$/, ``)
     .split(`;`)
     .map((item) => {
-      const g = /(?<key>(.+?))=['"](?<value>(.+?)?)['"]/.exec(item)
+      const g = /(?<key>(.+?))=['"](?<value>(.+?)?)['"]$/.exec(item)
       return g ? { [g.groups.key]: g.groups.value } : undefined
     })
     .reduce((metadata, item) => item ? { ...metadata, ...item } : metadata, {})

@@ -11,7 +11,7 @@ export const StatusBar = styled.div`
   flex-flow: row;
   align-items: flex-start;
   justify-content: ${ props => props.favs ? `space-between` : `flex-start` };
-  background-color: hsl(0, 0%, 0%);
+  background-color: black;
 `
 
 export const Button = styled.button`

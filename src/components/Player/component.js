@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
-import { StyledPlayer, Title, Tick, Video, Controls } from './styled'
+import { StyledPlayer, Top, Video, Controls } from './styled'
 import Display from '../Display'
+import Bitrate from './bitrate'
+import Title from './title'
 import { error, makePlayerState } from '../../functions'
 
 export default ({
@@ -230,14 +232,11 @@ export default ({
 
   return (
     <StyledPlayer>
-      <section>
+      <Top>
         <Display time={ time } node={ node.current } />
-        <Title>
-          <Tick>
-            { title || player.playing.name }
-          </Tick>
-        </Title>
-      </section>
+        <Title title={ title || player.playing.name } />
+        <Bitrate bitrate={ player.playing.bitrate } />
+      </Top>
       <Video
         ref={ node }
         sourceHeight={ sourceHeight.current }

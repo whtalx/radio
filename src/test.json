@@ -1,0 +1,27 @@
+[
+  {
+    "id": "db2b679f-0d08-11e9-a80b-52543be04c81",
+    "name": "Nightwave Plaza Opus 64",
+    "src": "http://radio.plaza.one/opus_64"
+  },
+  {
+    "id": "33b6a253-40f6-11e8-b74d-52543be04c81",
+    "name": "SomaFM Metal Detector (128k AAC)",
+    "src": "http://ice6.somafm.com/metal-128-aac"
+  },
+  {
+    "id": "62096bb0-1bf1-11e8-a334-52543be04c81",
+    "name": "GLOSS FM",
+    "src": "http://s42.myradiostream.com:29400"
+  },
+  {
+    "id": "c6cb3661-2802-11e8-91bf-52543be04c81",
+    "name": "bTuner",
+    "src": "http://radio.btuner.ru:8000/live.ogg"
+  },
+  {
+    "id": "98d1b738-8044-11e9-aa30-52543be04c81",
+    "name": "Радио Сектор / Sector Nota (flac)",
+    "src": "http://89.223.45.5:8000/nota-flac"
+  }
+]

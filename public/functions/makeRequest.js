@@ -18,7 +18,14 @@ export function makeRequest({ url, callback }) {
     ? https.request(options)
     : http.request(options)
 
-  global.prefetch.on(`error`, console.error)
+  global.prefetch.on(`error`, (e) => {
+    callback({
+      statusCode: Infinity,
+      statusMessage: e.message,
+      socket: { on: o => void o },
+      destroy: o => void o,
+    })
+  })
   global.prefetch.on(`socket`, onSocket)
   global.prefetch.on(`response`, callback)
   global.prefetch.end()

@@ -1,78 +1,59 @@
-import { serve, request, streamToString } from '.'
+import { serve, request, streamToString, abort } from '.'
 
 export function resolve({ url, data }) {
   return async (response) => {
-    response.socket.on(`error`, () => {
-      global.prefetch = null
-    })
+    response.socket.on(`error`, () => abort())
 
     const { headers, statusCode, statusMessage } = response
 
     if (statusCode > 208) {
       console.log(`Response status ${ statusCode }: ${ statusMessage }`)
-
-      statusCode > 300 && statusCode < 304
+      return statusCode > 300 && statusCode < 304
         ? redirect()
-        : global.player.webContents.send(`rejected`, data)
-
-      response.destroy()
-      return
+        : reject()
     }
 
     const [type, subtype] = (headers[`content-type`] || `undefined/undefined`).split(`/`)
 
-    if (/mpegurl/i.test(subtype)) {
-      return parse()
-    }
+    if (/mpegurl/i.test(subtype)) return parse()
 
     switch (type) {
       case `audio`:
       case `video`:
-      case `undefined`: {
+      case `undefined`:
         return resolve({ url })
-      }
 
-      case `application`: {
-        if (subtype === `ogg`) {
-          resolve({ url })
-          return
-        }
+      case `application`:
+        return subtype === `ogg`
+          ? resolve({ url })
+          : await parse()
 
-        return await parse()
-      }
+      case `text`:
+        return /http(s)?:\/\/[\w\d_.-]+(:\d+)?\/;/i.test(url)
+          ? reject(data)
+          : recursive(url.match(/http(s)?:\/\/[\w\d_.-]+(:\d+)?/ig)[0])
 
-      case `text`: {
-        if (/http(s)?:\/\/[\w\d_.-]+(:\d+)?\/;/i.test(url)) {
-          global.player.webContents.send(`rejected`, data)
-          response.destroy()
-        } else {
-          const link = url.match(/http(s)?:\/\/[\w\d_.-]+(:\d+)?/ig)[0]
-          console.log(`recursive call:\n\t${ link }/;`)
-          request(undefined, data, link)
-          response.destroy()
-        }
-        return
-      }
-
-      default: {
-        global.player.webContents.send(`rejected`, data)
-        response.destroy()
-        return
-      }
+      default:
+        return reject(data)
     }
 
     function resolve({ url, hls }) {
       console.log(`resolved\n\t${ hls || url }\nwith content-type:\n\t${ type }/${ subtype }`)
-      console.log(headers)
+
       if (url) {
-        global.player.webContents.send(`resolved`, { ...data, src_resolved: url, bitrate: (/\d+/.exec(headers[`icy-br`]) || [])[0] })
+        let { bitrate, samplerate, channels } = getAudioInfo(headers[`ice-audio-info`])
+
+        !bitrate && (bitrate = parseInt(/\d+/.exec(headers[`icy-br`])))
+        !samplerate && (samplerate = parseInt(/\d+/.exec(headers[`icy-sr`])))
+
+        global.player.webContents.send(`resolved`, { ...data, unresolvable: undefined, src_resolved: url, bitrate, samplerate, channels })
         global.request = global.prefetch
         global.prefetch = null
-        serve(response)
+        return serve(response)
       } else if (hls) {
         global.stream && (global.stream = null)
-        global.player.webContents.send(`resolved`, { ...data, hls, src_resolved: true })
-        response.destroy()
+        global.player.webContents.send(`resolved`, { ...data, unresolvable: undefined, hls, src_resolved: true })
+        return response.destroy()
       }
     }
 
@@ -83,8 +64,7 @@ export function resolve({ url, data }) {
           ? url.match(/\w+:\/\/[^/]+/)[0] + response.headers.location
           : url.match(/\S+\//)[0] + response.headers.location
 
-      console.log(`recursive call: ${ location }`)
-      request(undefined, data, location)
+      return recursive(location)
     }
 
     async function parse() {
@@ -110,10 +90,8 @@ export function resolve({ url, data }) {
           .filter(i => /^File/g.test(i))
           .map(i => i.replace(/File\d=/g, ``))
       } else {
-        global.player.webContents.send(`rejected`, data)
         console.log(`can't parse`)
-        response.destroy()
-        return
+        return reject()
       }
 
       // links = text.match(/http(s)?:\/\/[\w\d.\-:/=%&?#@]+(?=\s)?/ig).split(`\n`).filter(i => i)
@@ -124,9 +102,29 @@ export function resolve({ url, data }) {
           ? url.match(/\w+:\/\/[^/]+/)[0] + links[links.length - 1]
           : url.match(/\S+\//)[0] + links[links.length - 1]
 
-      console.log(`recursive call: ${ lastLink }`)
-      request(undefined, data, lastLink)
-      response.destroy()
+      return recursive(lastLink)
+    }
+
+    function getAudioInfo(string = ``) {
+      return string.split(`;`).reduce(
+        (a, i) => {
+          const [key, value] = i.split(`=`)
+          a[key.replace(/ice-/g, ``)] = parseInt(value)
+          return a
+        },
+        {}
+      )
+    }
+
+    function reject() {
+      global.player.webContents.send(`resolved`, { ...data, unresolvable: true })
+      return response.destroy()
+    }
+
+    function recursive(url) {
+      console.log(`recursive call: ${ url }`)
+      url && request(undefined, data, url)
+      return response.destroy()
     }
   }
 }

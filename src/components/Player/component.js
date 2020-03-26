@@ -7,7 +7,7 @@ import Display from '../Display'
 import Bitrate from './bitrate'
 import Title from './title'
 import { error, makePlayerState } from '../../functions'
-// TODO: try Aurora.js (in browser)
+
 export default ({
   list,
   listToggle,

@@ -42,11 +42,6 @@ export default ({
         updateStation(data)
       })
 
-      ipcRenderer.on(`rejected`, (_, data) => {
-        setProcessing(null)
-        updateStation({ ...data, unresolvable: true })
-      })
-
       ipcRenderer.on(`context`, (_, label) => {
         switch (label) {
           case `Play`: {
@@ -137,21 +132,8 @@ export default ({
     () => {
       if (!selected) return
 
-      if (selected.unresolvable) {
-        setSelected(null)
-        return
-      }
-
-      if (selected.hls) {
-        setPlaying(selected)
-      } else if (selected.src_resolved) {
-        setPlaying(selected)
-        ipcRenderer.send(`request`, selected)
-      } else if (selected.id !== player.playing.id) {
-        setProcessing(selected.id)
-        ipcRenderer.send(`request`, selected)
-      }
-
+      setProcessing(selected.id)
+      ipcRenderer.send(`request`, selected)
       setSelected(null)
     },
     [selected] // eslint-disable-line
@@ -161,7 +143,7 @@ export default ({
     () => {
       if (!contextMenuCalled) return
 
-      const play = { label: `Play`, enabled: !focused.current.unresolvable }
+      const play = { label: `Play` }
       const stop = { label: `Stop` }
       const info = { label: `Information` }
       const add = { label: `Add to favourites` }

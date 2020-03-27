@@ -41,10 +41,29 @@ export function resolve({ url, data }) {
       console.log(`resolved\n\t${ hls || url }\nwith content-type:\n\t${ type }/${ subtype }`)
 
       if (url) {
-        let { bitrate, samplerate, channels } = getAudioInfo(headers[`ice-audio-info`])
-
-        !bitrate && (bitrate = parseInt(/\d+/.exec(headers[`icy-br`])))
+        let { bitrate, samplerate, channels, quality } = getAudioInfo(headers[`ice-audio-info`])
         !samplerate && (samplerate = parseInt(/\d+/.exec(headers[`icy-sr`])))
+
+        if (!bitrate) {
+          const b = parseInt(/\d+/.exec(headers[`icy-br`]))
+          if (!b && subtype === `ogg` && quality) {
+            bitrate = {
+              '0.0': 64,
+              '0.1': 80,
+              '0.2': 96,
+              '0.3': 112,
+              '0.4': 128,
+              '0.5': 160,
+              '0.6': 192,
+              '0.7': 224,
+              '0.8': 256,
+              '0.9': 320,
+              '1.0': 500,
+            }[quality]
+          } else {
+            bitrate = b
+          }
+        }
 
         global.player.webContents.send(`resolved`, { ...data, unresolvable: undefined, src_resolved: url, bitrate, samplerate, channels })
         global.request = global.prefetch
@@ -109,7 +128,7 @@ export function resolve({ url, data }) {
       return string.split(`;`).reduce(
         (a, i) => {
           const [key, value] = i.split(`=`)
-          a[key.replace(/ice-/g, ``)] = parseInt(value)
+          a[key.replace(/ice-/g, ``)] = /quality/.test(key) ? value : parseInt(value)
           return a
         },
         {}

@@ -3,6 +3,7 @@ import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import { StyledPlayer, Top, Video, Controls } from './styled'
 import Samplerate from './samplerate'
+import Channels from './channels'
 import Display from '../Display'
 import Bitrate from './bitrate'
 import Title from './title'
@@ -238,6 +239,7 @@ export default ({
         <Title title={ title || player.playing.name } />
         <Bitrate bitrate={ player.playing.bitrate } />
         <Samplerate samplerate={ player.playing.samplerate } />
+        <Channels channels={ player.playing.channels } />
       </Top>
       <Video
         ref={ node }

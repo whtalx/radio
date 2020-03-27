@@ -6,6 +6,7 @@ import Samplerate from './samplerate'
 import Channels from './channels'
 import Display from '../Display'
 import Bitrate from './bitrate'
+import Volume from './volume'
 import Title from './title'
 import { error, makePlayerState } from '../../functions'
 
@@ -20,6 +21,9 @@ export default ({
   const timer = useRef(NaN)
   const hls = useRef(null)
   const node = useRef(null)
+  const gain = useRef(null)
+  const panner = useRef(null)
+  const worklet = useRef(null)
   const station = useRef(player.playing)
   const listVisible = useRef(list.visible)
   const sourceHeight = useRef(0)
@@ -29,6 +33,18 @@ export default ({
 
   useEffect(
     () => {
+      const { webAudio } = window
+      gain.current = webAudio.createGain()
+      panner.current = webAudio.createPanner()
+      webAudio.createMediaElementSource(node.current).connect(gain.current)
+      gain.current.connect(panner.current)
+      gain.current.gain.value = player.volume / 100
+      webAudio.audioWorklet.addModule(`workers/worklet.js`).then(() => {
+        worklet.current = new AudioWorkletNode(webAudio, `gain-processor`)
+        worklet.current.port.onmessage = ({ data }) => console.log(data)
+        panner.current.connect(worklet.current)
+      })
+
       node.current.autoplay = true
       node.current.addEventListener(`pause`, stop)
       node.current.addEventListener(`playing`, () => {
@@ -164,11 +180,19 @@ export default ({
     },
     [fullscreen] // eslint-disable-line
   )
+
   useEffect(
     () => {
       listVisible.current = list.visible
     },
     [list.visible]
+  )
+
+  useEffect(
+    () => {
+      gain.current.gain.value = player.volume / 100
+    },
+    [player.volume]
   )
 
   function stop() {
@@ -235,11 +259,12 @@ export default ({
   return (
     <StyledPlayer>
       <Top>
-        <Display time={ time } node={ node.current } />
+        <Display time={ time } worklet={ worklet.current } />
         <Title title={ title || player.playing.name } />
         <Bitrate bitrate={ player.playing.bitrate } />
         <Samplerate samplerate={ player.playing.samplerate } />
         <Channels channels={ player.playing.channels } />
+        <Volume />
       </Top>
       <Video
         ref={ node }

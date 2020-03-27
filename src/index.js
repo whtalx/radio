@@ -6,6 +6,9 @@ import store from './store'
 import Window from './components/Window'
 import './index.css'
 
+
+window.webAudio= new AudioContext()
+
 ReactDOM.render(
   <Provider store={ store }>
     <Helmet>

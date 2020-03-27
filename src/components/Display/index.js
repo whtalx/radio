@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ipcRenderer } from 'electron'
 import { connect } from 'react-redux'
 import Status from './status'
@@ -6,17 +6,15 @@ import Background from './background'
 import { Wrapper, Counter, Visualisation} from './styled'
 import { Analyser, Timer, visualize } from '../../functions'
 
-const context = new AudioContext()
-const bands = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .7 })
-const peaks = Analyser({ node: context.createAnalyser(), smoothingTimeConstant: .99 })
-const poles = [2,3,4,5,6,7,10,15,21,30,42,60,84,116,167,237,334,464,696]
-
-function Display({ time, node, state }) {
+function Display({ time, worklet, state }) {
   const animation = useRef(NaN)
   const timer = useRef(null)
+  const bands = useRef(null)
+  const peaks = useRef(null)
   const counter = useRef(null)
   const controller = useRef(false)
   const visualisation = useRef(null)
+  const [poles] = useState([2,3,4,5,6,7,10,15,21,30,42,60,84,116,167,237,334,464,696])
 
   useEffect(
     () => {
@@ -29,18 +27,15 @@ function Display({ time, node, state }) {
 
   useEffect(
     () => {
-      if (!node) return
+      if (!worklet) return
 
-      context.audioWorklet.addModule(`workers/worklet.js`).then(() => {
-        const worklet = new AudioWorkletNode(context, `gain-processor`)
-        worklet.port.onmessage = ({ data }) => console.log(data)
-        context.createMediaElementSource(node).connect(worklet)
-        worklet.connect(bands)
-        worklet.connect(peaks)
-        worklet.connect(context.destination)
-      })
+      bands.current = Analyser({ node: worklet.context.createAnalyser(), smoothingTimeConstant: .7 })
+      peaks.current = Analyser({ node: worklet.context.createAnalyser(), smoothingTimeConstant: .99 })
+      worklet.connect(bands.current)
+      worklet.connect(peaks.current)
+      worklet.connect(worklet.context.destination)
     },
-    [node]
+    [worklet]
   )
 
   useEffect(
@@ -79,12 +74,17 @@ function Display({ time, node, state }) {
   }
 
   function frame() {
-    if (!animation.current || !visualisation.current) return
+    if (
+      !animation.current ||
+      !visualisation.current ||
+      !bands.current ||
+      !peaks.current
+    ) return
 
-    const bandsData = new Uint8Array(bands.frequencyBinCount)
-    bands.getByteFrequencyData(bandsData)
-    const peaksData = new Uint8Array(peaks.frequencyBinCount)
-    peaks.getByteFrequencyData(peaksData)
+    const bandsData = new Uint8Array(bands.current.frequencyBinCount)
+    bands.current.getByteFrequencyData(bandsData)
+    const peaksData = new Uint8Array(peaks.current.frequencyBinCount)
+    peaks.current.getByteFrequencyData(peaksData)
 
     visualize({
       canvas: visualisation.current,

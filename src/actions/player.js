@@ -5,3 +5,5 @@ export const setPlaying = createAction(`SET_PLAYING`)
 
 // set player current state ("loading" / "playing" / "paused")
 export const setState = createAction(`PLAYER_SET_STATE`)
+
+export const setVolume = createAction(`PLAYER_SET_GAIN`)

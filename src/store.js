@@ -8,7 +8,7 @@ const getState = () => {
   const storedList = localStorage.getItem(`list`)
   const storedPlayer = localStorage.getItem(`player`)
   const list = storedList ? JSON.parse(storedList) : undefined
-  const player = storedPlayer ? { playing: JSON.parse(storedPlayer).playing, currentState: `paused` } : undefined
+  const player = storedPlayer ? { ...JSON.parse(storedPlayer), currentState: `paused` } : undefined
   return { list, player }
 }
 

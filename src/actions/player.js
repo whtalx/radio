@@ -7,3 +7,5 @@ export const setPlaying = createAction(`SET_PLAYING`)
 export const setState = createAction(`PLAYER_SET_STATE`)
 
 export const setVolume = createAction(`PLAYER_SET_GAIN`)
+
+export const setPan = createAction(`PLAYER_SET_PAN`)

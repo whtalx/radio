@@ -8,6 +8,7 @@ import Display from '../Display'
 import Bitrate from './bitrate'
 import Volume from './volume'
 import Title from './title'
+import Pan from './pan'
 import { error, makePlayerState } from '../../functions'
 
 export default ({
@@ -20,29 +21,31 @@ export default ({
 }) => {
   const timer = useRef(NaN)
   const hls = useRef(null)
+  const pan = useRef(null)
   const node = useRef(null)
   const gain = useRef(null)
-  const panner = useRef(null)
-  const worklet = useRef(null)
   const station = useRef(player.playing)
+  const worklet = useRef(null)
   const listVisible = useRef(list.visible)
   const sourceHeight = useRef(0)
   const [time, setTime] = useState(null)
   const [title, setTitle] = useState(``)
+  const [optionChanged, setOptionChanged] = useState(``)
   const [fullscreen, setFullscreen] = useState(false)
 
   useEffect(
     () => {
       const { webAudio } = window
       gain.current = webAudio.createGain()
-      panner.current = webAudio.createPanner()
+      pan.current = webAudio.createStereoPanner()
       webAudio.createMediaElementSource(node.current).connect(gain.current)
-      gain.current.connect(panner.current)
+      gain.current.connect(pan.current)
+      pan.current.pan.value = player.pan / 100
       gain.current.gain.value = player.volume / 100
       webAudio.audioWorklet.addModule(`workers/worklet.js`).then(() => {
         worklet.current = new AudioWorkletNode(webAudio, `gain-processor`)
         worklet.current.port.onmessage = ({ data }) => console.log(data)
-        panner.current.connect(worklet.current)
+        pan.current.connect(worklet.current)
       })
 
       node.current.autoplay = true
@@ -188,13 +191,6 @@ export default ({
     [list.visible]
   )
 
-  useEffect(
-    () => {
-      gain.current.gain.value = player.volume / 100
-    },
-    [player.volume]
-  )
-
   function stop() {
     ipcRenderer.send(`abort`)
     stopTimer()
@@ -260,11 +256,18 @@ export default ({
     <StyledPlayer>
       <Top>
         <Display time={ time } worklet={ worklet.current } />
-        <Title title={ title || player.playing.name } />
+        <Title title={ optionChanged || title || player.playing.name } />
         <Bitrate bitrate={ player.playing.bitrate } />
         <Samplerate samplerate={ player.playing.samplerate } />
         <Channels channels={ player.playing.channels } />
-        <Volume />
+        <Volume
+          setOptionChanged={ setOptionChanged }
+          set={ v => gain.current.gain.value = v }
+        />
+        <Pan
+          setOptionChanged={ setOptionChanged }
+          set={ p => pan.current.pan.value = p }
+        />
       </Top>
       <Video
         ref={ node }

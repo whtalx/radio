@@ -4,18 +4,28 @@ import player from './reducers/player'
 import list from './reducers/list'
 import api from './reducers/api'
 
-const getState = () => {
+const getSavedState = ({ list, player }) => {
   const storedList = localStorage.getItem(`list`)
   const storedPlayer = localStorage.getItem(`player`)
-  const list = storedList ? JSON.parse(storedList) : undefined
-  const player = storedPlayer ? { ...JSON.parse(storedPlayer), currentState: `paused` } : undefined
-  return { list, player }
+  return {
+    list: storedList
+      ? JSON.parse(storedList)
+      : list(undefined, {}),
+
+    player: storedPlayer
+      ? {
+        ...player(undefined, {}),
+        ...JSON.parse(storedPlayer),
+        currentState: `paused`,
+      }
+      : player(undefined, {}),
+  }
 }
 
 const store = configureStore({
   reducer: combineReducers({ api, list, player }),
   middleware: getDefaultMiddleware(),
-  preloadedState: getState(),
+  preloadedState: getSavedState({ list, player }),
 })
 
 store.subscribe(() => {

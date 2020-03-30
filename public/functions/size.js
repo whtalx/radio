@@ -7,7 +7,10 @@ export function size(type) {
       return e => e.reply(`sizeVideo`, global.player.getSize())
 
     case `setSize`:
-      return (_, size) => global.player.setSize(...size)
+      return (_, size) => {
+        const [width, height] = size
+        global.player.setBounds({ width, height })
+      }
 
     default:
       return () => void 0

@@ -29,6 +29,7 @@ global.server.on(`request`, (request, response) => {
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(menu()))
 
+app.allowRendererProcessReuse = false
 app.commandLine.appendArgument(`disable-background-timer-throttling`)
 app.whenReady().then(createWindow)
 app.on(`window-all-closed`, () => process.platform !== `darwin` && app.quit())

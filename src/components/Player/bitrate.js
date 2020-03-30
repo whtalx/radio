@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { Output, Title } from './styled'
 
 const Wrapper = styled(Output)`
-  width: 23px;
+  width: 24px;
   position: absolute;
   left: 96px;
   top: 17px;

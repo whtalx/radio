@@ -75,8 +75,6 @@ export const Range = styled.input.attrs({
   type: `range`,
 })`
   height: 5px;
-  border: 1px solid black;
-  border-radius: 2px;
   background-image: linear-gradient(0deg, hsl(358, 88%, 55%) 0%, hsl(34, 84%, 55%) 25%, hsl(67, 79%, 50%) 50%, hsl(87, 85%, 45%) 75%, hsl(115, 86%, 40%) 100%);
   background-position-x: 100%;
   background-repeat: no-repeat;
@@ -89,9 +87,21 @@ export const Range = styled.input.attrs({
     height: 11px;
     -webkit-appearance: none;
     border: 1px solid black;
-    border-radius: 2px;
+    border-radius: 1px;
     background-color: hsl(201, 16%, 72%);
-    background-image: linear-gradient(90deg, black 0%, black 20%, hsl(212, 17%, 58%) 20%, hsl(212, 17%, 58%) 40%, black 40%, black 60%, hsl(212, 17%, 58%) 60%, hsl(212, 17%, 58%) 80%, black 80%, black 100%);
+    background-image: linear-gradient(
+      90deg,
+      black 0%,
+      black 20%,
+      hsl(212, 17%, 58%) 20%,
+      hsl(212, 17%, 58%) 40%,
+      black 40%,
+      black 60%,
+      hsl(212, 17%, 58%) 60%,
+      hsl(212, 17%, 58%) 80%,
+      black 80%,
+      black 100%
+    );
     background-position: 3px 3px;
     background-repeat: no-repeat;
     background-size: 5px 3px;
@@ -103,5 +113,91 @@ export const Range = styled.input.attrs({
 
   :focus {
     outline: none;
+  }
+
+  :active {
+    ::-webkit-slider-thumb {
+      background-color: black;
+      border-color: black;//hsl(210, 13%, 94%) hsl(212, 12%, 58%) hsl(212, 12%, 58%) hsl(210, 13%, 94%);
+      background-image: linear-gradient(
+        90deg,
+        white 0%,
+        white 20%,
+        black 20%,
+        black 40%,
+        white 40%,
+        white 60%,
+        black 60%,
+        black 80%,
+        white 80%,
+        white 100%
+      );
+      box-shadow:
+        inset -1px 0 0 black,
+        inset -2px -1px 0 hsl(212, 12%, 58%),
+        inset 1px 1px 0 hsl(210, 13%, 94%);
+    }
+  }
+`
+
+export const Switch = styled.button`
+  -webkit-font-smoothing: none;
+  box-sizing: border-box;
+  border-color: hsl(0, 0%, 15%) hsl(210, 50%, 6%) hsl(210, 50%, 6%) hsl(0, 0%, 15%);
+  border-style: solid;
+  border-width: 1px;
+  background-color: hsl(180, 5%, 69%);
+  box-shadow:
+    inset 1px 1px hsl(240, 4%, 56%),
+    inset -1px -1px hsl(180, 9%, 18%),
+    inset 2px 0 hsl(180, 5%, 63%),
+    inset 0 -2px hsl(180, 3%, 47%),
+    inset 3px 2px hsl(0, 0%, 87%);
+
+  :focus {
+    outline: 0;
+  }
+
+  svg {
+    position: absolute;
+    left: 10px;
+    top: 3px;
+    fill: hsl(240, 5%, 37%);
+  }
+
+  :after {
+    content: '';
+    width: 4px;
+    height: 3px;
+    box-sizing: border-box;
+    position: absolute;
+    left: 4px;
+    top: 3px;
+    background-color: ${ ({ active }) => active ? `hsl(118, 100%, 48%)` : `hsl(109, 100%, 18%)` };
+    border-color: hsl(180, 5%, 34%) hsl(24, 9%, 82%) hsl(24, 9%, 82%) hsl(180, 5%, 34%);
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  :active {
+    background-color: hsl(240, 4%, 50%);
+    box-shadow:
+      inset 1px 1px hsl(240, 33%, 5%),
+      inset -1px 0 hsl(0, 0%, 13%),
+      inset 2px 2px hsl(180, 5%, 37%),
+      inset 3px 0 hsl(240, 4%, 54%),
+      inset 4px 3px hsl(0, 0%, 65%);
+
+    svg {
+      left: 11px;
+      top: 4px;
+      fill: black;
+    }
+
+    :after {
+      left: 5px;
+      top: 4px;
+      border-color: black hsl(180, 5%, 69%) hsl(180, 5%, 69%) black;
+    }
   }
 `

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import { StyledPlayer, Top, Video, Controls } from './styled'
+import { Playlist, Equaliser } from './switches'
 import Samplerate from './samplerate'
 import Channels from './channels'
 import Display from '../Display'
@@ -13,7 +14,6 @@ import { error, makePlayerState } from '../../functions'
 
 export default ({
   list,
-  listToggle,
   updateStation,
   player,
   setState,
@@ -219,9 +219,6 @@ export default ({
 
   function handleClick(button) {
     switch (button) {
-      case `list`:
-        return () => listToggle()
-
       case `play`:
         return () => {
           player.currentState === `paused` &&
@@ -268,6 +265,8 @@ export default ({
           setOptionChanged={ setOptionChanged }
           set={ p => pan.current.pan.value = p }
         />
+        <Playlist />
+        <Equaliser />
       </Top>
       <Video
         ref={ node }
@@ -276,9 +275,6 @@ export default ({
         onDoubleClick={ () => setFullscreen(last => !last) }
       />
       <Controls>
-        <button onClick={ handleClick(`list`) }>
-          list
-        </button>
         <button onClick={ handleClick(`play`) }>
           play
         </button>

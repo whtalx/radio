@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ipcRenderer } from 'electron'
-import { connect } from 'react-redux'
 import Status from './status'
 import Background from './background'
 import { Wrapper, Counter, Visualisation} from './styled'
-import { Analyser, Timer, visualize } from '../../functions'
+import { Analyser, Timer, visualize } from '../../../functions'
 
-function Display({ time, worklet, state }) {
+export default function Display({ time, worklet, state }) {
   const animation = useRef(NaN)
   const timer = useRef(null)
   const bands = useRef(null)
@@ -102,7 +101,7 @@ function Display({ time, worklet, state }) {
   return (
     <Wrapper>
       <Background>
-      <Status />
+      <Status state={ state } />
       <g id="controls" fill="#333C49">
         <path id="O" d="M4 3H3V7H4V8H6V7H7V3H6V2H4V3ZM4 3V7H6V3H4Z" />
         <path id="A" d="M4 16V14H6V16H7V11H6V10H4V11H3V16H4ZM4 11V13H6V11H4Z" />
@@ -116,7 +115,3 @@ function Display({ time, worklet, state }) {
     </Wrapper>
   )
 }
-
-const mapState = ({ player }) => ({ state: player.currentState })
-
-export default connect(mapState)(Display)

@@ -1,7 +1,5 @@
 import React from 'react'
 import styled from 'styled-components'
-import { connect } from 'react-redux'
-import { setVolume } from '../../actions/player'
 import { Range } from './styled'
 
 const Input = styled(Range).attrs({
@@ -15,7 +13,7 @@ const Input = styled(Range).attrs({
   top: 36px;
 `
 
-function Volume({ set, volume, setVolume, setOptionChanged }) {
+export default function Volume({ set, volume, setVolume, setOptionChanged }) {
   function handleChange({ target }) {
     const { value } = target
     const newVolume = parseInt(value)
@@ -49,11 +47,3 @@ function Volume({ set, volume, setVolume, setOptionChanged }) {
     />
   )
 }
-
-const mapState = ({ player: { volume } }) => ({ volume })
-
-const mapDispatch = (dispatch) => ({
-  setVolume: volume => dispatch(setVolume(volume)),
-})
-
-export default connect(mapState, mapDispatch)(Volume)

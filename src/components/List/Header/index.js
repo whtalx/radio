@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { StatusBar, Button, Status, Nav } from './styled'
-import { navProps } from '../../functions'
+import { navProps } from '../../../functions'
 
 export default ({
   list,
@@ -49,11 +49,11 @@ export default ({
               (all, item, index, orig) =>
                 index === 0
                   ? orig.length === 2
-                    ? [...all, titles[item], ` `]
-                    : [...all, titles[item]]
+                  ? [...all, titles[item], ` `]
+                  : [...all, titles[item]]
                   : index === orig.length - 1
-                    ? [...all, titles[item]]
-                    : [...all, ` `, titles[item], ` `],
+                  ? [...all, titles[item]]
+                  : [...all, ` `, titles[item], ` `],
               []
             )
         }

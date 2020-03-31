@@ -1,8 +1,7 @@
-import React from 'react'
-import { connect } from 'react-redux'
+import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { listToggle } from '../../actions/list'
 import { Switch } from './styled'
+import { ipcRenderer } from 'electron'
 
 const PL = styled(Switch)`
   width: 23px;
@@ -12,16 +11,29 @@ const PL = styled(Switch)`
   top: 36px;
 `
 
-export const Playlist = connect(
-  ({ list: { visible } }) => ({ visible }),
-  dispatch => ({ listToggle: () => dispatch(listToggle()) }),
-)(({ visible, listToggle }) =>
-  <PL active={ visible } onClick={ listToggle }>
-    <svg viewBox="0 0 7 5" width="7px" height="5px" fillRule="evenodd">
-      <path d="M0 0h3v3h-2v2h-1v-5ZM1 1h1v1h-1v-1ZM4 0h1v4h2v1h-3v-5Z" />
-    </svg>
-  </PL>
-)
+export const Playlist = () => {
+  const [active, setActive] = useState(JSON.parse(localStorage.list || `{}`).visible)
+
+  useEffect(() => {
+    window.addEventListener(`storage`, () => {
+      setActive(JSON.parse(localStorage.list || `{}`).visible)
+    })
+  },
+  []
+  )
+
+  function toggle() {
+    ipcRenderer.send(`toggle_list`)
+  }
+
+  return (
+    <PL active={ active } onClick={ toggle }>
+      <svg viewBox="0 0 7 5" width="7px" height="5px" fillRule="evenodd">
+        <path d="M0 0h3v3h-2v2h-1v-5ZM1 1h1v1h-1v-1ZM4 0h1v4h2v1h-3v-5Z" />
+      </svg>
+    </PL>
+  )
+}
 
 const EQ = styled(Switch)`
   width: 23px;

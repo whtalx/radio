@@ -65,13 +65,13 @@ export function resolve({ url, data }) {
           }
         }
 
-        global.player.webContents.send(`resolved`, { ...data, unresolvable: undefined, src_resolved: url, bitrate, samplerate, channels })
+        message(`resolved`, { ...data, unresolvable: undefined, src_resolved: url, bitrate, samplerate, channels })
         global.request = global.prefetch
         global.prefetch = null
         return serve(response)
       } else if (hls) {
         global.stream && (global.stream = null)
-        global.player.webContents.send(`resolved`, { ...data, unresolvable: undefined, hls, src_resolved: true })
+        message(`resolved`, { ...data, unresolvable: undefined, hls, src_resolved: true })
         return response.destroy()
       }
     }
@@ -136,7 +136,7 @@ export function resolve({ url, data }) {
     }
 
     function reject() {
-      global.player.webContents.send(`resolved`, { ...data, unresolvable: true })
+      message(`resolved`, { ...data, unresolvable: true })
       return response.destroy()
     }
 
@@ -144,6 +144,11 @@ export function resolve({ url, data }) {
       console.log(`recursive call: ${ url }`)
       url && request(undefined, data, url)
       return response.destroy()
+    }
+
+    function message(type, data) {
+      global.list.webContents.send(type, data)
+      global.player.webContents.send(type, data)
     }
   }
 }

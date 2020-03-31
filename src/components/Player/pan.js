@@ -1,7 +1,5 @@
 import React from 'react'
 import styled from 'styled-components'
-import { connect } from 'react-redux'
-import { setPan } from '../../actions/player'
 import { Range } from './styled'
 
 const Input = styled(Range).attrs({
@@ -15,7 +13,7 @@ const Input = styled(Range).attrs({
   top: 36px;
 `
 
-function Pan({ set, pan, setPan, setOptionChanged }) {
+export default function Pan({ set, pan, setPan, setOptionChanged }) {
   function handleChange({ target }) {
     const { value } = target
     if (Math.abs(value) > 23) {
@@ -56,11 +54,3 @@ function Pan({ set, pan, setPan, setOptionChanged }) {
     />
   )
 }
-
-const mapState = ({ player: { pan } }) => ({ pan })
-
-const mapDispatch = (dispatch) => ({
-  setPan: volume => dispatch(setPan(volume)),
-})
-
-export default connect(mapState, mapDispatch)(Pan)

@@ -3,6 +3,7 @@ import Store from 'electron-store'
 import http from 'http'
 import {
   createWindow,
+  toggleList,
   request,
   control,
   context,
@@ -49,3 +50,5 @@ ipcMain.on(`getSizeList`, size(`getSizeList`))
 ipcMain.on(`getSizeVideo`, size(`getSizeVideo`))
 ipcMain.on(`ping`, (e, m) => e.reply(`pong`, m))
 ipcMain.on(`hide`, control(process.platform === `darwin` ? `hide` : `close`))
+ipcMain.on(`list`, (_, data) => data && global.list.once(`ready-to-show`, () => global.list.show()))
+ipcMain.on(`toggle_list`, toggleList)

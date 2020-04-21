@@ -18,7 +18,7 @@ export function createWindow() {
       require(`devtron`).install()
     }
 
-    global.player.show()
+    // global.player.show()
   })
 
   global.player.on(`close`, () => {

@@ -1,7 +1,8 @@
-import React, { useEffect, useReducer, useRef, useState } from 'react'
+import React, { useEffect, useReducer, useRef, useState, useLayoutEffect } from 'react'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import { StyledPlayer, Top, Video, Controls } from './styled'
+import { Play, Stop, Previous, Next, Eject } from './buttons'
 import { Playlist, Equaliser } from './switches'
 import Samplerate from './samplerate'
 import Channels from './channels'
@@ -78,7 +79,7 @@ export default () => {
         ipcRenderer.send(`setSize`, [
           width,
           sourceHeight.current
-            ? height + sourceHeight.current - 32
+            ? height + sourceHeight.current - 8
             : 116
         ])
       )
@@ -128,8 +129,7 @@ export default () => {
 
           const { width, height } = video.metadata
           if (!width || !height) return
-
-          sourceHeight.current = Math.floor(height * 244 / width)
+          sourceHeight.current = Math.round(height / width * 245)
         })
 
         hls.current.on(Hls.Events.ERROR, (e, data) => {
@@ -194,6 +194,13 @@ export default () => {
       state.playing,
       state.currentState,
     ]
+  )
+
+  useLayoutEffect(
+    () => {
+      ipcRenderer.send(`show`)
+    },
+    [] // eslint-disable-line
   )
 
   function updateStation(payload) {
@@ -296,12 +303,11 @@ export default () => {
         onDoubleClick={ () => setFullscreen(last => !last) }
       />
       <Controls>
-        <button onClick={ handleClick(`play`) }>
-          play
-        </button>
-        <button onClick={ handleClick(`stop`) }>
-          stop
-        </button>
+        <Previous />
+        <Play onClick={ handleClick(`play`) } />
+        <Stop onClick={ handleClick(`stop`) } />
+        <Next />
+        <Eject />
       </Controls>
     </StyledPlayer>
   )

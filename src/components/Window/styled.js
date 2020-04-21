@@ -137,12 +137,10 @@ export const Close = styled.button`
 `
 
 export const Content = styled.div`
+  margin: 20px 3px 6px 10px;
   width: 260px;
   height: auto;
-  min-height: 114px;
   position: relative;
-  left: 10px;
-  top: 21px;
   box-sizing: border-box;
   overflow: hidden;
   -webkit-app-region: no-drag;

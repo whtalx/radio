@@ -19,15 +19,16 @@ export const Top = styled.div`
 `
 
 export const Video = styled.video`
-  margin: 0 auto;
-  width: 244px;
+  margin-left: 5px;
+  width: 245px;
   height: ${ props => props.sourceHeight || 8 }px;
+  box-sizing: content-box;
   border-top-color: hsl(240, 100%, 3%);
   border-left-color: hsl(240, 100%, 3%);
   border-right-color: hsl(240, 18%, 27%);
   border-bottom-color: hsl(240, 18%, 27%);
   border-style: solid;
-  border-width: 1px;
+  border-width: 2px 1px 1px 3px;
 
   :fullscreen {
     border: none;
@@ -39,7 +40,10 @@ export const Video = styled.video`
 `
 
 export const Controls = styled.div`
-  height: 36px;
+  padding: 6px 0 0 5px;
+  height: 28px;
+  display: flex;
+  flex-flow: row nowrap;
 `
 
 export const Output = styled.div`
@@ -198,6 +202,80 @@ export const Switch = styled.button`
       left: 5px;
       top: 4px;
       border-color: black hsl(180, 5%, 69%) hsl(180, 5%, 69%) black;
+    }
+  }
+`
+
+export const Button = styled.button`
+  padding: 0;
+  position: relative;
+  box-sizing: padding-box;
+  border: 0;
+  background-color: hsl(180, 5%, 69%);
+  box-shadow:
+    inset 1px 1px hsl(240, 4%, 56%),
+    inset -1px -1px hsl(180, 9%, 18%),
+    inset 2px 0 hsl(180, 5%, 63%),
+    inset 0 -2px hsl(180, 3%, 47%),
+    inset 3px 2px hsl(0, 0%, 87%);
+
+  :focus {
+    outline: 0;
+  }
+
+  svg {
+    position: absolute;
+
+    .dark {
+      fill: hsl(300, 20%, 8%);
+    }
+
+    .light {
+      fill: hsl(180, 50%, 94%);
+    }
+
+    .fill {
+      fill: hsl(240, 5%, 65%);
+    }
+
+    .fill-dark {
+      fill: hsl(240, 5%, 40%);
+    }
+
+    .shadow {
+      fill: hsl(210, 7%, 58%);
+    }
+  }
+
+  :active {
+    background-color: hsl(240, 4%, 50%);
+    box-shadow:
+      inset 1px 1px hsl(240, 33%, 5%),
+      inset -1px 0 hsl(0, 0%, 13%),
+      inset 2px 2px hsl(180, 5%, 37%),
+      inset 3px 0 hsl(240, 4%, 54%),
+      inset 4px 3px hsl(0, 0%, 65%);
+
+    svg {
+      .dark {
+        fill: hsl(0, 0%, 0%);
+      }
+
+      .light {
+        fill: hsl(180, 5%, 66%);
+      }
+
+      .fill {
+        fill: hsl(180, 4%, 40%);
+      }
+
+      .fill-dark {
+        fill: hsl(240, 5%, 31%);
+      }
+
+      .shadow {
+        fill: hsl(210, 7%, 35%);
+      }
     }
   }
 `

@@ -1,8 +1,8 @@
 const player = {
-  currentState: `paused`,
   playing: {},
   volume: 75,
   pan: 0,
+  random: false,
 }
 
 export const initialState = {
@@ -45,6 +45,12 @@ export function reducer(state, { type, payload }) {
       return {
         ...state,
         pan: payload,
+      }
+
+    case `SET_RANDOM`:
+      return {
+        ...state,
+        random: !state.random,
       }
 
     default:

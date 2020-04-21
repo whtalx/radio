@@ -53,21 +53,22 @@ export const Ul = styled.ul`
 export const Li = styled.li.attrs({
   tabIndex: 1,
 })`
-  padding-left: .5em;
+  padding-left: .5rem;
   width: 100%;
-  height: 1.1em;
+  height: 1.3rem;
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
-  line-height: 1.1em;
+  border: none;
+  outline: none;
+  font-size: 1.1rem;
+  line-height: 1.3rem;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
   color: ${ props => props.playing ? `hsl(0, 0%, 100%)` : props.unresolvable && `hsl(0, 100%, 50%)` };
 
   :focus {
-    border: none;
-    outline: none;
     background-color: hsl(240, 100%, 50%);
   }
 

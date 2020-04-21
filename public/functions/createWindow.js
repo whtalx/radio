@@ -80,7 +80,7 @@ function createList(x, y) {
     movable: true,
     frame: false,
     show: false,
-    parent: global.player,
+    // parent: global.player,
     webPreferences: {
       nodeIntegration: true,
     },

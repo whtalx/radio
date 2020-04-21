@@ -2,8 +2,8 @@ import React, { useEffect, useReducer, useRef, useState, useLayoutEffect } from 
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import { StyledPlayer, Top, Video, Controls } from './styled'
-import { Play, Stop, Previous, Next, Eject } from './buttons'
-import { Playlist, Equaliser } from './switches'
+import { Play, Stop, Previous, Next, Eject, Export } from './buttons'
+import { Playlist, Equaliser, Shuffle, Favorite } from './switches'
 import Samplerate from './samplerate'
 import Channels from './channels'
 import Display from './Display'
@@ -16,21 +16,29 @@ import { reducer, initialState } from './reducer'
 
 export default () => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const timer = useRef(NaN)
   const hls = useRef(null)
   const pan = useRef(null)
   const node = useRef(null)
   const gain = useRef(null)
-  const station = useRef(state.playing)
+  const timer = useRef(NaN)
   const worklet = useRef(null)
   const sourceHeight = useRef(0)
+  const station = useRef(state.playing)
   const [time, setTime] = useState(null)
   const [title, setTitle] = useState(``)
-  const [optionChanged, setOptionChanged] = useState(``)
   const [fullscreen, setFullscreen] = useState(false)
+  const [optionChanged, setOptionChanged] = useState(``)
+  const [list, setList] = useState(JSON.parse(localStorage.list || `{ favourites: [] }`))
+  const [favourite, setFavourite] = useState(station.current.id && isFavourite({ station: station.current, list: list.favourites }))
 
   useEffect(
     () => {
+      window.addEventListener(`storage`, () => {
+        const newList = JSON.parse(localStorage.list || `{ favourites: [] }`)
+        setList(newList)
+        station.current.id && setFavourite(isFavourite({ station: station.current, list: newList.favourites }))
+      })
+
       const { webAudio } = window
       gain.current = webAudio.createGain()
       pan.current = webAudio.createStereoPanner()
@@ -86,8 +94,10 @@ export default () => {
 
       ipcRenderer.on(`pong`, (_, command) => {
         switch (command) {
-          case `play`:
+          case `play`: {
+            console.log(station.current)
             return ipcRenderer.send(`request`, station.current)
+          }
 
           case `stop`:
             return stop()
@@ -110,6 +120,7 @@ export default () => {
       if (state.currentState !== `pending`) return
       station.current = state.playing
       const { current } = station
+      setFavourite(current.id && isFavourite({ station: current, list: list.favourites }))
 
       if (current.hls) {
         hls.current = new Hls({
@@ -215,6 +226,10 @@ export default () => {
     dispatch({ type: `SET_PLAYING`, payload })
   }
 
+  function setRandom() {
+    dispatch({ type: `SET_RANDOM` })
+  }
+
   function stop() {
     ipcRenderer.send(`abort`)
     stopTimer()
@@ -273,6 +288,10 @@ export default () => {
     tick()
   }
 
+  function isFavourite({ station, list }) {
+    return station.id && list.findIndex(({ id }) => id === station.id) >= 0
+  }
+
   return (
     <StyledPlayer>
       <Top>
@@ -308,6 +327,12 @@ export default () => {
         <Stop onClick={ handleClick(`stop`) } />
         <Next />
         <Eject />
+        <Export />
+        <Shuffle random={ state.random } setRandom={ setRandom } />
+        <Favorite
+          favourite={ favourite }
+          setFavourite={ () => station.current.id && ipcRenderer.send(`ping`, `list`, `toggleFavourite`) }
+        />
       </Controls>
     </StyledPlayer>
   )

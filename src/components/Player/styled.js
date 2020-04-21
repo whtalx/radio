@@ -62,7 +62,7 @@ export const Title = styled.div`
   position: relative;
   overflow: hidden;
   font-size: 10px;
-  line-height: 10px;
+  line-height: 12px;
   background-color: black;
   color: hsl(120, 100%, 50%);
   border-right: 1px solid black;
@@ -78,7 +78,7 @@ export const Tick = styled.p`
 export const Range = styled.input.attrs({
   type: `range`,
 })`
-  height: 5px;
+  margin: 0;
   background-image: linear-gradient(0deg, hsl(358, 88%, 55%) 0%, hsl(34, 84%, 55%) 25%, hsl(67, 79%, 50%) 50%, hsl(87, 85%, 45%) 75%, hsl(115, 86%, 40%) 100%);
   background-position-x: 100%;
   background-repeat: no-repeat;

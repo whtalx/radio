@@ -10,7 +10,7 @@ const Input = styled(Range).attrs({
   height: 5px;
   position: absolute;
   left: 166px;
-  top: 36px;
+  top: 39px;
 `
 
 export default function Pan({ set, pan, setPan, setOptionChanged }) {

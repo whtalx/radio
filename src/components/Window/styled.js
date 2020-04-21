@@ -138,7 +138,7 @@ export const Close = styled.button`
 
 export const Content = styled.div`
   margin: 20px 3px 6px 10px;
-  width: 260px;
+  width: 256px;
   height: auto;
   position: relative;
   box-sizing: border-box;

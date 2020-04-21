@@ -10,7 +10,7 @@ const Input = styled(Range).attrs({
   height: 5px;
   position: absolute;
   left: 97px;
-  top: 36px;
+  top: 39px;
 `
 
 export default function Volume({ set, volume, setVolume, setOptionChanged }) {

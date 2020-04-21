@@ -12,17 +12,17 @@ import {
 } from '../../functions'
 
 export default () => {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [player, setPlayer] = useState(JSON.parse(localStorage.player || `null`))
   const focused = useRef({})
-  const showing = useRef(state.list.show)
-  const playing = useRef(player.playing)
   const container = useRef(null)
   const [offsets, setOffsets] = useState({})
   const [showCount, setShowCount] = useState(150)
   const [selected, setSelected] = useState(null)
   const [processing, setProcessing] = useState(null)
+  const [state, dispatch] = useReducer(reducer, initialState);
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
+  const [player, setPlayer] = useState(JSON.parse(localStorage.player || `null`))
+  const showing = useRef(state.list.show)
+  const playing = useRef(player.playing)
 
   useEffect(
     () => {
@@ -43,13 +43,13 @@ export default () => {
         switch (label) {
           case `Play`: {
             playing.current === focused.current
-              ? ipcRenderer.send(`ping`, `play`)
+              ? ipcRenderer.send(`ping`, `player`, `play`)
               : setSelected(focused.current)
             return
           }
 
           case `Stop`: {
-            ipcRenderer.send(`ping`, `stop`)
+            ipcRenderer.send(`ping`, `player`, `stop`)
             return
           }
 
@@ -75,10 +75,23 @@ export default () => {
 
       ipcRenderer.send(`list`, state.list.visible)
 
+      ipcRenderer.on(`pong`, (_, command) => {
+        switch (command) {
+          case `toggleFavourite`: {
+            toggleFavourite(playing.current)
+            return
+          }
+
+          default:
+            return
+        }
+      })
+
       return () => {
         ipcRenderer.removeAllListeners(`resolved`)
         ipcRenderer.removeAllListeners(`rejected`)
         ipcRenderer.removeAllListeners(`context`)
+        ipcRenderer.removeAllListeners(`pong`)
       }
     },
     [] // eslint-disable-line
@@ -150,7 +163,7 @@ export default () => {
 
       const menus = [
         playing.current.id === focused.current.id && player.currentState !== `paused` ? stop : play,
-        state.list.favourites.findIndex(station => station.id === focused.current.id) >= 0 ? remove : add,
+        state.list.favourites.findIndex(({ id }) => id === focused.current.id) >= 0 ? remove : add,
         info,
       ]
 
@@ -181,17 +194,16 @@ export default () => {
       state !== initialState && localStorage.setItem(`list`, JSON.stringify(state.list))
     },
     [ //  eslint-disable-line
-      state.list,
-      state.list.tags,
       state.list.show,
       state.list.visible,
-      state.list.history,
-      state.list.stations,
-      state.list.languages,
       state.list.lastSearch,
-      state.list.favourites,
-      state.list.countrycodes,
+      state.list.tags.length,
       state.list.showFavourites,
+      state.list.history.length,
+      state.list.stations.length,
+      state.list.languages.length,
+      state.list.favourites.length,
+      state.list.countrycodes.length,
     ]
   )
 
@@ -236,6 +248,10 @@ export default () => {
 
   function favouritesRemove(payload) {
     dispatch({ type: `FAVOURITES_REMOVE`, payload })
+  }
+
+  function toggleFavourite(payload) {
+    dispatch({ type: `TOGGLE_FAVOURITE`, payload })
   }
 
   function handleContextMenu(event) {

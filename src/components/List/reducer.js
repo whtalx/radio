@@ -179,6 +179,15 @@ export function reducer(state, { type, payload }) {
       return { api, list }
     }
 
+    case `TOGGLE_FAVOURITE`: {
+      const { api, list } = state
+      const index = payload.id ? list.favourites.findIndex(({ id }) => id === payload.id) : -1
+      index >= 0
+        ? list.favourites.splice(index, 1)
+        : list.favourites.push(payload)
+      return { api, list }
+    }
+
     default:
       return state
   }

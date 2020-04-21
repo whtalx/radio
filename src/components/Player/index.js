@@ -28,13 +28,13 @@ export default () => {
   const [title, setTitle] = useState(``)
   const [fullscreen, setFullscreen] = useState(false)
   const [optionChanged, setOptionChanged] = useState(``)
-  const [list, setList] = useState(JSON.parse(localStorage.list || `{ favourites: [] }`))
+  const [list, setList] = useState(JSON.parse(localStorage.list || `{ "favourites": [] }`))
   const [favourite, setFavourite] = useState(station.current.id && isFavourite({ station: station.current, list: list.favourites }))
 
   useEffect(
     () => {
       window.addEventListener(`storage`, () => {
-        const newList = JSON.parse(localStorage.list || `{ favourites: [] }`)
+        const newList = JSON.parse(localStorage.list || `{ "favourites": [] }`)
         setList(newList)
         station.current.id && setFavourite(isFavourite({ station: station.current, list: newList.favourites }))
       })

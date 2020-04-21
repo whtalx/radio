@@ -11,7 +11,7 @@ export const Wrapper = styled.div`
   width: 257px;
   height: 478px;
   box-sizing: border-box;
-  border-color: hsl(240, 100%, 3%);
+  border-color: black;
   border-style: solid;
   border-width: 1px 0 0 1px;
 `
@@ -21,9 +21,9 @@ export const Container = styled.div`
   height: 475px;
   box-sizing: border-box;
   overflow: hidden scroll;
-  background-color: hsl(240, 100%, 3%);
+  background-color: black;
   color: hsl(120, 100%, 50%);
-  border-bottom: 2px solid hsl(240, 100%, 3%);
+  border-bottom: 2px solid black;
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 hsl(212, 17%, 58%);
 

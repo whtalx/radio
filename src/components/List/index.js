@@ -20,7 +20,7 @@ export default () => {
   const [processing, setProcessing] = useState(null)
   const [state, dispatch] = useReducer(reducer, initialState);
   const [contextMenuCalled, setContextMenuCalled] = useState(false)
-  const [player, setPlayer] = useState(JSON.parse(localStorage.player || `null`))
+  const [player, setPlayer] = useState(JSON.parse(localStorage.player || `{}`))
   const showing = useRef(state.list.show)
   const playing = useRef(player.playing)
 

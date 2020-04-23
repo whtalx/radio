@@ -228,84 +228,85 @@ export default connect(
           <Container ref={ container } onScroll={ handleScroll }>
             <Ul>
               {
-                list.showFavourites
-                  ? list.favourites.slice(0, showCount).map((listItem) =>
-                    <Li
-                      key={ listItem.id }
-                      title={ listItem.src }
-                      unresolvable={ listItem.unresolvable }
-                      playing={ listItem.id === playing.current.id }
-                      processing={ listItem.id === processing }
-                      onFocus={ () => focused.current = listItem }
-                      onContextMenu={ handleContextMenu }
-                      onDoubleClick={ () => setSelected(listItem) }
-                      children={ listItem.name }
-                    />
-                  )
-                  : list.show && list[list.show] && list[list.show].slice(0, showCount).map((listItem, index) => {
-                    switch (list.show) {
-                      case `stations`:
-                        return (
-                          <Li
-                            key={ listItem.id }
-                            title={ listItem.src }
-                            unresolvable={ listItem.unresolvable }
-                            playing={ listItem.id === playing.current.id }
-                            processing={ listItem.id === processing }
-                            onFocus={ () => focused.current = listItem }
-                            onContextMenu={ handleContextMenu }
-                            onDoubleClick={ () => setSelected(listItem) }
-                            children={ listItem.name }
-                          />
-                        )
+                list.show && list[list.show] && list[list.show].slice(0, showCount).map((listItem, index) => {
+                  switch (list.show) {
+                    case `stations`:
+                      return (
+                        <Li
+                          key={ listItem.id }
+                          title={ listItem.src }
+                          unresolvable={ listItem.unresolvable }
+                          playing={ listItem.id === playing.current.id }
+                          processing={ listItem.id === processing }
+                          onFocus={ () => focused.current = listItem }
+                          onContextMenu={ handleContextMenu }
+                          onDoubleClick={ () => setSelected(listItem) }
+                          children={ listItem.name }
+                        />
+                      )
 
-                      case `countrycodes`:
-                        return (
-                          <Li
-                            key={ listItem.name + index }
-                            onDoubleClick={ () => setApi(listItem.search) }
-                            title={ `Stations: ${ listItem.stationcount }` }
-                            processing={ listItem.search.countrycode === processing }
-                            playing={ playing.current.countrycode === listItem.search.countrycode }
-                            children={ listItem.name }
-                          />
-                        )
+                    case `countrycodes`:
+                      return (
+                        <Li
+                          key={ listItem.name + index }
+                          onDoubleClick={ () => setApi(listItem.search) }
+                          title={ `Stations: ${ listItem.stationcount }` }
+                          processing={ listItem.search.countrycode === processing }
+                          playing={ playing.current.countrycode === listItem.search.countrycode }
+                          children={ listItem.name }
+                        />
+                      )
 
-                      case `languages`:
-                        return (
-                          <Li
-                            key={ listItem.name + index }
-                            processing={ listItem.name === processing }
-                            onDoubleClick={ () => setApi(listItem.search) }
-                            title={ `Stations: ${ listItem.stationcount }` }
-                            playing={ playing.current.language === listItem.name }
-                            children={ listItem.name }
-                          />
-                        )
+                    case `languages`:
+                      return (
+                        <Li
+                          key={ listItem.name + index }
+                          processing={ listItem.name === processing }
+                          onDoubleClick={ () => setApi(listItem.search) }
+                          title={ `Stations: ${ listItem.stationcount }` }
+                          playing={ playing.current.language === listItem.name }
+                          children={ listItem.name }
+                        />
+                      )
 
-                      case `tags`:
-                        return (
-                          <Li
-                            key={ listItem.name + index }
-                            processing={ listItem.name === processing }
-                            onDoubleClick={ () => setApi(listItem.search) }
-                            title={ `Stations: ${ listItem.stationcount }` }
-                            playing={ playing.current.tag === listItem.name }
-                            children={ listItem.name }
-                          />
-                        )
+                    case `tags`:
+                      return (
+                        <Li
+                          key={ listItem.name + index }
+                          processing={ listItem.name === processing }
+                          onDoubleClick={ () => setApi(listItem.search) }
+                          title={ `Stations: ${ listItem.stationcount }` }
+                          playing={ playing.current.tag === listItem.name }
+                          children={ listItem.name }
+                        />
+                      )
 
-                      default:
-                        return (
-                          <Li
-                            key={ listItem.name + index }
-                            processing={ listItem.name === processing }
-                            onDoubleClick={ () => setType(listItem.type) }
-                            children={ listItem.name }
-                          />
-                        )
-                    }
-                  })
+                    case `favourites`:
+                      return (
+                        <Li
+                          key={ listItem.id }
+                          title={ listItem.src }
+                          unresolvable={ listItem.unresolvable }
+                          playing={ listItem.id === playing.current.id }
+                          processing={ listItem.id === processing }
+                          onFocus={ () => focused.current = listItem }
+                          onContextMenu={ handleContextMenu }
+                          onDoubleClick={ () => setSelected(listItem) }
+                          children={ listItem.name }
+                        />
+                      )
+
+                    default:
+                      return (
+                        <Li
+                          key={ listItem.name + index }
+                          processing={ listItem.name === processing }
+                          onDoubleClick={ () => setType(listItem.type) }
+                          children={ listItem.name }
+                        />
+                      )
+                  }
+                })
               }
             </Ul>
           </Container>

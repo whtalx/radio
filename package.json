@@ -54,7 +54,7 @@
   },
   "build": {
     "appId": "com.example.radio",
-    "productName": "radio",
+    "productName": "WebRadio",
     "mac": {
       "category": "public.app-category.music"
     },

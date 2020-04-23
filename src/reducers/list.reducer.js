@@ -26,6 +26,7 @@ export const list = createReducer(
   {
     tags: [],
     show: `start`,
+    lastShow: null,
     visible: false,
     history: [`start`],
     stations: [],
@@ -121,6 +122,14 @@ export const list = createReducer(
     },
 
     [favouritesToggle]: (state) => {
+      if (state.showFavourites) {
+        state.show = state.lastShow
+        state.lastShow = null
+      } else {
+        state.lastShow = state.show
+        state.show = `favourites`
+      }
+
       state.showFavourites = !state.showFavourites
     },
 

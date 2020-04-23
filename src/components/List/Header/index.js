@@ -50,7 +50,7 @@ export default connect(
       return list.history.findIndex(i => i === list.show)
     }
 
-    return list.showFavourites ? (
+    return list.show === `favourites` ? (
       <StatusBar favs={ true }>
         <Button onClick={ favouritesToggle } title={ `Back` }>&lt;</Button>
         <span>Favourites</span>

@@ -1,5 +1,9 @@
-export function control(func) {
-  return (_, name) => {
-    global[name] && global[name][func] && global[name][func]()
-  }
+export function control(_, command) {
+  const c = command === `close`
+    ? process.platform === `darwin`
+      ? `hide`
+      : `close`
+    : command
+
+    global.player[c] && global.player[c]()
 }

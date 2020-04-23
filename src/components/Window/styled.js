@@ -1,31 +1,22 @@
 import styled from 'styled-components'
 
 export const Wrapper = styled.div`
-  height: ${ ({ h }) => Number.isFinite(h) ? `${ h }px` : h };
-  box-sizing: border-box;
-  overflow: hidden;
-  position: relative;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-flow: column;
   background-color: hsl(240, 18%, 27%);
-  border: 1px solid hsl(240, 100%, 3%);
-  box-shadow: inset 1px 1px 2px hsl(204, 29%, 80%);
-  -webkit-app-region: drag;
+  border: 4px solid hsl(240, 100%, 3%);
+  border-image: url('assets/b.png') 4;
 `
 
 export const Frame = styled.div`
   width: 267px;
-  height: calc(100% - 16px);
-  position: absolute;
-  left: 3px;
-  top: 11px;
-  box-sizing: border-box;
+  height: auto;
   border-width: 2px 1px 1px 2px;
   border-style: solid;
   border-color: hsl(240, 100%, 3%);
-  box-shadow:
-    inset 1px 1px 0 hsl(204, 29%, 80%),
-    1px 1px 2px hsl(204, 29%, 80%);
+  box-shadow: inset 1px 1px 1px hsla(204, 29%, 80%, .3);
 `
 
 export const Shadow = styled.div`
@@ -35,13 +26,18 @@ export const Shadow = styled.div`
   background-image:
     linear-gradient(
       163.19deg,
-      hsla(240, 100%, 3%, .24) -1.39%,
-      hsla(240, 100%, 3%, .65) 17.27%,
-      hsla(240, 100%, 3%, .56) 30.95%,
-      hsla(240, 100%, 3%, 0) 55.54%,
-      hsla(240, 100%, 3%, .37) 80.43%,
-      hsla(240, 100%, 3%, .71) 99.69%
+      hsla(240,100%,3%,.24) 0%,
+      hsla(240,100%,3%,.65) 15%,
+      hsla(240,100%,3%,.56) 30%,
+      hsla(240,100%,3%,0) 50%,
+      hsla(240,100%,3%,.49) 66%,
+      hsla(240,100%,3%,.65) 73%,
+      hsla(240,100%,3%,.56) 87%,
+      hsla(240, 100%, 3%, .24) 99%
     );
+  background-position: 0 0;
+  background-repeat: repeat-y;
+  background-size: 100% 108px;
 `
 
 export const Spacer = styled.div`
@@ -62,17 +58,15 @@ export const Spacer = styled.div`
 `
 
 export const Title = styled.div`
-  width: 265px;
-  height: 7px;
-  position: absolute;
-  left: 4px;
-  top: 2px;
+  width: 266px;
+  height: 8px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
   text-transform: uppercase;
   font-size: 9px;
   font-weight: 800;
+  line-height: 8px;
   color: hsl(0, 0%, 100%);
   -webkit-app-region: drag;
 
@@ -83,6 +77,7 @@ export const Title = styled.div`
     height: 7px;
     border: 0;
     -webkit-app-region: no-drag;
+    z-index: 10;
 
     :focus {
       outline: 0;
@@ -94,7 +89,7 @@ export const Title = styled.div`
   }
 
   ${ Spacer }:nth-child(1) {
-    flex-grow: ${ ({ buttons }) => `1.${ buttons + 1 }` };
+    flex-grow: 1.4;
   }
 `
 
@@ -137,11 +132,9 @@ export const Close = styled.button`
 `
 
 export const Content = styled.div`
-  margin: 20px 3px 6px 10px;
-  width: 256px;
-  height: auto;
-  position: relative;
-  box-sizing: border-box;
+  width: 267px;
+  height: 100%;
   overflow: hidden;
-  -webkit-app-region: no-drag;
+  display: flex;
+  flex-flow: column;
 `

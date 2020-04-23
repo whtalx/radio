@@ -1,74 +1,50 @@
 import React from 'react'
-import { ipcRenderer } from 'electron'
-import { Wrapper, Title, Content, Frame, Shadow, Spacer, Close, Minimize } from './styled'
+import { connect } from 'react-redux'
+import styled from 'styled-components'
+
 import Player from '../Player'
 import List from '../List'
+import {
+  Wrapper,
+  Title,
+  Content,
+  Frame,
+  Shadow,
+  Spacer,
+  Close,
+  Minimize,
+} from './styled'
 
-export default ({ location }) => {
-  const win = location.search.substr(1) || `player`
-  return makeWindow(win)
-}
+import { control } from '../../functions'
 
-function makeWindow(name) {
-  switch (name) {
-    case `player`:
-      return render({
-        key: `player_window`,
-        title: `WebRadio`,
-        height: `auto`,
-        buttons: [
-          <Minimize
-            key={ `player_minimize` }
-            title={ `minimize` }
-            onClick={ control(`minimize`) }
-          />,
-          <Close
-            key={ `player_close` }
-            title={ `close` }
-            onClick={ control(`hide`) }
-          />,
-        ],
-        children: <Player />,
-      })
+const ListFrame = styled(Frame)`
+  flex-grow: 1;
+  max-height: calc(100% - ${ ({ videoHeight }) => videoHeight ? 92 + videoHeight : 100 }px);
+`
 
-    case `list`:
-      return render({
-        key: `list_window`,
-        title: `Stations`,
-        height: 509,
-        buttons: [
-          <Close
-            key={ `list_close` }
-            title={ `close` }
-            onClick={ () => ipcRenderer.send(`toggle_list`) }
-          />,
-        ],
-        children: <List />,
-      })
-
-    default:
-      return null
+export default connect (
+  ({ player: { videoHeight }}) => ({ videoHeight })
+)(
+  ({ videoHeight }) => {
+    return (
+      <Wrapper>
+        <Shadow />
+        <Title>
+          <Spacer />
+          &nbsp;webradio&nbsp;
+          <Spacer />
+          <Minimize title={ `minimize` } onClick={ control(`minimize`) } />
+          <Close title={ `close` } onClick={ control(`close`) } />
+        </Title>
+        <Content>
+          <Frame>
+            <Player />
+          </Frame>
+          <ListFrame videoHeight={ videoHeight }>
+            <List />
+          </ListFrame>
+        </Content>
+      </Wrapper>
+    )
   }
-}
-
-function render({ key, title, height, buttons, children }) {
-  return (
-    <Wrapper key={ key } h={ height }>
-      <Frame />
-      <Shadow />
-      <Title buttons={ buttons.length }>
-        <Spacer />
-        &nbsp;{ title }&nbsp;
-        <Spacer />
-        { buttons }
-      </Title>
-      <Content>
-        {  children }
-      </Content>
-    </Wrapper>
-  )
-}
-
-function control(command, window = `player`) {
-  return () => ipcRenderer.send(command, window)
-}
+)

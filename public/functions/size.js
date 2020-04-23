@@ -1,18 +1,22 @@
 export function size(type) {
   switch (type) {
-    case `getSizeList`:
-      return e => e.reply(`sizeList`, global.player.getSize())
+    case `getHeight`:
+      return e => e.reply(`height`, global.player.getBounds().height)
 
-    case `getSizeVideo`:
-      return e => e.reply(`sizeVideo`, global.player.getSize())
-
-    case `setSize`:
-      return (_, size) => {
-        const [width, height] = size
-        global.player.setBounds({ width, height })
+    case `setHeight`:
+      return (_, list, player) => {
+        if (list !== 0) {
+          global.player.resizable = true
+          global.player.setMinimumSize(275, player + 116)
+          global.player.setBounds({ height: player + list })
+        } else {
+          global.player.resizable = false
+          global.player.setMinimumSize(275, player)
+          global.player.setBounds({ height: player })
+        }
       }
 
     default:
-      return () => void 0
+      return x => void x
   }
 }

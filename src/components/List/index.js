@@ -1,8 +1,9 @@
-import React, { useEffect, useReducer, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { connect } from 'react-redux'
 import { ipcRenderer } from 'electron'
-import { reducer, initialState } from './reducer'
 import Header from './Header'
-import { Container, Ul, Li, Wrapper } from './styled'
+import { Wrapper, Reservoir, Container, Ul, Li } from './styled'
+
 import {
   request,
   getTags,
@@ -11,356 +12,305 @@ import {
   getCountryCodes,
 } from '../../functions'
 
-export default () => {
-  const focused = useRef({})
-  const container = useRef(null)
-  const [offsets, setOffsets] = useState({})
-  const [showCount, setShowCount] = useState(150)
-  const [selected, setSelected] = useState(null)
-  const [processing, setProcessing] = useState(null)
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [contextMenuCalled, setContextMenuCalled] = useState(false)
-  const [player, setPlayer] = useState(JSON.parse(localStorage.player || `{}`))
-  const showing = useRef(state.list.show)
-  const playing = useRef(player.playing)
+import {
+  setApi,
+  setType,
+  setState,
+  setPlaying,
+  setTagsList,
+  updateStation,
+  favouritesAdd,
+  setStationsList,
+  setLanguagesList,
+  favouritesRemove,
+  setCountryCodesList,
+} from '../../actions'
 
-  useEffect(
-    () => {
-      window.addEventListener(`storage`, () => {
-        setPlayer(JSON.parse(localStorage.player || `null`))
-      })
+export default connect(
+  ({ api, list, player }) => ({ api, list, player }),
+  (dispatch) => ({
+    setApi: state => dispatch(setApi(state)),
+    setType: type => dispatch(setType(type)),
+    setTags: tags => dispatch(setTagsList(tags)),
+    setState: state => dispatch(setState(state)),
+    setPlaying: station => dispatch(setPlaying(station)),
+    updateStation: station => dispatch(updateStation(station)),
+    favouritesAdd: station => dispatch(favouritesAdd(station)),
+    setStations: stations => dispatch(setStationsList(stations)),
+    setLanguages: languages => dispatch(setLanguagesList(languages)),
+    favouritesRemove: station => dispatch(favouritesRemove(station)),
+    setCountryCodes: countryCodes => dispatch(setCountryCodesList(countryCodes)),
+  }),
+)(
+  ({
+    api,
+    list,
+    setApi,
+    setTags,
+    setType,
+    setState,
+    setPlaying,
+    setStations,
+    setLanguages,
+    setCountryCodes,
+    favouritesAdd,
+    favouritesRemove,
+    player,
+  }) => {
+    const showing = useRef(list.show)
+    const playing = useRef(player.playing)
+    const focused = useRef({})
+    const container = useRef(null)
+    const [offsets, setOffsets] = useState({})
+    const [showCount, setShowCount] = useState(150)
+    const [selected, setSelected] = useState(null)
+    const [processing, setProcessing] = useState(null)
+    const [contextMenuCalled, setContextMenuCalled] = useState(false)
 
-      ipcRenderer.on(`resolved`, (_, data) => {
-        setProcessing(null)
-        updateStation(data)
-      })
+    useEffect(
+      () => {
+        ipcRenderer.on(`resolved`, () => {
+          setProcessing(null)
+        })
 
-      ipcRenderer.on(`toggle_list`, () => {
-        dispatch({ type: `LIST_TOGGLE` })
-      })
+        ipcRenderer.on(`rejected`, () => {
+          setProcessing(null)
+        })
 
-      ipcRenderer.on(`context`, (_, label) => {
-        switch (label) {
-          case `Play`: {
-            playing.current === focused.current
-              ? ipcRenderer.send(`ping`, `player`, `play`)
-              : setSelected(focused.current)
+        ipcRenderer.on(`context`, (_, label) => {
+          switch (label) {
+            case `Play`: {
+              playing.current === focused.current
+                ? setPlaying(focused.current)
+                : setSelected(focused.current)
+              return
+            }
+
+            case `Stop`: {
+              setState(`paused`)
+              return
+            }
+
+            case `Add to favourites`: {
+              favouritesAdd(focused.current)
+              return
+            }
+
+            case `Remove from favourites`: {
+              favouritesRemove(focused.current)
+              return
+            }
+
+            case `Information`: {
+              console.log(JSON.parse(JSON.stringify(focused.current)))
+              return
+            }
+
+            default:
+              return
+          }
+        })
+      },
+      [] // eslint-disable-line
+    )
+
+    useEffect(
+      () => {
+        switch (api.type) {
+          case `stations`: {
+            setOffsets(o => ({ ...o, stations: 0 }))
+            const { countrycode, language, tag } = api.search
+            setProcessing(countrycode || language || tag)
+            request(api)
+              .then(data => setStations(getStations(data).map(item => ({ ...item, countrycode, language, tag }))))
+              .then(() => setProcessing(null))
             return
           }
 
-          case `Stop`: {
-            ipcRenderer.send(`ping`, `player`, `stop`)
+          case `countrycodes`: {
+            setProcessing(`by countries`)
+            request(api)
+              .then(data => setCountryCodes(getCountryCodes(data)))
+              .then(() => setProcessing(null))
             return
           }
 
-          case `Add to favourites`: {
-            favouritesAdd(focused.current)
+          case `languages`: {
+            setProcessing(`by languages`)
+            request(api)
+              .then(data => setLanguages(getLanguages(data)))
+              .then(() => setProcessing(null))
             return
           }
 
-          case `Remove from favourites`: {
-            favouritesRemove(focused.current)
-            return
-          }
-
-          case `Information`: {
-            console.log(JSON.parse(JSON.stringify(focused.current)))
+          case `tags`: {
+            setProcessing(`by tags`)
+            request(api)
+              .then(data => setTags(getTags(data)))
+              .then(() => setProcessing(null))
             return
           }
 
           default:
             return
         }
-      })
+      },
+      [api.type] // eslint-disable-line
+    )
 
-      ipcRenderer.send(`list`, state.list.visible)
+    useEffect(
+      () => {
+        if (!selected) return
 
-      ipcRenderer.on(`pong`, (_, command) => {
-        switch (command) {
-          case `toggleFavourite`: {
-            toggleFavourite(playing.current)
-            return
-          }
+        setProcessing(selected.id)
+        ipcRenderer.send(`request`, selected)
+        setSelected(null)
+      },
+      [selected] // eslint-disable-line
+    )
 
-          default:
-            return
-        }
-      })
+    useEffect(
+      () => {
+        if (!contextMenuCalled) return
 
-      return () => {
-        ipcRenderer.removeAllListeners(`resolved`)
-        ipcRenderer.removeAllListeners(`rejected`)
-        ipcRenderer.removeAllListeners(`context`)
-        ipcRenderer.removeAllListeners(`pong`)
-      }
-    },
-    [] // eslint-disable-line
-  )
+        const play = { label: `Play` }
+        const stop = { label: `Stop` }
+        const info = { label: `Information` }
+        const add = { label: `Add to favourites` }
+        const remove = { label: `Remove from favourites` }
 
-  useEffect(
-    () => {
-      switch (state.api.type) {
-        case `stations`: {
-          const { countrycode, language, tag } = state.api.search
-          setProcessing(countrycode || language || tag)
-          request(state.api)
-            .then(data => setStations(getStations(data).map(item => ({ ...item, countrycode, language, tag }))))
-            .then(() => setProcessing(null))
-          return
-        }
+        const menus = [
+          playing.current.id === focused.current.id && player.currentState !== `paused` ? stop : play,
+          list.favourites.findIndex(({ id }) => id === focused.current.id) >= 0 ? remove : add,
+          info,
+        ]
 
-        case `countrycodes`: {
-          setProcessing(`by countries`)
-          request(state.api)
-            .then(data => setCountryCodes(getCountryCodes(data)))
-            .then(() => setProcessing(null))
-          return
-        }
+        ipcRenderer.send(`context`, menus)
+        setContextMenuCalled(false)
+      },
+      [contextMenuCalled] // eslint-disable-line
+    )
 
-        case `languages`: {
-          setProcessing(`by languages`)
-          request(state.api)
-            .then(data => setLanguages(getLanguages(data)))
-            .then(() => setProcessing(null))
-          return
-        }
+    useEffect(
+      () => {
+        container.current.scroll(0, offsets[list.show] || 0)
+        showing.current = list.show
+        setShowCount(150)
+      },
+      [list.show] // eslint-disable-line
+    )
 
-        case `tags`: {
-          setProcessing(`by tags`)
-          request(state.api)
-            .then(data => setTags(getTags(data)))
-            .then(() => setProcessing(null))
-          return
-        }
+    useEffect(
+      () => {
+        playing.current = player.playing
+      },
+      [player.playing] // eslint-disable-line
+    )
 
-        default:
-          return
-      }
-    },
-    [state.api.type] // eslint-disable-line
-  )
+    function handleContextMenu(event) {
+      event.preventDefault()
+      event.target.focus()
+      setContextMenuCalled(true)
+    }
 
-  useEffect(
-    () => {
-      if (!selected) return
+    function handleScroll({ target }) {
+      setOffsets(last => ({ ...last, [showing.current]: target.scrollTop }))
 
-      setProcessing(selected.id)
-      ipcRenderer.send(`request`, selected)
-      setSelected(null)
-    },
-    [selected] // eslint-disable-line
-  )
+      showCount < list[showing.current].length &&
+      target.scrollTop / target.lastElementChild.clientHeight > .5 &&
+      setShowCount(last => last + 100)
+    }
 
-  useEffect(
-    () => {
-      if (!contextMenuCalled) return
+    return (
+      <Wrapper>
+        <Reservoir>
+          <Header />
+          <Container ref={ container } onScroll={ handleScroll }>
+            <Ul>
+              {
+                list.showFavourites
+                  ? list.favourites.slice(0, showCount).map((listItem) =>
+                    <Li
+                      key={ listItem.id }
+                      title={ listItem.src }
+                      unresolvable={ listItem.unresolvable }
+                      playing={ listItem.id === playing.current.id }
+                      processing={ listItem.id === processing }
+                      onFocus={ () => focused.current = listItem }
+                      onContextMenu={ handleContextMenu }
+                      onDoubleClick={ () => setSelected(listItem) }
+                      children={ listItem.name }
+                    />
+                  )
+                  : list.show && list[list.show] && list[list.show].slice(0, showCount).map((listItem, index) => {
+                    switch (list.show) {
+                      case `stations`:
+                        return (
+                          <Li
+                            key={ listItem.id }
+                            title={ listItem.src }
+                            unresolvable={ listItem.unresolvable }
+                            playing={ listItem.id === playing.current.id }
+                            processing={ listItem.id === processing }
+                            onFocus={ () => focused.current = listItem }
+                            onContextMenu={ handleContextMenu }
+                            onDoubleClick={ () => setSelected(listItem) }
+                            children={ listItem.name }
+                          />
+                        )
 
-      const play = { label: `Play` }
-      const stop = { label: `Stop` }
-      const info = { label: `Information` }
-      const add = { label: `Add to favourites` }
-      const remove = { label: `Remove from favourites` }
+                      case `countrycodes`:
+                        return (
+                          <Li
+                            key={ listItem.name + index }
+                            onDoubleClick={ () => setApi(listItem.search) }
+                            title={ `Stations: ${ listItem.stationcount }` }
+                            processing={ listItem.search.countrycode === processing }
+                            playing={ playing.current.countrycode === listItem.search.countrycode }
+                            children={ listItem.name }
+                          />
+                        )
 
-      const menus = [
-        playing.current.id === focused.current.id && player.currentState !== `paused` ? stop : play,
-        state.list.favourites.findIndex(({ id }) => id === focused.current.id) >= 0 ? remove : add,
-        info,
-      ]
+                      case `languages`:
+                        return (
+                          <Li
+                            key={ listItem.name + index }
+                            processing={ listItem.name === processing }
+                            onDoubleClick={ () => setApi(listItem.search) }
+                            title={ `Stations: ${ listItem.stationcount }` }
+                            playing={ playing.current.language === listItem.name }
+                            children={ listItem.name }
+                          />
+                        )
 
-      ipcRenderer.send(`context`, menus)
-      setContextMenuCalled(false)
-    },
-    [contextMenuCalled] // eslint-disable-line
-  )
+                      case `tags`:
+                        return (
+                          <Li
+                            key={ listItem.name + index }
+                            processing={ listItem.name === processing }
+                            onDoubleClick={ () => setApi(listItem.search) }
+                            title={ `Stations: ${ listItem.stationcount }` }
+                            playing={ playing.current.tag === listItem.name }
+                            children={ listItem.name }
+                          />
+                        )
 
-  useEffect(
-    () => {
-      state.api.type === `stations` && setOffsets(o => ({ ...o, stations: 0 }))
-    },
-    [state.api.type] // eslint-disable-line
-  )
-
-  useEffect(
-    () => {
-      container.current.scroll(0, offsets[state.list.show] || 0)
-      showing.current = state.list.show
-      setShowCount(150)
-    },
-    [state.list.show] // eslint-disable-line
-  )
-
-  useEffect(
-    () => {
-      state !== initialState && localStorage.setItem(`list`, JSON.stringify(state.list))
-    },
-    [ //  eslint-disable-line
-      state.list.show,
-      state.list.visible,
-      state.list.lastSearch,
-      state.list.tags.length,
-      state.list.showFavourites,
-      state.list.history.length,
-      state.list.stations.length,
-      state.list.languages.length,
-      state.list.favourites.length,
-      state.list.countrycodes.length,
-    ]
-  )
-
-  useEffect(
-    () => {
-      playing.current = player.playing
-    },
-    [player] // eslint-disable-line
-  )
-
-  function setApi(payload) {
-    dispatch({ type: `SET_API`, payload })
+                      default:
+                        return (
+                          <Li
+                            key={ listItem.name + index }
+                            processing={ listItem.name === processing }
+                            onDoubleClick={ () => setType(listItem.type) }
+                            children={ listItem.name }
+                          />
+                        )
+                    }
+                  })
+              }
+            </Ul>
+          </Container>
+        </Reservoir>
+      </Wrapper>
+    )
   }
-
-  function setType(payload) {
-    dispatch({ type: `SET_TYPE`, payload })
-  }
-
-  function updateStation(payload) {
-    dispatch({ type: `UPDATE_STATION`, payload })
-  }
-
-  function setTags(payload) {
-    dispatch({ type: `SET_TAGS_LIST`, payload })
-  }
-
-  function setStations(payload) {
-    dispatch({ type: `SET_STATIONS_LIST`, payload })
-  }
-
-  function setLanguages(payload) {
-    dispatch({ type: `SET_LANGUAGES_LIST`, payload })
-  }
-
-  function setCountryCodes(payload) {
-    dispatch({ type: `SET_COUNTRY_CODES_LIST`, payload })
-  }
-
-  function favouritesAdd(payload) {
-    dispatch({ type: `FAVOURITES_ADD`, payload })
-  }
-
-  function favouritesRemove(payload) {
-    dispatch({ type: `FAVOURITES_REMOVE`, payload })
-  }
-
-  function toggleFavourite(payload) {
-    dispatch({ type: `TOGGLE_FAVOURITE`, payload })
-  }
-
-  function handleContextMenu(event) {
-    event.preventDefault()
-    event.target.focus()
-    setContextMenuCalled(true)
-  }
-
-  function handleScroll({ target }) {
-    setOffsets(last => ({ ...last, [showing.current]: target.scrollTop }))
-
-    showCount < state.list[showing.current].length &&
-    target.scrollTop / target.lastElementChild.clientHeight > .7 &&
-    setShowCount(last => last + 100)
-  }
-
-  return (
-    <Wrapper>
-      <Container ref={ container } onScroll={ handleScroll }>
-        <Header
-          list={ state.list }
-          show={ payload => dispatch({ type: `SHOW`, payload }) }
-          back={ () => dispatch({ type: `HISTORY_BACK` }) }
-          forward={ () => dispatch({ type: `HISTORY_FORWARD` }) }
-          favouritesToggle={ () => dispatch({ type: `FAVOURITES_TOGGLE` }) }
-        />
-        <Ul>
-          {
-            state.list.showFavourites
-              ? state.list.favourites.slice(0, showCount).map((listItem) =>
-                <Li
-                  key={ listItem.id }
-                  title={ listItem.src }
-                  unresolvable={ listItem.unresolvable }
-                  playing={ listItem.id === playing.current.id }
-                  processing={ listItem.id === processing }
-                  onFocus={ () => focused.current = listItem }
-                  onContextMenu={ handleContextMenu }
-                  onDoubleClick={ () => setSelected(listItem) }
-                  children={ listItem.name }
-                />
-              )
-              : state.list.show && state.list[state.list.show] && state.list[state.list.show].slice(0, showCount).map((listItem, index) => {
-                switch (state.list.show) {
-                  case `stations`:
-                    return (
-                      <Li
-                        key={ listItem.id }
-                        title={ listItem.src }
-                        unresolvable={ listItem.unresolvable }
-                        playing={ listItem.id === playing.current.id }
-                        processing={ listItem.id === processing }
-                        onFocus={ () => focused.current = listItem }
-                        onContextMenu={ handleContextMenu }
-                        onDoubleClick={ () => setSelected(listItem) }
-                        children={ listItem.name }
-                      />
-                    )
-
-                  case `countrycodes`:
-                    return (
-                      <Li
-                        key={ listItem.name + index }
-                        onDoubleClick={ () => setApi(listItem.search) }
-                        title={ `Stations: ${ listItem.stationcount }` }
-                        processing={ listItem.search.countrycode === processing }
-                        playing={ playing.current.countrycode === listItem.search.countrycode }
-                        children={ listItem.name }
-                      />
-                    )
-
-                  case `languages`:
-                    return (
-                      <Li
-                        key={ listItem.name + index }
-                        processing={ listItem.name === processing }
-                        onDoubleClick={ () => setApi(listItem.search) }
-                        title={ `Stations: ${ listItem.stationcount }` }
-                        playing={ playing.current.language === listItem.name }
-                        children={ listItem.name }
-                      />
-                    )
-
-                  case `tags`:
-                    return (
-                      <Li
-                        key={ listItem.name + index }
-                        processing={ listItem.name === processing }
-                        onDoubleClick={ () => setApi(listItem.search) }
-                        title={ `Stations: ${ listItem.stationcount }` }
-                        playing={ playing.current.tag === listItem.name }
-                        children={ listItem.name }
-                      />
-                    )
-
-                  default:
-                    return (
-                      <Li
-                        key={ listItem.name + index }
-                        processing={ listItem.name === processing }
-                        onDoubleClick={ () => setType(listItem.type) }
-                        children={ listItem.name }
-                      />
-                    )
-                }
-              })
-          }
-        </Ul>
-      </Container>
-    </Wrapper>
-  )
-}
+)

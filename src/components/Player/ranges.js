@@ -2,18 +2,64 @@ import React from 'react'
 import styled from 'styled-components'
 import { Range } from './styled'
 
-const Input = styled(Range).attrs({
-  min: `-100`,
+const VolumeRange = styled(Range).attrs({
+  min: `0`,
   max: `100`,
 })`
-  width: 38px;
+  width: 80px;
   height: 5px;
   position: absolute;
-  left: 166px;
+  left: 97px;
   top: 39px;
 `
 
-export default function Pan({ set, pan, setPan, setOptionChanged }) {
+export function Volume({ set, volume, setVolume, setOptionChanged }) {
+  function handleChange({ target }) {
+    const { value } = target
+    const newVolume = parseInt(value)
+    set(newVolume / 100)
+    showVolume(newVolume)
+    target.style.backgroundPositionY = `${ newVolume }%`
+  }
+
+  function handleDown({ target: { value } }) {
+    showVolume(parseInt(value))
+  }
+
+  function handleUp({ target: { value } }) {
+    const newVolume = parseInt(value)
+    set(newVolume / 100)
+    setVolume(newVolume)
+    setOptionChanged(``)
+  }
+
+  function showVolume(v) {
+    setOptionChanged(`Volume: ${ v }%`)
+  }
+
+  return (
+    <VolumeRange
+      defaultValue={ volume }
+      style={{ backgroundPositionY: `${ volume }%` }}
+      onChange={ handleChange }
+      onMouseDown={ handleDown }
+      onMouseUp={ handleUp }
+    />
+  )
+}
+
+const PanRange = styled(Range).attrs({
+  min: `-100`,
+  max: `100`,
+})`
+  width: 46px;
+  height: 5px;
+  position: absolute;
+  left: 181px;
+  top: 39px;
+`
+
+export function Pan({ set, pan, setPan, setOptionChanged }) {
   function handleChange({ target }) {
     const { value } = target
     if (Math.abs(value) > 23) {
@@ -45,7 +91,7 @@ export default function Pan({ set, pan, setPan, setOptionChanged }) {
   }
 
   return (
-    <Input
+    <PanRange
       defaultValue={ 0 }
       style={{ backgroundPositionY: `${ Math.abs(pan) }%` }}
       onChange={ handleChange }

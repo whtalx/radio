@@ -1,13 +1,16 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { BrowserRouter as Router, Route } from 'react-router-dom'
+import { Provider } from 'react-redux'
 import Window from './components/Window'
+import store from './store'
+import { saveState } from './functions'
 import './index.css'
-
 
 window.webAudio = new AudioContext()
 
+store.subscribe(saveState(store))
+
 ReactDOM.render(
-  <Router><Route component={ Window } /></Router>,
+  <Provider store={ store }><Window /></Provider>,
   document.getElementById('root')
 )

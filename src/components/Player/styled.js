@@ -1,7 +1,8 @@
 import styled from 'styled-components'
 
 export const StyledPlayer = styled.div`
-  height: max-content;
+  padding: 8px 3px 5px 5px;
+  height: ${ ({ videoHeight }) => videoHeight ? videoHeight + 89 : 97 }px;
   display: flex;
   flex-flow: column;
   align-content: center;
@@ -21,7 +22,7 @@ export const Top = styled.div`
 export const Video = styled.video`
   margin-left: 5px;
   width: 245px;
-  height: ${ props => props.sourceHeight || 8 }px;
+  height: ${ ({ videoHeight }) => videoHeight || 8 }px;
   box-sizing: content-box;
   border-top-color: hsl(240, 100%, 3%);
   border-left-color: hsl(240, 100%, 3%);
@@ -29,6 +30,12 @@ export const Video = styled.video`
   border-bottom-color: hsl(240, 18%, 27%);
   border-style: solid;
   border-width: 2px 1px 1px 3px;
+  background-image: linear-gradient(135deg,
+    hsla(240, 100%, 3%, .3) 0%,
+    hsla(240, 100%, 3%, .2) 25%,
+    hsla(240, 100%, 3%, .2) 75%,
+    hsla(240, 100%, 3%, .3) 100%
+  );
 
   :fullscreen {
     border: none;
@@ -41,7 +48,7 @@ export const Video = styled.video`
 
 export const Controls = styled.div`
   padding: 6px 0 0 5px;
-  height: 28px;
+  height: 24px;
   display: flex;
   flex-flow: row nowrap;
 `
@@ -122,7 +129,7 @@ export const Range = styled.input.attrs({
   :active {
     ::-webkit-slider-thumb {
       background-color: black;
-      border-color: black;//hsl(210, 13%, 94%) hsl(212, 12%, 58%) hsl(212, 12%, 58%) hsl(210, 13%, 94%);
+      border-color: black;
       background-image: linear-gradient(
         90deg,
         white 0%,
@@ -209,7 +216,7 @@ export const Switch = styled.button`
 export const Button = styled.button`
   padding: 0;
   position: relative;
-  box-sizing: padding-box;
+  box-sizing: content-box;
   border: 0;
   background-color: hsl(180, 5%, 69%);
   box-shadow:

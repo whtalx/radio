@@ -8,24 +8,29 @@ const barSpin = keyframes`
 `
 
 export const Wrapper = styled.div`
-  width: 257px;
-  height: 478px;
-  box-sizing: border-box;
+  padding: 4px 2px 3px 3px;
+  width: 100%;
+  height: 100%;
+  color: hsl(120, 100%, 50%);
+`
+
+export const Reservoir = styled.div`
+  padding: 1px 0 0 1px;
+  width: 259px;
+  height: 100%;
   border-color: black;
   border-style: solid;
   border-width: 1px 0 0 1px;
 `
 
 export const Container = styled.div`
-  width: 254px;
-  height: 475px;
-  box-sizing: border-box;
+  width: 100%;
+  height: calc(100% - 13px);
   overflow: hidden scroll;
   background-color: black;
-  color: hsl(120, 100%, 50%);
-  border-bottom: 2px solid black;
-  transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0 hsl(212, 17%, 58%);
+  border-color: hsl(212, 17%, 58%);
+  border-style: solid;
+  border-width:  0 1px 1px 0;
 
   ::-webkit-scrollbar {
     -webkit-appearance: none;

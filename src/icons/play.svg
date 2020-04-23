@@ -1,0 +1,7 @@
+<svg width="10" height="10" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
+  <path class="fill" d="M4 8H2V9H1V8H2V7L4 7V6H6V5H8V6H6V7L4 7V8Z" />
+  <path class="fill-dark" d="M2 1H1V2H2V1ZM4 2H3V3H4V2ZM6 3H5V4H6V3ZM8 4H7V5H8V4Z" />
+  <path class="shadow" d="M6 6V5L7 4.99997V4H5V3H3V2H1V8H2V7H4V6H6Z" />
+  <path class="light" d="M2 10H0V9H2V8H4V7H6V6H8V5H10V6H8V7H6V8H4V9H2V10Z" />
+  <path class="dark" d="M10 5H8V4H6V3H4V2H2V1H1V9H0V0H2V1H4V2H6V3H8V4H10V5Z" />
+</svg>

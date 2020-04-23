@@ -3,13 +3,12 @@ import Store from 'electron-store'
 import http from 'http'
 import {
   createWindow,
-  toggleList,
   request,
   control,
   context,
   abort,
-  menu,
   size,
+  menu,
 } from './functions'
 
 global.player = null
@@ -43,13 +42,6 @@ app.on(`activate`, () =>
 ipcMain.on(`abort`, abort)
 ipcMain.on(`request`, request)
 ipcMain.on(`context`, context)
-ipcMain.on(`close`, control(`close`))
-ipcMain.on(`toggle_list`, toggleList)
-ipcMain.on(`setSize`, size(`setSize`))
-ipcMain.on(`minimize`, control(`minimize`))
-ipcMain.on(`show`, () => global.player.show())
-ipcMain.on(`getSizeList`, size(`getSizeList`))
-ipcMain.on(`getSizeVideo`, size(`getSizeVideo`))
-ipcMain.on(`hide`, control(process.platform === `darwin` ? `hide` : `close`))
-ipcMain.on(`list`, (_, data) => data && global.list.once(`ready-to-show`, () => global.list.show()))
-ipcMain.on(`ping`, (_, r, m) => global[r] && global[r].webContents && global[r].webContents.send(`pong`, m))
+ipcMain.on(`control`, control)
+ipcMain.on(`getHeight`, size(`getHeight`))
+ipcMain.on(`setHeight`, size(`setHeight`))

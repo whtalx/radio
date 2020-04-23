@@ -7,8 +7,10 @@
   "description": "web radio player",
   "main": "public/electron.js",
   "scripts": {
-    "pack": "electron-builder -w",
-    "prepack": "craco build",
+    "win": "electron-builder -w",
+    "prewin": "craco build",
+    "mac": "electron-builder -m",
+    "premac": "craco build",
     "release": "electron-builder",
     "react": "craco start",
     "electron": "electron .",
@@ -26,17 +28,18 @@
   },
   "devDependencies": {
     "@craco/craco": "^5.6.4",
+    "@reduxjs/toolkit": "^1.3.5",
     "babel-plugin-styled-components": "^1.10.7",
     "devtron": "^1.4.0",
     "electron": "^8.2.3",
     "electron-builder": "^22.4.1",
     "electron-devtools-installer": "^2.2.4",
-    "electron-rebuild": "^1.10.1",
     "hls.js": "^0.13.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-router-dom": "^5.1.2",
+    "react-redux": "^7.2.0",
     "react-scripts": "^3.4.1",
+    "redux": "^4.0.5",
     "styled-components": "^5.1.0"
   },
   "browserslist": {

@@ -147,7 +147,6 @@ export function resolve({ url, data }) {
     }
 
     function message(type, data) {
-      global.list.webContents.send(type, data)
       global.player.webContents.send(type, data)
     }
   }

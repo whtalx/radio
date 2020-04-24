@@ -5,7 +5,7 @@ import Hls from 'hls.js'
 
 import { Play, Stop, Previous, Next, Eject, Export } from './buttons'
 import { StyledPlayer, Top, Video, Controls } from './styled'
-import { Playlist, Shuffle, Favorite } from './switches'
+import { Playlist, Favorite } from './switches'
 import { Title, Bitrate, Samplerate } from './outputs'
 import { Volume, Pan } from './ranges'
 import Channels from './channels'
@@ -18,11 +18,10 @@ import {
   updateStation,
   listToggle,
   setPlaying,
-  setRandom,
   setVolume,
   setState,
   setPan,
-} from "../../actions"
+} from '../../actions'
 
 
 export default connect(
@@ -35,7 +34,6 @@ export default connect(
     setVolume: volume => dispatch(setVolume(volume)),
     setState: state => dispatch(setState(state)),
     listToggle: () => dispatch(listToggle()),
-    setRandom: () => dispatch(setRandom()),
     setPan: pan => dispatch(setPan(pan)),
   }),
 )(
@@ -45,7 +43,6 @@ export default connect(
     setPan,
     setState,
     setVolume,
-    setRandom,
     setPlaying,
     listToggle,
     updateStation,
@@ -329,7 +326,6 @@ export default connect(
           <Next />
           <Eject />
           <Export />
-          <Shuffle random={ player.random } setRandom={ setRandom } />
           <Favorite
             favourite={ favourite }
             setFavourite={ () => station.current.id && toggleFavourite(station.current) }

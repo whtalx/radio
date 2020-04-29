@@ -31,6 +31,8 @@ Menu.setApplicationMenu(Menu.buildFromTemplate(menu()))
 
 app.allowRendererProcessReuse = false
 app.commandLine.appendArgument(`disable-background-timer-throttling`)
+app.commandLine.appendSwitch(`disable-features`, `HardwareMediaKeyHandling`)
+app.commandLine.appendSwitch(`force-color-profile`, `generic-rgb`)
 app.whenReady().then(createWindow)
 app.on(`window-all-closed`, () => process.platform !== `darwin` && app.quit())
 app.on(`activate`, () =>

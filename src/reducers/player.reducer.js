@@ -2,7 +2,6 @@ import { createReducer } from '@reduxjs/toolkit'
 import {
   setPan,
   setState,
-  setRandom,
   setVolume,
   setPlaying,
   updateStation,
@@ -13,7 +12,6 @@ export const player = createReducer(
   {
     currentState: `paused`,
     videoHeight: 0,
-    random: false,
     playing: {},
     volume: 75,
     pan: 0,
@@ -49,11 +47,6 @@ export const player = createReducer(
     [setPan]: (state, { payload }) => ({
       ...state,
       pan: payload,
-    }),
-
-    [setRandom]: (state) => ({
-      ...state,
-      random: !state.random,
     }),
   }
 )

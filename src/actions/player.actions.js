@@ -10,6 +10,4 @@ export const setVolume = createAction(`SET_GAIN`)
 
 export const setPan = createAction(`SET_PAN`)
 
-export const setRandom = createAction(`SET_RANDOM`)
-
 export const setVideoHeight = createAction(`SET_VIDEO_HEIGHT`)

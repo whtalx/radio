@@ -1,5 +1,4 @@
 import { BrowserWindow, screen } from 'electron'
-import isDev from 'electron-is-dev'
 import { makeURL } from './makeURL'
 
 export function createWindow() {
@@ -8,22 +7,23 @@ export function createWindow() {
   global.player = new BrowserWindow({
     x,
     y,
-    width: 275,
-    height: 116,
-    minWidth: 275,
-    maxWidth: 275,
-    minHeight: 116,
+    width: 324,
+    height: 133,
+    minWidth: 324,
+    minHeight: 133,
+    maxHeight: 133,
     backgroundColor: `#00000000`,
     acceptFirstMouse: true,
     maximizable: false,
     transparent: true,
     hasShadow: false,
-    resizable: false,
+    resizable: true,
     movable: true,
     frame: false,
     show: false,
     webPreferences: {
       // nodeIntegrationInWorker: true,
+      contextIsolation: false,
       nodeIntegration: true,
       webSecurity: false,
     },
@@ -35,13 +35,6 @@ export function createWindow() {
   global.player.on(`hide`, () => global.player.webContents.send(`invisible`))
   global.player.on(`minimize`, () => global.player.webContents.send(`invisible`))
   global.player.once(`ready-to-show`, () => {
-    if (isDev) {
-      const { default: install, /*REACT_DEVELOPER_TOOLS, */REDUX_DEVTOOLS } = require(`electron-devtools-installer`)
-      install(REDUX_DEVTOOLS)
-      // install(REACT_DEVELOPER_TOOLS)
-      require(`devtron`).install()
-    }
-
     global.player.show()
   })
 

@@ -1,56 +1,49 @@
 import styled from 'styled-components'
 
+import { filter } from '../../../functions'
+
+import dot from '../../common/images/dot.png'
+
 export const Wrapper = styled.div`
-  width: 93px;
-  height: 42px;
-  box-sizing: content-box;
+  width: calc(100% - 24px);
+  height: 58px;
+  position: absolute;
+  left: 11px;
+  top: 9px;
+`
+
+export const Background = styled.div`
+  display: grid;
+  grid-template: 58px / 48px auto 48px;
+  border-radius: 8px;
+  background-image: url(${ dot });
+  background-size: 2px 2px;
+  ${ filter(`displayBackground`) };
+`
+
+export const Content = styled.div`
+  padding: 11px 8px 0;
+  width: 100%;
+  height: 39px;
   position: absolute;
   left: 0;
   top: 0;
-  border-top: 1px solid black;
+  display: flex;
+  justify-content: space-between;
+  ${ filter(`displayContents`) };
 `
 
-export const Visualisation = styled.canvas`
-  position: absolute;
-  right: 3px;
-  bottom: 6px;
-  width: 79px;
-  height: 19px;
+export const Spacer = styled.div`
+  flex-grow: 1;
 `
 
-export const Counter = styled.canvas`
-  width: 63px;
-  height: 13px;
-  position: absolute;
-  right: 4px;
-  top: 3px;
-`
+export const Overlay = styled.img`
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: .75;
 
-export const Background = styled.svg`
-  box-shadow: 1px 1px 0 hsl(217, 22%, 63%);
-`
-
-export const Group = styled.g`
-  &.loading #paused,
-  &.pending #paused,
-  &.playing #paused {
-    display: none;
-  }
-
-  &.paused #playing,
-  &.paused #loading,
-  &.paused #loaded {
-    display: none;
-  }
-
-  &.loading,
-  &.pending {
-    #loading {
-      fill: #FF2833;
-    }
-
-    #loaded {
-      fill: #114033;
-    }
+  :last-child {
+    transform: scaleX(-1);
   }
 `

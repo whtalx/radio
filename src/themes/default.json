@@ -1,0 +1,70 @@
+{
+  "titlebarBackground": {
+    "contrast": 1.2,
+    "brightness": 1.2,
+    "hue": 150,
+    "saturation": 1
+  },
+  "titlebarContents": {
+    "saturation": 4,
+    "hue": 150
+  },
+  "primaryBackground": {
+    "hue": 150,
+    "saturation": 5
+  },
+  "secondaryBackground": {
+    "hue": 150,
+    "saturation": 5
+  },
+  "button": {
+    "saturation": 7,
+    "hue": 150
+  },
+  "buttonHover": {
+    "saturation": 12,
+    "contrast": 1.25,
+    "brightness": 0.9,
+    "hue": 150
+  },
+  "buttonPressed": {
+    "saturation": 10,
+    "contrast": 1.25,
+    "brightness": 0.9,
+    "hue": 150
+  },
+  "buttonTrim": {
+    "saturation": 2,
+    "hue": 150,
+    "contrast": 0.9
+  },
+  "buttonIcon": {
+    "contrast": 0.9,
+    "saturation": 0.75,
+    "hue": 155
+  },
+  "displayBackground": {
+    "hue": 150,
+    "brightness": 1.2
+  },
+  "displayContents": {
+    "hue": 150,
+    "saturation": 25
+  },
+  "displayTitle": {
+    "color": "#FBCEB0"
+  },
+  "text": {
+    "color": null
+  },
+  "list": {
+    "selected": "#FE7E55",
+    "text": "#FFF"
+  },
+  "scrollbar": {
+    "hue": 155,
+    "contrast": 1.2,
+    "brightness": 0.9,
+    "saturation": 5
+  }
+}

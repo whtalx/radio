@@ -1,51 +1,35 @@
-import React, { useRef, useState } from 'react'
+import React, { useContext, useRef, useState } from 'react'
+
+import { State, Dispatch } from '../../reducer'
 
 import { Previous, Play, Stop, Next, Mute } from './Buttons'
 import { Wrapper, Volume } from './styled'
 import Display from './Display'
 
-const INFO = {
-  bitrate: 256,
-  samplerate: 44100,
-  channels: 2,
-  type: 'mp3',
-  favourite: true,
-}
-
 export default function Player() {
+  const state = useContext(State)
+  const dispatch = useContext(Dispatch)
   const statusTimeout = useRef(NaN)
-  const [isMuted, setMuted] = useState(false)
-  const [state, setState] = useState(`stopped`)
-  const [volume, setVolume] = useState(.5)
   const [status, setStatus] = useState(``)
-  const [title, setTitle] = useState(` `)
-  const [info, setInfo] = useState({})
+  const { currentState, volume, station, isMuted = false } = state.player
 
   function play() {
-    if (state === `playing`) return
-
-    setInfo(INFO)
-    setState(`playing`)
-    setTitle(`Lorem ipsum dolor sit amet consectetur adipiscing elit Integer nec odio Praesent libero Sed cursus ante dapibus diam Sed nisi Nulla quis sem at nibh elementum imperdiet`)
+    currentState !== `playing` && dispatch({ type: `play` })
   }
 
   function stop() {
-    if (state === `stopped`) return
-
-    setState(`stopped`)
-    setTitle(``)
-    setInfo({})
+    currentState !== `stopped` && dispatch({ type: `stop` })
   }
 
   function mute() {
-    setMuted(a => !a)
+    dispatch({ type: `mute`, payload: !isMuted })
     setStatus(`Volume: ${ isMuted ? Math.floor(volume * 100) : `0` }%`)
     sceduleStatusClear()
   }
 
   function changeVolume(value) {
     setStatus(`Volume: ${ Math.floor(value * 100) }%`)
-    setVolume(value)
+    dispatch({ type: `volume`, payload: value })
   }
 
   function sceduleStatusClear() {
@@ -72,10 +56,10 @@ export default function Player() {
 
   return (
     <Wrapper>
-      <Display info={ info } title={ title } status={ status } state={ state } />
+      <Display info={ station?.info || {} } title={ station?.title || ` ` } status={ status } state={ currentState } />
       <Previous />
-      <Play onClick={ play } switched={ state === `playing` } />
-      <Stop onClick={ stop } switched={ state === `stopped` } />
+      <Play onClick={ play } switched={ currentState === `playing` } />
+      <Stop onClick={ stop } switched={ currentState === `stopped` } />
       <Next />
       <Mute muted={ isMuted } onClick={ mute } />
       <Volume

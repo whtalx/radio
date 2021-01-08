@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
-import { v4 } from 'uuid'
+import React, { useContext, useState } from 'react'
+
+import { State, Dispatch } from '../../reducer'
 
 import Tab from './Tab'
 import List from './List'
@@ -15,13 +16,36 @@ import bottomLeft from './images/bottom-left.png'
 import bottomCenter from './images/bottom-center.png'
 import bottomRight from './images/bottom-right.png'
 
-export default function Drawer({ opened, toggle }) {
-  const tabs = [`станции`, `настройки`, `темы`]
-  const [activeTab, setActiveTab] = useState(tabs[0])
-  const items = [...Array(Math.floor(Math.random() * 100))].map(() => v4())
+const tabs = [`станции`, `настройки`, `темы`] // TODO: i18n
+
+export default function Drawer() {
+  const state = useContext(State)
+  const dispatch = useContext(Dispatch)
+  const [activeTab, setActiveTab] = useState(0)
+
+  function toggle() {
+    dispatch({ type: `toggleDrawer` })
+  }
+
+  function renderTab(item, index) {
+    const active = activeTab === index
+
+    function onClick() {
+      setActiveTab(index)
+    }
+
+    return (
+      <Tab
+        key={ item }
+        children={ item }
+        active={ active }
+        onClick={ onClick }
+      />
+    )
+  }
 
   return (
-    <Wrapper data-opened={ opened }>
+    <Wrapper data-opened={ state.window.drawer }>
       <Image src={ topLeft } />
       <Image src={ topCenter } />
       <Image src={ topRight } />
@@ -30,16 +54,7 @@ export default function Drawer({ opened, toggle }) {
       <Image src={ middleRight } />
       <Image src={ bottomLeft } />
       <Tabs>
-        {
-          tabs.map((item) =>
-            <Tab
-              key={ v4() }
-              children={ item }
-              active={ activeTab === item }
-              onClick={ () => setActiveTab(item) }
-            />
-          )
-        }
+        { tabs.map(renderTab) }
         <Space src={ bottomCenter } relative />
       </Tabs>
       <div>
@@ -47,7 +62,7 @@ export default function Drawer({ opened, toggle }) {
         <Toggle onClick={ toggle } />
       </div>
       <Content>
-        <List items={ items } />
+        <List activeTab={ activeTab } />
       </Content>
     </Wrapper>
   )

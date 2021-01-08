@@ -29,6 +29,15 @@ export const Wrapper = styled.div`
     border-bottom: 1px solid black;
     ${ filter(`scrollbar`) };
   }
+
+  &[hidden] {
+    pointer-events: none;
+    visibility: hidden;
+
+    :before {
+      display: none;
+    }
+  }
 `
 
 const Button = styled.button`
@@ -38,11 +47,6 @@ const Button = styled.button`
   background-size: 200% 100%;
   isolation: isolate!important;
   ${ filter(`button`) };
-
-  :disabled {
-    pointer-events: none;
-    opacity: .8;
-  }
 
   :hover {
     ${ filter(`buttonHover`) }

@@ -7,7 +7,7 @@ export default function Scrollbar({ container, length }) {
   const [heightRatio, setHeightRatio] = useState(1)
   const [scrollRatio, setScrollRatio] = useState(0)
   const bar = useRef(null)
-  const disabled = heightRatio === 1
+  const hidden = heightRatio === 1
 
   function setScrollTop(props) {
     container.current.scrollTo(props)
@@ -40,7 +40,7 @@ export default function Scrollbar({ container, length }) {
   }
 
   function scrollToPosition(clickEvent) {
-    if (disabled || clickEvent.target !== bar.current) return
+    if (hidden || clickEvent.target !== bar.current) return
 
     const { current: { scrollHeight } } = container
     const rect = bar.current.getBoundingClientRect()
@@ -54,9 +54,9 @@ export default function Scrollbar({ container, length }) {
     const min = 0
     const top = scrollTop + props.top
 
-    !(scrollTop === min && top < min) &&
-      !(scrollTop === max && top > max) &&
+    if (!(scrollTop === min && top < min) && !(scrollTop === max && top > max)) {
       setScrollTop({ ...props, top })
+    }
   }
 
   function scrollUp() {
@@ -119,8 +119,8 @@ export default function Scrollbar({ container, length }) {
   )
 
   return (
-    <Wrapper onWheel={ onWheel }>
-      <Top onClick={ scrollUp } disabled={ disabled } />
+    <Wrapper onWheel={ onWheel } hidden={ hidden }>
+      <Top onClick={ scrollUp } />
       <Bar ref={ bar } onClick={ scrollToPosition }>
         {
           bar.current && heightRatio < 1 && (
@@ -128,7 +128,7 @@ export default function Scrollbar({ container, length }) {
           )
         }
       </Bar>
-      <Bottom onClick={ scrollDown } disabled={ disabled } />
+      <Bottom onClick={ scrollDown } />
     </Wrapper>
   )
 }

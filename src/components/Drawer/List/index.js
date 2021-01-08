@@ -4,17 +4,24 @@ import { v4 } from 'uuid'
 import Scrollbar from '../Scrollbar'
 import { Container, UL, Wrapper } from './styled'
 
-export default function List({ items }) {
+const content = [
+  [...Array(Math.floor(Math.random() * 100))].map(() => v4()),
+  [...Array(Math.floor(Math.random() * 100))].map(() => v4()),
+  [...Array(Math.floor(Math.random() * 100))].map(() => v4()),
+]
+
+export default function List({ activeTab }) {
   const container = useRef(null)
   const name = v4()
+  const items = content[activeTab]
 
   return (
     <Wrapper>
       <Container ref={ container }>
         <UL>
           {
-            items.map((item) => {
-              const key = v4()
+            items.map((item, index) => {
+              const key = index
               return (
                 <li key={ key }>
                   <input hidden id={ key } type="radio" name={ name } />

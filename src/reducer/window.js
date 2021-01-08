@@ -9,6 +9,11 @@ export default function windowReducer(draft, action) {
       break
     }
 
+    case `setLocale`: {
+      draft.locale = action.payload
+      break
+    }
+
     default:
       break
   }

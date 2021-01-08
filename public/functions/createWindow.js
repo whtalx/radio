@@ -1,5 +1,6 @@
 import { BrowserWindow, screen } from 'electron'
-import { makeURL } from './makeURL'
+
+import { getSystemLocale, makeURL } from '.'
 
 export function createWindow() {
   const [x, y] = global.store.get(`position`) || []
@@ -36,6 +37,7 @@ export function createWindow() {
   global.player.on(`minimize`, () => global.player.webContents.send(`invisible`))
   global.player.once(`ready-to-show`, () => {
     global.player.show()
+    getSystemLocale()
   })
 
   global.player.on(`close`, () => {
@@ -50,8 +52,9 @@ export function createWindow() {
     global.player.on(`enter-full-screen`, () => {
       const [width, height] = global.player.getSize()
       const bounds = screen.getPrimaryDisplay().bounds
+      const onLeave = () => global.player.setContentSize(width, height)
       global.player.setContentSize(bounds.width, bounds.height)
-      global.player.once(`leave-full-screen`, () => global.player.setContentSize(width, height))
+      global.player.once(`leave-full-screen`, onLeave)
     })
   }
 }

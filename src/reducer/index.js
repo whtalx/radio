@@ -7,7 +7,7 @@ import { void0 } from '../functions'
 
 export const initialState = {
   player: { currentState: `stopped`, volume: .5 },
-  window: { drawer: false },
+  window: { drawer: false, locale: `en` },
 }
 
 export const State = createContext({

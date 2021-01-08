@@ -1,9 +1,11 @@
 import React, { useContext, useState } from 'react'
 
 import { State, Dispatch } from '../../reducer'
+import Localise from '../../i18n'
 
 import Tab from './Tab'
 import List from './List'
+import Settings from './Settings'
 import { Content, Image, Space, Tabs, Toggle, Wrapper } from './styled'
 
 import topLeft from './images/top-left.png'
@@ -16,12 +18,16 @@ import bottomLeft from './images/bottom-left.png'
 import bottomCenter from './images/bottom-center.png'
 import bottomRight from './images/bottom-right.png'
 
-const tabs = [`станции`, `настройки`, `темы`] // TODO: i18n
-
 export default function Drawer() {
   const state = useContext(State)
   const dispatch = useContext(Dispatch)
+  const localise = useContext(Localise)
   const [activeTab, setActiveTab] = useState(0)
+  const tabs = [
+    localise(`stations`),
+    localise(`settings`),
+    localise(`themes`),
+  ]
 
   function toggle() {
     dispatch({ type: `toggleDrawer` })
@@ -62,7 +68,11 @@ export default function Drawer() {
         <Toggle onClick={ toggle } />
       </div>
       <Content>
-        <List activeTab={ activeTab } />
+        {
+          activeTab === 1
+            ? <Settings />
+            : <List activeTab={ activeTab } />
+        }
       </Content>
     </Wrapper>
   )

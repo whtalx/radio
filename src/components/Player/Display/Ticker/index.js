@@ -96,7 +96,7 @@ export default function Ticker({ title, status }) {
     () => {
       startScrolling(1500)
     },
-    [container, status, title]
+    [container, status, title] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   return (

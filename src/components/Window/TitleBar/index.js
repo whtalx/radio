@@ -1,4 +1,5 @@
 import React from 'react'
+import { ipcRenderer } from 'electron'
 
 import {
   Menu,
@@ -12,8 +13,6 @@ import {
   SpacerRight,
 } from './styled'
 
-import { control } from '../../../functions'
-
 import logo from './images/logo-center.png'
 import logoLeft from './images/logo-left.png'
 import logoRight from './images/logo-right.png'
@@ -23,6 +22,14 @@ import right from './images/background-right.png'
 import center from './images/background-center.png'
 
 export default function TitleBar() {
+  function hide() {
+    ipcRenderer.send(`control`, `minimize`)
+  }
+
+  function close() {
+    ipcRenderer.send(`control`, `close`)
+  }
+
   return (
     <Wrapper>
       <Background src={ left } />
@@ -35,8 +42,8 @@ export default function TitleBar() {
         <Title src={ logo } width="85px" />
         <SpacerRight src={ logoSpacer } />
         <Title src={ logoRight } width="5px" />
-        <Hide onClick={ control(`minimize`) } />
-        <Close onClick={ control(`close`) } />
+        <Hide onClick={ hide } />
+        <Close onClick={ close } />
       </Contents>
     </Wrapper>
   )

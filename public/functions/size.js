@@ -1,4 +1,8 @@
-const { screen } = require('electron')
+import { screen } from 'electron'
+
+import { saveSettings } from '.'
+
+import { PLAYER_HEIGHT, DRAWER_HEIGHT, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT } from '../constants'
 
 export function size(type) {
   switch (type) {
@@ -6,18 +10,21 @@ export function size(type) {
       return e => e.reply(`height`, global.player.getBounds().height)
 
     case `setHeight`:
-      return (_, list, player) => {
+      return (_, drawer) => {
         const { workArea } = screen.getPrimaryDisplay()
 
-        if (list !== 0) {
-          global.player.setMinimumSize(324, player + 250)
+        if (drawer) {
+          global.player.setMinimumSize(WINDOW_MIN_WIDTH, PLAYER_HEIGHT + DRAWER_HEIGHT)
           global.player.setMaximumSize(workArea.width, workArea.height)
-          global.player.setBounds({ height: player + list })
+          global.player.setBounds({ height: WINDOW_MIN_HEIGHT })
         } else {
-          global.player.setMinimumSize(324, player)
-          global.player.setMaximumSize(workArea.width, player)
-          global.player.setBounds({ height: player })
+          global.player.setMinimumSize(WINDOW_MIN_WIDTH, PLAYER_HEIGHT)
+          global.player.setMaximumSize(workArea.width, PLAYER_HEIGHT)
+          global.player.setBounds({ height: PLAYER_HEIGHT })
         }
+
+        const { width, height } = global.player.getBounds()
+        saveSettings(undefined, { bounds: { width, height } })
       }
 
     default:

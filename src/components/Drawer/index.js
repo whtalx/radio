@@ -23,6 +23,7 @@ export default function Drawer() {
   const dispatch = useContext(Dispatch)
   const localise = useContext(Localise)
   const [activeTab, setActiveTab] = useState(0)
+  const { drawer } = state.window
   const tabs = [
     localise(`stations`),
     localise(`settings`),
@@ -30,7 +31,7 @@ export default function Drawer() {
   ]
 
   function toggle() {
-    dispatch({ type: `toggleDrawer` })
+    dispatch({ type: `setDrawer`, payload: !drawer })
   }
 
   function renderTab(item, index) {
@@ -51,7 +52,7 @@ export default function Drawer() {
   }
 
   return (
-    <Wrapper data-opened={ state.window.drawer }>
+    <Wrapper data-opened={ drawer }>
       <Image src={ topLeft } />
       <Image src={ topCenter } />
       <Image src={ topRight } />

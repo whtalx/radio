@@ -13,13 +13,18 @@ export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState)
   const { locale } = state.window
 
-  function setLocale(error, value = '') {
-    dispatch({ type: `setLocale`, payload: value.substr(0, 2) })
+  function setLocale(_, data = '') {
+    dispatch({ type: `setLocale`, payload: data.substr(0, 2) })
+  }
+
+  function setSettings(_, data) {
+    dispatch({ type: `setSettings`, payload: data })
   }
 
   useEffect(
     () => {
       ipcRenderer.on(`locale`, setLocale)
+      ipcRenderer.on(`settings`, setSettings)
     },
     []
   )

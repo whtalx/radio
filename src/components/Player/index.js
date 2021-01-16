@@ -1,6 +1,7 @@
-import React, { useContext, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 
 import { State, Dispatch } from '../../reducer'
+import Localise from '../../i18n'
 
 import { Previous, Play, Stop, Next, Mute } from './Buttons'
 import { Wrapper, Volume } from './styled'
@@ -8,17 +9,20 @@ import Display from './Display'
 
 export default function Player() {
   const state = useContext(State)
-  const dispatch = useContext(Dispatch)
   const statusTimeout = useRef(NaN)
+  const localise = useContext(Localise)
+  const dispatch = useContext(Dispatch)
   const [status, setStatus] = useState(``)
-  const { currentState, volume, station, isMuted = false } = state.player
+  const [titles, setTitles] = useState({})
+  const { currentState, volume, isMuted = false } = state.player
+  const stopped = currentState === `stopped`
 
   function play() {
-    currentState !== `playing` && dispatch({ type: `play` })
+    stopped && dispatch({ type: `play` })
   }
 
   function stop() {
-    currentState !== `stopped` && dispatch({ type: `stop` })
+    !stopped && dispatch({ type: `stop` })
   }
 
   function mute() {
@@ -54,13 +58,29 @@ export default function Player() {
     setStatus(``)
   }
 
+  useEffect(
+    () => {
+      function getTitles() {
+        return {
+          play: localise(`play`),
+          stop: localise(`stop`),
+          next: localise(`next`),
+          previous: localise(`previous`),
+        }
+      }
+
+      setTitles(getTitles())
+    },
+    [state.window.locale] // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
   return (
     <Wrapper>
-      <Display info={ station?.info || {} } title={ station?.title || ` ` } status={ status } state={ currentState } />
-      <Previous />
-      <Play onClick={ play } switched={ currentState === `playing` } />
-      <Stop onClick={ stop } switched={ currentState === `stopped` } />
-      <Next />
+      <Display status={ status } />
+      <Previous title={ titles.previous } />
+      <Play onClick={ play } title={ titles.play } switched={ !stopped } />
+      <Stop onClick={ stop } title={ titles.stop } switched={ stopped } />
+      <Next title={ titles.next } />
       <Mute muted={ isMuted } onClick={ mute } />
       <Volume
         value={ volume }

@@ -1,34 +1,37 @@
-import { WIDTH, HEIGHT } from './constants'
-
 export default function Timer(canvas, sprite) {
   const context = canvas.getContext(`2d`)
   const POSITIONS = [0, 13, 26, 44, 57]
   const { width, height } = canvas
 
   function wx(value) {
-    return value * width / WIDTH
+    return value * devicePixelRatio
   }
 
   function hy(value) {
-    return value * height / HEIGHT
+    return value * devicePixelRatio
   }
 
   function draw(digit, position) {
     context.drawImage(sprite, digit * 26, 0, 26, 40, wx(POSITIONS[position]), 0, wx(13), hy(20))
   }
 
-  function clrScr() {
+  function clrScr(withClolon = true, activeClolon = true) {
     context.clearRect(0, 0, width, height)
-    context.drawImage(sprite, 310, 0, 10, 40, wx(38), 0, wx(5), hy(20)) // * -- colon
+    withClolon && context.drawImage(sprite, activeClolon ? 312 : 322, 0, 10, 40, wx(39), 0, wx(5), hy(20)) // colon
   }
 
   function render(time) {
-    clrScr()
-    if (!Number.isFinite(time)) return
+    if (!Number.isFinite(time)) {
+      clrScr()
+      return
+    }
 
     const m = Math.floor(time / 60)
+    const s = time - m * 60
     const minutes = `0${ m }`.slice(m < 100 ? -2 : -3)
-    const seconds = `0${ time - m * 60 }`.slice(-2)
+    const seconds = `0${ s }`.slice(-2)
+
+    clrScr(true, s % 2 === 0)
 
     if (minutes.length === 3) {
       draw(minutes[0], 0)
@@ -46,8 +49,8 @@ export default function Timer(canvas, sprite) {
 
   function empty() {
     clrScr()
-    draw(10, 0) // * -- hyphen
-    draw(11, 1) // * -- empty digit
+    draw(10, 0) // hyphen
+    draw(11, 1) // empty digit
     draw(11, 2)
     draw(11, 3)
     draw(11, 4)

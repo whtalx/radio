@@ -2,15 +2,15 @@ import React from 'react'
 
 import Time from './Time'
 import Info from './Info'
-import State from './State'
 import Ticker from './Ticker'
+import Indicators from './Indicators'
 import Visualisation from './Visualisation'
 import { Background, Content, Overlay, Spacer, Wrapper } from './styled'
 
 import overlayLeft from './images/display-left.png'
 import overlayCenter from './images/display-center.png'
 
-export default function Display({ info, title, status, state }) {
+export default function Display({ status }) {
   return (
     <Wrapper>
       <Background>
@@ -19,14 +19,14 @@ export default function Display({ info, title, status, state }) {
         <Overlay src={ overlayLeft } />
       </Background>
       <Content>
-        <State state={ state } />
-        <Time state={ state } />
+        <Indicators />
+        <Time />
         <Spacer />
-        <Info { ...info } />
+        <Info />
         <Spacer />
-        <Visualisation state={ state } />
+        <Visualisation />
       </Content>
-      <Ticker title={ title } status={ status } />
+      <Ticker status={ status } />
     </Wrapper>
   )
 }

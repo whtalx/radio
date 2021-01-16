@@ -1,17 +1,20 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useContext, useEffect, useRef } from 'react'
 
 import { Canvas } from './styled'
 
-import { WIDTH, HEIGHT } from './constants'
 import Timer from './Timer'
+import { State } from '../../../../reducer'
+import { WIDTH, HEIGHT } from './constants'
 
 import time from './images/time.png'
 
-export default function Time({ state }) {
+export default function Time() {
   const timer = useRef(null)
   const canvas = useRef(null)
   const intervalId = useRef(NaN)
+  const state = useContext(State)
   const sprite = useRef(new Image())
+  const { currentState } = state.player
   const width = WIDTH * devicePixelRatio
   const height = HEIGHT * devicePixelRatio
 
@@ -57,7 +60,7 @@ export default function Time({ state }) {
     () => {
       if (!timer.current) return
 
-      if (state === `playing`) {
+      if (currentState === `playing`) {
         tick()
         intervalId.current = setInterval(tick, 1000)
       } else {
@@ -70,7 +73,7 @@ export default function Time({ state }) {
         clearIntervalId()
       }
     },
-    [state]
+    [currentState]
   )
 
   return (

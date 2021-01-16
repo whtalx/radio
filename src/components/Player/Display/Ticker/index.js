@@ -1,12 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
+
+import { State } from '../../../../reducer'
 
 import { Status, Title, Wrapper } from './styled'
 
-export default function Ticker({ title, status }) {
+export default function Ticker({ status }) {
   const timeoutId = useRef(NaN)
   const container = useRef(null)
-  const [isDragging, setIsDragging] = useState(false)
+  const state = useContext(State)
   const [direction, setDirection] = useState(1)
+  const [isDragging, setIsDragging] = useState(false)
+  const { station } = state.player
+  const title = station?.title || `\u200a`
 
   function tick({ target, left }) {
     return function scroll() {

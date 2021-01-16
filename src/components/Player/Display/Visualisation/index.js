@@ -1,20 +1,23 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useContext, useEffect, useRef } from 'react'
 
 import { Canvas, Wrapper } from './styled'
 
 import Spectrum from './Spectrum'
+import { State } from '../../../../reducer'
 import { WIDTH, HEIGHT } from './constants'
 
 function getFrequencyData() {
   return Array(18).fill().map(() => Math.random())
 }
 
-export default function Visualisation({ state }) {
+export default function Visualisation() {
   const canvas = useRef(null)
-  const intervalId = useRef(NaN)
   const spectrum = useRef(null)
+  const intervalId = useRef(NaN)
+  const state = useContext(State)
   const width = WIDTH * devicePixelRatio
   const height = HEIGHT * devicePixelRatio
+  const { currentState } = state.player
 
   function tick() {
     if (!spectrum.current) return
@@ -45,7 +48,7 @@ export default function Visualisation({ state }) {
     () => {
       if (!spectrum.current) return
 
-      if (state === `playing`) {
+      if (currentState === `playing`) {
         tick()
         intervalId.current = setInterval(tick, 1000)
       } else {
@@ -53,12 +56,11 @@ export default function Visualisation({ state }) {
         spectrum.current.stop()
       }
 
-
       return () => {
         clearIntervalId()
       }
     },
-    [state]
+    [currentState]
   )
 
   return (

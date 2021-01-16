@@ -39,7 +39,7 @@ export const Container = styled.div`
 `
 
 export const UL = styled.ul`
-  padding: .2em 0 .2em .2em;
+  padding: .2em;
   width: 100%;
   height: fit-content;
   list-style: none;

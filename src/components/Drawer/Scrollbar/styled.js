@@ -31,8 +31,9 @@ export const Wrapper = styled.div`
   }
 
   &[hidden] {
-    pointer-events: none;
+    width: 0;
     visibility: hidden;
+    pointer-events: none;
 
     :before {
       display: none;

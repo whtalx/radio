@@ -74,7 +74,7 @@ export default function Range({ type, value, setValue, onSetExact, onDragStart, 
   function scroll(mouseWheelEvent) {
     onSetExact instanceof Function && onSetExact(mouseWheelEvent)
     const { deltaY: delta } = mouseWheelEvent
-    const difference = limit(delta / range, -1)
+    const difference = limit(.25 * delta / range, -1)
     const newValue = value + difference
     setValue(limit(newValue))
   }

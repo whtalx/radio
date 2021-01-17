@@ -1,6 +1,6 @@
 import osLocale from 'os-locale'
 
-export async function getSystemLocale() {
+export async function getSystemLocale(self) {
   const locale = await osLocale()
-  locale && global.player.webContents.send(`locale`, locale)
+  locale && self.sendMessage(`locale`, locale)
 }

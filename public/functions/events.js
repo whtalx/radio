@@ -1,91 +1,117 @@
 import { app, screen } from 'electron'
 
-import { createWindow, getSystemLocale, saveSettings } from '.'
+import { createWindow, getSystemLocale } from '.'
 
 import { PLAYER_HEIGHT, DRAWER_HEIGHT, WINDOW_MIN_WIDTH } from '../constants'
 
-export function onActivate() {
-  global.player === null
-    ? createWindow()
-    : !global.player.isVisible() && global.player.show()
-}
-
-export function onAllClosed() {
-  process.platform !== `darwin` && app.quit()
-}
-
-export function onSaveSettings(_, data) {
-  saveSettings(data)
-}
-
-export function onRequest(request, response) {
-  if (global.stream && global.stream.pipe) {
-    global.stream.pipe(response)
-  } else {
-    response.statusCode = 503
-    response.end()
-  }
-}
-
-export function onResized() {
-  const { width, height } = global.player.getBounds()
-  saveSettings({ bounds: { width, height } })
-}
-
-export function onMoved() {
-  saveSettings({ position: global.player.getPosition() })
-}
-
-export function onClosed() {
-  global.player = null
-}
-
-export function onShow() {
-  global.player.webContents.send(`visible`)
-}
-
-export function onRestore() {
-  global.player.webContents.send(`visible`)
-}
-
-export function onHide() {
-  global.player.webContents.send(`invisible`)
-}
-
-export function onMinimize() {
-  global.player.webContents.send(`invisible`)
-}
-
-export function onceReadyToShow() {
-  function callback(_, data) {
-    if (data.position) {
-      const [x, y] = data.position
-      global.player.setPosition(x, y)
-      delete data.position
+export function Events(self) {
+  function onRequest(_, response) {
+    if (self.stream && self.stream.pipe) {
+      self.stream.pipe(response)
+    } else {
+      response.statusCode = 503
+      response.end()
     }
+  }
 
-    if (data.bounds) {
-      const { width, height } = data.bounds
-      const { workArea } = screen.getPrimaryDisplay()
+  function onActivate() {
+    !self.player
+      ? createWindow()
+      : !self.player.isVisible() && self.player.show()
+  }
 
-      if (data.drawer) {
-        global.player.setMinimumSize(WINDOW_MIN_WIDTH, PLAYER_HEIGHT + DRAWER_HEIGHT)
-        global.player.setMaximumSize(workArea.width, workArea.height)
-      } else {
-        global.player.setMinimumSize(WINDOW_MIN_WIDTH, PLAYER_HEIGHT)
-        global.player.setMaximumSize(workArea.width, PLAYER_HEIGHT)
+  function onAllClosed() {
+    process.platform !== `darwin` && app.quit()
+  }
+
+  function onResized() {
+    const { width, height } = self.player.getBounds()
+    self.saveSettings({ bounds: { width, height } })
+  }
+
+  function onMoved() {
+    self.saveSettings({ position: self.player.getPosition() })
+  }
+
+  function onClosed() {
+    delete self.player
+  }
+
+  function onShow() {
+    self.sendMessage(`visible`)
+  }
+
+  function onRestore() {
+    self.sendMessage(`visible`)
+  }
+
+  function onHide() {
+    self.sendMessage(`invisible`)
+  }
+
+  function onMinimize() {
+    self.sendMessage(`invisible`)
+  }
+
+  function onceReadyToShow() {
+    function callback(_, data) {
+      if (data.position) {
+        const [x, y] = data.position
+        self.player.setPosition(x, y)
+        delete data.position
       }
-      global.player.setBounds({ width, height })
-      delete data.bounds
+
+      if (data.bounds) {
+        const { width, height } = data.bounds
+        const { workArea } = screen.getPrimaryDisplay()
+
+        if (data.drawer) {
+          self.player.setMinimumSize(WINDOW_MIN_WIDTH, PLAYER_HEIGHT + DRAWER_HEIGHT)
+          self.player.setMaximumSize(workArea.width, workArea.height)
+        } else {
+          self.player.setMinimumSize(WINDOW_MIN_WIDTH, PLAYER_HEIGHT)
+          self.player.setMaximumSize(workArea.width, PLAYER_HEIGHT)
+        }
+
+        self.player.setBounds({ width, height })
+        delete data.bounds
+      }
+
+      if (!data.locale) {
+        getSystemLocale(self)
+      }
+
+      self.sendMessage(`settings`, data)
+      self.player.show()
     }
 
-    if (!data.locale) {
-      getSystemLocale()
-    }
-
-    global.player.webContents.send(`settings`, data)
-    global.player.show()
+    self.storage.get(`settings`, callback)
   }
 
-  global.storage.get(`settings`, callback)
+  function onEnterFullScreen() {
+    const [width, height] = self.player.getSize()
+    const bounds = screen.getPrimaryDisplay().bounds
+
+    function onceLeaveFullScreen() {
+      self.player.setContentSize(width, height)
+    }
+
+    self.player.setContentSize(bounds.width, bounds.height)
+    self.player.once(`leave-full-screen`, onceLeaveFullScreen)
+  }
+
+  return {
+    onHide,
+    onShow,
+    onMoved,
+    onClosed,
+    onRequest,
+    onRestore,
+    onResized,
+    onMinimize,
+    onActivate,
+    onAllClosed,
+    onceReadyToShow,
+    onEnterFullScreen,
+  }
 }
